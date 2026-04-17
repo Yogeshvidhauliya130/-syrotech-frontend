@@ -31,7 +31,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/login", {
+     const res = await fetch("https://syrotech-backend.onrender.com/api/login", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
@@ -65,7 +65,7 @@ export default function Login() {
     if (!form.password || form.password.length < 4) { setError("Password min 4 characters."); return; }
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/signup", {
+      const res = await fetch("https://syrotech-backend.onrender.com/api/signup", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({

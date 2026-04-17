@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
-const BASE_URL = "http://localhost:3001";
+// const BASE_URL = "http://localhost:3001";
+const BASE_URL = "https://syrotech-backend.onrender.com";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
