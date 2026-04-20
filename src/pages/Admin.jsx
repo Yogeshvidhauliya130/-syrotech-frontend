@@ -294,7 +294,7 @@ function Analytics() {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1300, background: "white" }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-              {["Ticket No", "Assigned To", "Raised By", "Customer Info", "Device Info", "Issue", "Status", "Resolution Rate", "Customer Rating"].map((h, i) => (
+             {["Ticket No", "Assigned To", "Raised By", "Customer Info", "Device Info", "Issue", "Status", "Customer Rating"].map((h, i) => (
                 <th key={i} style={{
                   padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
                   textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
@@ -412,13 +412,7 @@ function Analytics() {
                     )}
                   </td>
 
-                  {/* Resolution Rate */}
-                  <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: "#ff5a00" }}>
-                      {getResolutionRate(ticket.assignTo)}
-                    </div>
-                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>agent rate</div>
-                  </td>
+                  
 
                   {/* Customer Rating */}
                   <td style={{ padding: "12px 14px" }}>
