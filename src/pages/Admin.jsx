@@ -4,11 +4,8 @@ import * as XLSX from "xlsx";
 import AdminUsers from "./AdminUsers";
 import "./Admin.css";
 
-// const BASE_URL = "http://localhost:3001";
-
 const BASE_URL = "https://syrotech-backend.onrender.com";
 
-// ✅ uses createdAt
 function getTimeScore(t) {
   if (!t.createdAt || !t.resolvedAt) return 0;
   const hrs = (new Date(t.resolvedAt) - new Date(t.createdAt)) / (1000 * 60 * 60);
@@ -87,9 +84,24 @@ function TicketTable({ rows }) {
   );
 }
 
+// ✅ Star display (read-only)
+function StarDisplay({ value }) {
+  const n = parseInt(value) || 0;
+  if (!n) return <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s} style={{ fontSize: 14, color: s <= n ? "#f59e0b" : "#d1d5db" }}>★</span>
+      ))}
+      <span style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, marginLeft: 4 }}>{n}/5</span>
+    </div>
+  );
+}
+
 export default function Admin() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("users");
+  // ✅ Default tab changed to analytics
+  const [tab, setTab] = useState("analytics");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -97,11 +109,12 @@ export default function Admin() {
     navigate("/", { replace: true });
   };
 
+  // ✅ NAV order: Analytics, Query Tracker, Performance, User Permissions
   const NAV = [
-    { key: "users",       icon: "👥", label: "User Permissions" },
-    { key: "queries",     icon: "🎫", label: "Query Tracker"    },
     { key: "analytics",   icon: "📊", label: "Analytics"        },
+    { key: "queries",     icon: "🎫", label: "Query Tracker"    },
     { key: "performance", icon: "🏆", label: "Performance"      },
+    { key: "users",       icon: "👥", label: "User Permissions" },
   ];
 
   return (
@@ -124,11 +137,215 @@ export default function Admin() {
         <button className="logout-btn" onClick={handleLogout}><span>⬅</span> Logout</button>
       </aside>
       <main className="admin-main">
-        {tab === "users"       && <AdminUsers />}
-        {tab === "queries"     && <QueryTracker />}
         {tab === "analytics"   && <Analytics />}
+        {tab === "queries"     && <QueryTracker />}
         {tab === "performance" && <Performance />}
+        {tab === "users"       && <AdminUsers />}
       </main>
+    </div>
+  );
+}
+
+// ✅ NEW Analytics — full ticket table
+function Analytics() {
+  const [tickets, setTickets] = useState([]);
+  const [filter, setFilter]   = useState("all");
+  const [search, setSearch]   = useState("");
+
+  useEffect(() => {
+    const load = () => fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(setTickets).catch(console.error);
+    load();
+    const id = setInterval(load, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  // ✅ Persistent ticket number map — oldest = Syro1
+  const ticketNumberMap = {};
+  [...tickets]
+    .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
+    .forEach((t, i) => { ticketNumberMap[t.id] = i + 1; });
+
+  const counts = {
+    all:      tickets.length,
+    pending:  tickets.filter(t => t.status === "pending").length,
+    open:     tickets.filter(t => t.status === "open").length,
+    resolved: tickets.filter(t => t.status === "resolved").length,
+    rma:      tickets.filter(t => t.status === "rma").length,
+  };
+
+  const filtered = tickets
+    .filter(t => filter === "all" || (t.status || "pending").toLowerCase() === filter)
+    .filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.customer, t.phone, t.email, t.category, t.serialNo]
+      .some(f => (f || "").toLowerCase().includes(search.toLowerCase())))
+    .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+  const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
+  const STATUS_BG    = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff" };
+
+  // Resolution rate per agent
+  const getResolutionRate = (assignTo) => {
+    const agentTickets = tickets.filter(t => t.assignTo === assignTo);
+    if (!agentTickets.length) return "—";
+    const resolved = agentTickets.filter(t => t.status === "resolved").length;
+    return `${Math.round((resolved / agentTickets.length) * 100)}%`;
+  };
+
+  return (
+    <div className="tab-content">
+      <div className="tab-header">
+        <div>
+          <h2 className="tab-title">Analytics</h2>
+          <p className="tab-sub">All tickets overview</p>
+        </div>
+        {/* Summary pills */}
+        <div className="tab-stats" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {[
+            ["all",      "All",       "#374151", "#f3f4f6"],
+            ["open",     "🔓 Open",    "#e04e00", "#fff4ee"],
+            ["pending",  "⏳ Pending", "#b45309", "#fffbeb"],
+            ["resolved", "✅ Resolved","#1a7a46", "#edfaf3"],
+            ["rma",      "🔧 RMA",     "#7c3aed", "#f5f3ff"],
+          ].map(([key, label, col, bg]) => (
+            <button key={key}
+              onClick={() => setFilter(key)}
+              style={{
+                padding: "6px 14px", borderRadius: 16, cursor: "pointer",
+                border: filter === key ? `2px solid ${col}` : "1px solid #d1d5db",
+                background: filter === key ? bg : "white",
+                color: filter === key ? col : "#555",
+                fontWeight: filter === key ? 700 : 400,
+                fontSize: 12, whiteSpace: "nowrap"
+              }}>
+              {label} <span style={{
+                marginLeft: 4, background: filter === key ? col : "#e5e7eb",
+                color: filter === key ? "white" : "#555",
+                borderRadius: 10, padding: "1px 6px", fontSize: 10, fontWeight: 700
+              }}>{counts[key]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Search */}
+      <div style={{ marginBottom: 14 }}>
+        <input
+          placeholder="🔍 Search by name, agent, phone, product..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{
+            width: "100%", padding: "10px 16px", border: "1.5px solid #d1d5db",
+            borderRadius: 10, fontSize: 13, outline: "none", background: "white",
+            fontFamily: "inherit", color: "#111", boxSizing: "border-box"
+          }}
+        />
+      </div>
+
+      {/* ✅ Table */}
+      <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
+          <thead>
+            <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
+              {["Ticket No", "Assigned To", "Raised By", "Customer Info", "Status", "Resolution Rate", "Customer Rating"].map((h, i) => (
+                <th key={i} style={{
+                  padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
+                  textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
+                  borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap"
+                }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
+                  No tickets found.
+                </td>
+              </tr>
+            ) : filtered.map((ticket, idx) => {
+              const s = (ticket.status || "pending").toLowerCase();
+              return (
+                <tr key={ticket.id} style={{
+                  borderBottom: "1px solid #f0ede8",
+                  background: idx % 2 === 0 ? "#faf7f4" : "white",
+                  borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
+                }}>
+
+                  {/* ✅ Ticket No */}
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticketNumberMap[ticket.id]}</div>
+                    <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.date || "—"}</div>
+                  </td>
+
+                  {/* Assigned To */}
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.assignTo || "—"}</div>
+                    {ticket.reassignedFrom && (
+                      <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700 }}>🔄 from {ticket.reassignedFrom}</div>
+                    )}
+                  </td>
+
+                  {/* Raised By */}
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
+                    <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.raisedBy || ""}</div>
+                  </td>
+
+                  {/* ✅ Customer Info — name, phone, email, city/address in one column */}
+                  <td style={{ padding: "12px 14px", minWidth: 180 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{ticket.customer || "—"}</div>
+                    {ticket.phone && <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone}</div>}
+                    {ticket.email && <div style={{ fontSize: 11, color: "#6b7280" }}>✉️ {ticket.email}</div>}
+                    {(ticket.city || ticket.country) && (
+                      <div style={{ fontSize: 11, color: "#9ca3af" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ")}</div>
+                    )}
+                  </td>
+
+                  {/* ✅ Status — open/pending/resolved/rma as badge */}
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                    <span style={{
+                      padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                      color: STATUS_COLOR[s], background: STATUS_BG[s],
+                      display: "inline-block"
+                    }}>
+                      {s.toUpperCase()}
+                    </span>
+                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
+                      {ticket.category} · {ticket.serialNo}
+                    </div>
+                    {ticket.resolvedAt && (
+                      <div style={{ fontSize: 10, color: "#10b981", marginTop: 2 }}>
+                        ✅ {new Date(ticket.resolvedAt).toLocaleDateString()}
+                      </div>
+                    )}
+                  </td>
+
+                  {/* ✅ Resolution Rate (per agent) */}
+                  <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: "#ff5a00" }}>
+                      {getResolutionRate(ticket.assignTo)}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>agent rate</div>
+                  </td>
+
+                  {/* ✅ Customer Rating — stars */}
+                  <td style={{ padding: "12px 14px" }}>
+                    <StarDisplay value={ticket.feedbackRating} />
+                    {ticket.feedbackComment && (
+                      <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        "{ticket.feedbackComment}"
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
+        Showing <strong style={{ color: "#374151" }}>{filtered.length}</strong> of <strong style={{ color: "#374151" }}>{tickets.length}</strong> tickets
+      </div>
     </div>
   );
 }
@@ -137,10 +354,10 @@ function QueryTracker() {
   const [queries, setQueries]           = useState([]);
   const [filter, setFilter]             = useState("all");
   const [search, setSearch]             = useState("");
-  const [deletingId, setDeletingId]     = useState(null);
   const [expandedId, setExpandedId]     = useState(null);
   const [feedbackData, setFeedbackData] = useState({});
   const [savingId, setSavingId]         = useState(null);
+  const [issuePopup, setIssuePopup]     = useState(null); // ✅ NEW
 
   const fetchData = () =>
     fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(data => {
@@ -161,16 +378,6 @@ function QueryTracker() {
     }).then(r => r.json()).then(updated =>
       setQueries(prev => prev.map(q => q.id === id ? { ...updated, feedbackRating: updated.feedbackRating ? parseInt(updated.feedbackRating) : null } : q))
     );
-  };
-
-  const deleteTicket = (id, raisedByName, category) => {
-    const confirmed = window.confirm(`⚠️ Delete this ticket?\n\nRaised by: ${raisedByName || "Unknown"}\nProduct: ${category}\n\nThis will remove it permanently.`);
-    if (!confirmed) return;
-    setDeletingId(id);
-    fetch(`${BASE_URL}/tickets/${id}`, { method: "DELETE" })
-      .then(r => r.json())
-      .then(() => { setQueries(prev => prev.filter(q => q.id !== id)); setDeletingId(null); })
-      .catch(err => { console.error("Delete failed:", err); setDeletingId(null); });
   };
 
   const saveFeedback = (ticketId) => {
@@ -211,6 +418,60 @@ function QueryTracker() {
 
   return (
     <div className="tab-content">
+
+      {/* ✅ Issue Popup Modal */}
+      {issuePopup && (
+        <div
+          onClick={() => setIssuePopup(null)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "white", borderRadius: 14, padding: "24px 28px",
+              maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#fad8be"}`
+            }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#c94500" }}>
+                {issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}
+              </div>
+              <button onClick={() => setIssuePopup(null)}
+                style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>
+                ✕ Close
+              </button>
+            </div>
+            {issuePopup.resolutionNotes ? (
+              <>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  🔧 What was solved:
+                </div>
+                <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>
+                  {issuePopup.resolutionNotes}
+                </div>
+                {issuePopup.resolutionTimeTaken && (
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
+                    ⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong>
+                  </div>
+                )}
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  📋 Original Issue Raised:
+                </div>
+                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #ff5a00" }}>
+                  {issuePopup.description}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#fff8f2", padding: "14px 16px", borderRadius: 10, border: "1px solid #fad8be", borderLeft: "4px solid #ff5a00" }}>
+                {issuePopup.description}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="tab-header">
         <div>
           <h2 className="tab-title">Query Tracker</h2>
@@ -247,414 +508,325 @@ function QueryTracker() {
         </div>
       </div>
 
-      <div style={{ background: "linear-gradient(135deg, #fefce8, #fef9c3)", border: "1.5px solid #fde68a", borderRadius: 12, padding: "12px 18px", marginBottom: 12, fontSize: 12, color: "#92400e" }}>
-        <strong>🏆 Final Score = Time Score (from raised) + Customer Feedback Bonus</strong>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
-          {[["5⭐ = +1","#10b981"],["4⭐ = +0.5","#34d399"],["3⭐ = 0","#6b7280"],["2⭐ = -0.5","#f97316"],["1⭐ = -1","#ef4444"]].map(([label, col]) => (
-            <span key={label} style={{ background:"white", padding:"3px 10px", borderRadius:8, border:`1px solid ${col}`, color:col, fontWeight:700 }}>{label}</span>
-          ))}
-        </div>
-      </div>
-
-      <div className="delete-info-banner">
-        🗑️ Only <strong>resolved</strong> tickets can be deleted. &nbsp;⭐ Click <strong>Feedback</strong> on resolved tickets to add/update customer rating.
-      </div>
-
       {filtered.length === 0 && <div className="empty-state">No queries found.</div>}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 0, border: "1.5px solid #e0d8d0", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      {/* ✅ TABLE with horizontal scrollbar — removed Change, Score, Feedback, Delete columns */}
+      <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900, background: "white" }}>
+          <thead>
+            <tr style={{ background: "linear-gradient(135deg, #f9f7f4, #f4f0eb)", position: "sticky", top: 0, zIndex: 2 }}>
+              {["Raised By", "Assigned To", "Product / Serial", "Issue", "Date", "Status"].map((h, i) => (
+                <th key={i} style={{
+                  padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#999",
+                  textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
+                  borderBottom: "2px solid #e0d8d0", borderRight: i < 5 ? "1px solid #e0d8d0" : "none",
+                  whiteSpace: "nowrap", background: "linear-gradient(135deg, #f9f7f4, #f4f0eb)"
+                }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((q, idx) => {
+              const s          = (q.status || "pending").toLowerCase();
+              const isResolved = s === "resolved";
+              const isRma      = s === "rma";
+              const isExpanded = expandedId === q.id;
+              const fb         = feedbackData[q.id] || {};
+              const savedRating    = parseInt(q.feedbackRating) || 0;
+              const hasFeedback    = savedRating > 0;
+              const combinedScore  = (isResolved && q.createdAt && q.resolvedAt) ? getCombinedScore(q) : null;
+              const previewRating  = fb.rating !== undefined ? parseInt(fb.rating) : savedRating;
+              const previewScore   = (isResolved && q.createdAt && q.resolvedAt && previewRating)
+                ? Math.min(10, Math.max(1, getTimeScore(q) + getFeedbackBonus(previewRating))) : combinedScore;
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1.2fr 0.9fr 0.9fr 1.3fr 0.8fr 0.7fr 0.7fr 0.8fr 0.6fr 0.5fr",
-          padding: "12px 18px",
-          background: "linear-gradient(135deg, #f9f7f4, #f4f0eb)",
-          borderBottom: "2px solid #e0d8d0",
-          fontSize: 11, fontWeight: 700, color: "#999",
-          textTransform: "uppercase", letterSpacing: "0.07em",
-        }}>
-          <span>Raised By</span><span>Assigned To</span><span>Product/Serial</span>
-          <span>Issue</span><span>Date</span><span>Status</span>
-          <span>Change</span><span>Score</span><span>Feedback</span><span>Delete</span>
-        </div>
+              const detailRow1 = [
+                ["Customer",  q.customer || "—"],
+                ["Phone",     q.phone    || "—"],
+                ["Serial No", q.serialNo || "—"],
+                ["MAC",       q.mac      || "—"],
+                ["Pincode",   q.pincode  || "—"],
+              ];
+              const detailRow2 = [
+                ["City",        q.city     || "—"],
+                ["Country",     q.country  || "—"],
+                ["Raised At",   q.createdAt  ? new Date(q.createdAt).toLocaleString()  : "—"],
+                ["Accepted At", q.acceptedAt ? new Date(q.acceptedAt).toLocaleString() : "—"],
+                ["Resolved At", q.resolvedAt ? new Date(q.resolvedAt).toLocaleString() : "—"],
+              ];
 
-        {filtered.map(q => {
-          const s           = (q.status || "pending").toLowerCase();
-          const isResolved  = s === "resolved";
-          const isRma       = s === "rma";
-          const isDeleting  = deletingId === q.id;
-          const isExpanded  = expandedId === q.id;
-          const fb          = feedbackData[q.id] || {};
-          const savedRating = parseInt(q.feedbackRating) || 0;
-          const hasFeedback = savedRating > 0;
-          const combinedScore = (isResolved && q.createdAt && q.resolvedAt) ? getCombinedScore(q) : null;
-          const previewRating = fb.rating !== undefined ? parseInt(fb.rating) : savedRating;
-          const previewScore  = (isResolved && q.createdAt && q.resolvedAt && previewRating)
-            ? Math.min(10, Math.max(1, getTimeScore(q) + getFeedbackBonus(previewRating))) : combinedScore;
+              return (
+                <>
+                  <tr key={q.id} style={{
+                    borderBottom: "1px solid #f0ede8",
+                    background: idx % 2 === 0 ? "#faf7f4" : "white",
+                    borderLeft: `4px solid ${isRma ? "#7c3aed" : q.reassignedFrom ? "#f59e0b" : (isResolved ? "#10b981" : "#e5e7eb")}`,
+                  }}>
 
-          const detailRow1 = [
-            ["Customer",  q.customer || "—"],
-            ["Phone",     q.phone    || "—"],
-            ["Serial No", q.serialNo || "—"],
-            ["MAC",       q.mac      || "—"],
-            ["Pincode",   q.pincode  || "—"],
-          ];
-          const detailRow2 = [
-            ["City",        q.city     || "—"],
-            ["Country",     q.country  || "—"],
-            ["Raised At",   q.createdAt  ? new Date(q.createdAt).toLocaleString()  : "—"],
-            ["Accepted At", q.acceptedAt ? new Date(q.acceptedAt).toLocaleString() : "—"],
-            ["Resolved At", q.resolvedAt ? new Date(q.resolvedAt).toLocaleString() : "—"],
-          ];
+                    {/* Raised By */}
+                    <td style={{ padding: "14px 16px", borderRight: "1px solid #f0ede8" }}>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>{q.raisedByName || q.raisedBy || "—"}</div>
+                      {q.phone && <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>📞 {q.phone}</div>}
+                      {q.issueHistory && q.issueHistory.length > 0 && (
+                        <div style={{ fontSize: 10, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>
+                          🔁 {q.issueHistory.length} repeat
+                        </div>
+                      )}
+                    </td>
 
-          return (
-            <div key={q.id} style={{
-              background: "white",
-              borderBottom: "1px solid #f0ede8",
-              borderLeft: `4px solid ${isRma ? "#7c3aed" : q.reassignedFrom ? "#f59e0b" : (isResolved ? "#10b981" : "#e5e7eb")}`,
-            }}>
+                    {/* Assigned To */}
+                    <td style={{ padding: "14px 16px", fontSize: 13, borderRight: "1px solid #f0ede8" }}>
+                      <div style={{ fontWeight: 600 }}>{q.assignTo || "—"}</div>
+                      {q.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", marginTop: 3, fontWeight: 700 }}>🔄 from {q.reassignedFrom}</div>}
+                    </td>
 
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "1.2fr 0.9fr 0.9fr 1.3fr 0.8fr 0.7fr 0.7fr 0.8fr 0.6fr 0.5fr",
-                padding: "14px 18px", alignItems: "start", gap: 8, fontSize: 13,
-              }}>
+                    {/* Product / Serial */}
+                    <td style={{ padding: "14px 16px", borderRight: "1px solid #f0ede8" }}>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>{q.category}</div>
+                      <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>S/N: {q.serialNo}</div>
+                      {q.productImage && <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700, marginTop: 2 }}>📷 Has image</div>}
+                    </td>
 
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.raisedByName || q.raisedBy || "—"}</div>
-                  {q.phone && <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>📞 {q.phone}</div>}
-                  {/* ✅ NEW: Repeat customer badge */}
-                  {q.issueHistory && q.issueHistory.length > 0 && (
-                    <div style={{ fontSize: 10, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>
-                      🔁 {q.issueHistory.length} repeat visit{q.issueHistory.length > 1 ? "s" : ""}
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ minWidth: 0, fontSize: 13 }}>
-                  <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.assignTo || "—"}</div>
-                  {q.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", marginTop: 3, fontWeight: 700 }}>🔄 from {q.reassignedFrom}</div>}
-                </div>
-
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.category}</div>
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>S/N: {q.serialNo}</div>
-                  {/* ✅ NEW: Image indicator */}
-                  {q.productImage && <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700, marginTop: 2 }}>📷 Has image</div>}
-                </div>
-
-                <div style={{ minWidth: 0, fontSize: 12, color: "#555", wordBreak: "break-word", whiteSpace: "normal", lineHeight: 1.5 }}>
-                  {(q.description || "").slice(0, 55)}{(q.description || "").length > 55 ? "..." : ""}
-                </div>
-
-                <div style={{ minWidth: 0, fontSize: 12, color: "#888" }}>
-                  <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{q.date || "—"}</div>
-                  {q.resolvedAt && <div style={{ fontSize: 10, color: "#1a7a46", marginTop: 2 }}>✅ {new Date(q.resolvedAt).toLocaleDateString()}</div>}
-                </div>
-
-                <div style={{ minWidth: 0 }}>
-                  <span className="status-badge" style={{ color: SC[s]||"#333", background: SB[s]||"#f5f5f5", fontSize: 11 }}>{s}</span>
-                  {/* ✅ NEW: RMA indicator */}
-                  {isRma && <div style={{ fontSize: 10, color: "#7c3aed", fontWeight: 700, marginTop: 3 }}>🔧 {q.rmaCenterCity}</div>}
-                </div>
-
-                <div style={{ minWidth: 0 }}>
-                  <select className="status-select" value={s} onChange={e => updateStatus(q.id, e.target.value)} style={{ width: "100%", fontSize: 11 }}>
-                    <option value="open">Open</option>
-                    <option value="pending">Pending</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="rma">RMA</option>
-                  </select>
-                </div>
-
-                <div style={{ minWidth: 0, textAlign: "center" }}>
-                  {isResolved && combinedScore !== null ? (
-                    <>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: SCORE_COLOR(combinedScore) }}>{combinedScore}/10</div>
-                      {hasFeedback
-                        ? <div style={{ fontSize: 11, color: "#f59e0b", marginTop: 1 }}>{"★".repeat(savedRating)}{"☆".repeat(5 - savedRating)}</div>
-                        : <div style={{ fontSize: 10, color: "#d1d5db", marginTop: 1 }}>no rating</div>
-                      }
-                    </>
-                  ) : (
-                    <span style={{ fontSize: 11, color: "#ccc" }}>—</span>
-                  )}
-                </div>
-
-                <div style={{ minWidth: 0 }}>
-                  {(isResolved || isRma) ? (
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : q.id)}
-                      style={{
-                        width: "100%", padding: "7px 6px", borderRadius: 8, border: "none", cursor: "pointer",
-                        background: isRma ? (isExpanded ? "#ede9fe" : "#f5f3ff") : hasFeedback ? (isExpanded ? "#fef9c3" : "#ecfdf5") : (isExpanded ? "#eff6ff" : "#f8faff"),
-                        color: isRma ? "#5b21b6" : hasFeedback ? "#065f46" : "#1d4ed8",
-                        fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
-                        borderLeft: `3px solid ${isRma ? "#7c3aed" : hasFeedback ? "#10b981" : "#93c5fd"}`,
-                      }}
-                    >
-                      {isRma ? `🔧 ${isExpanded ? "▲" : "▼"}` : hasFeedback ? `⭐${savedRating} ${isExpanded ? "▲" : "▼"}` : `📝 ${isExpanded ? "▲" : "▼"}`}
-                    </button>
-                  ) : (
-                    <span style={{ fontSize: 11, color: "#ccc", display: "block", textAlign: "center" }}>—</span>
-                  )}
-                </div>
-
-                <div style={{ minWidth: 0, textAlign: "center" }}>
-                  {isResolved ? (
-                    <button className="btn-delete-ticket" onClick={() => deleteTicket(q.id, q.raisedByName, q.category)} disabled={isDeleting}>
-                      {isDeleting ? "..." : "🗑️"}
-                    </button>
-                  ) : (
-                    <span className="no-delete-placeholder">—</span>
-                  )}
-                </div>
-              </div>
-
-              {/* ✅ Expanded Panel */}
-              {isExpanded && (isResolved || isRma) && (
-                <div style={{ background: "#f8faff", borderTop: "2px dashed #bfdbfe", padding: "22px 28px 28px" }}>
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "#1e40af", marginBottom: 4 }}>
-                        📊 Ticket Details — <span style={{ color: "#ff5a00" }}>{q.customer || q.raisedByName}</span>
+                    {/* Issue */}
+                    <td style={{ padding: "14px 16px", maxWidth: 220, borderRight: "1px solid #f0ede8" }}>
+                      <div style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}>
+                        {(q.description || "").slice(0, 60)}{(q.description || "").length > 60 ? "..." : ""}
                       </div>
-                      <div style={{ fontSize: 12, color: "#6b7280", display: "flex", gap: 10, flexWrap: "wrap" }}>
-                        <span>#{(q.id || "").slice(-8)}</span>
-                        <span>· {q.category}</span>
-                        <span>· {isRma ? `RMA by ${q.rmaSentBy}` : `Resolved by ${q.assignTo}`}</span>
-                        {q.feedbackSent && <span style={{ background: "#dcfce7", color: "#065f46", padding: "2px 8px", borderRadius: 8, fontSize: 11, fontWeight: 600 }}>✅ WhatsApp Sent</span>}
-                      </div>
-                    </div>
-                    <button onClick={() => setExpandedId(null)}
-                      style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13, color: "#64748b", fontWeight: 600 }}>
-                      ✕ Close
-                    </button>
-                  </div>
+                    </td>
 
-                  <TicketTable rows={detailRow1} />
-                  <TicketTable rows={detailRow2} />
+                    {/* Date */}
+                    <td style={{ padding: "14px 16px", fontSize: 12, color: "#888", whiteSpace: "nowrap", borderRight: "1px solid #f0ede8" }}>
+                      <div>{q.date || "—"}</div>
+                      {q.resolvedAt && <div style={{ fontSize: 10, color: "#1a7a46", marginTop: 2 }}>✅ {new Date(q.resolvedAt).toLocaleDateString()}</div>}
+                    </td>
 
-                  {/* Issue description */}
-                  <div style={{ background: "#fff8f2", border: "1px solid #fad8be", borderLeft: "4px solid #ff5a00", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#4a3e36" }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: "#b0a898", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Issue Description</div>
-                    {q.description}
-                  </div>
+                    {/* ✅ Status — click resolved to see resolution notes */}
+                    <td style={{ padding: "14px 16px" }}>
+                      <span
+                        onClick={() => {
+                          if (isResolved) {
+                            setIssuePopup({
+                              description: q.description,
+                              resolutionNotes: q.resolutionNotes,
+                              resolutionTimeTaken: q.resolutionTimeTaken,
+                            });
+                          }
+                        }}
+                        style={{
+                          display: "inline-block", padding: "4px 10px", borderRadius: 12,
+                          fontSize: 11, fontWeight: 700,
+                          color: SC[s] || "#333", background: SB[s] || "#f5f5f5",
+                          cursor: isResolved ? "pointer" : "default",
+                          border: isResolved ? "1.5px solid #6ee7b7" : "none",
+                        }}
+                        title={isResolved ? "Click to see resolution details" : ""}
+                      >
+                        {s.toUpperCase()}
+                      </span>
+                      {isResolved && q.resolutionNotes && (
+                        <div
+                          onClick={() => setIssuePopup({ description: q.description, resolutionNotes: q.resolutionNotes, resolutionTimeTaken: q.resolutionTimeTaken })}
+                          style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
+                          📋 View details
+                        </div>
+                      )}
+                      {isRma && <div style={{ fontSize: 10, color: "#7c3aed", fontWeight: 700, marginTop: 3 }}>🔧 {q.rmaCenterCity}</div>}
+                      {/* ✅ Expand button for resolved/rma */}
+                      {(isResolved || isRma) && (
+                        <div
+                          onClick={() => setExpandedId(isExpanded ? null : q.id)}
+                          style={{ fontSize: 10, color: "#3b82f6", marginTop: 4, cursor: "pointer", fontWeight: 600 }}>
+                          {isExpanded ? "▲ Less" : "▼ Details"}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
 
-                  {/* ✅ NEW: Product Image */}
-                  {q.productImage && (
-                    <div style={{ marginBottom: 18 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>📷 Product Image</div>
-                      <img src={q.productImage} alt="Product"
-                        style={{ maxWidth: "100%", maxHeight: 250, borderRadius: 10, border: "2px solid #e0d8d0", cursor: "pointer" }}
-                        onClick={() => window.open(q.productImage, "_blank")}
-                      />
-                      <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>Click to view full size — serial no & MAC visible in image</div>
-                    </div>
-                  )}
+                  {/* ✅ Expanded Panel */}
+                  {isExpanded && (isResolved || isRma) && (
+                    <tr key={`exp-${q.id}`}>
+                      <td colSpan={6} style={{ background: "#f8faff", borderTop: "2px dashed #bfdbfe", padding: "22px 28px 28px" }}>
 
-                  {/* ✅ NEW: RMA Details */}
-                  {isRma && (
-                    <div style={{ background: "linear-gradient(135deg, #f5f3ff, #ede9fe)", border: "1.5px solid #c4b5fd", borderRadius: 12, padding: "16px 20px", marginBottom: 18 }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: "#5b21b6", marginBottom: 12 }}>🔧 RMA Details</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 13 }}>
-                        <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Reason</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaReason}</div></div>
-                        <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Sent By</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaSentBy}</div></div>
-                        <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>RMA Center</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterName}</div></div>
-                        <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>City</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterCity}</div></div>
-                        <div style={{ gridColumn: "1/-1" }}><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Address</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterAddress}</div></div>
-                        <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Center Phone</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>📞 {q.rmaCenterPhone}</div></div>
-                        <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Sent At</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaSentAt ? new Date(q.rmaSentAt).toLocaleString() : "—"}</div></div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ✅ NEW: Issue History */}
-                  {q.issueHistory && q.issueHistory.length > 0 && (
-                    <div style={{ background: "#eff6ff", border: "1.5px solid #93c5fd", borderRadius: 10, padding: "14px 18px", marginBottom: 18 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: "#1e40af", marginBottom: 10 }}>
-                        🔁 Repeat Customer — {q.issueHistory.length} Previous Issue{q.issueHistory.length > 1 ? "s" : ""}
-                      </div>
-                      {q.issueHistory.map((h, i) => (
-                        <div key={i} style={{ background: "white", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", marginBottom: 8, fontSize: 12 }}>
-                          <div style={{ fontWeight: 600, color: "#374151", marginBottom: 4 }}>{h.description}</div>
-                          <div style={{ color: "#9ca3af", fontSize: 11 }}>
-                            Raised by: {h.raisedByName} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+                          <div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: "#1e40af", marginBottom: 4 }}>
+                              📊 Ticket Details — <span style={{ color: "#ff5a00" }}>{q.customer || q.raisedByName}</span>
+                            </div>
+                            <div style={{ fontSize: 12, color: "#6b7280", display: "flex", gap: 10, flexWrap: "wrap" }}>
+                              <span>#{(q.id || "").slice(-8)}</span>
+                              <span>· {q.category}</span>
+                              <span>· {isRma ? `RMA by ${q.rmaSentBy}` : `Resolved by ${q.assignTo}`}</span>
+                              {q.feedbackSent && <span style={{ background: "#dcfce7", color: "#065f46", padding: "2px 8px", borderRadius: 8, fontSize: 11, fontWeight: 600 }}>✅ WhatsApp Sent</span>}
+                            </div>
                           </div>
+                          <button onClick={() => setExpandedId(null)}
+                            style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13, color: "#64748b", fontWeight: 600 }}>
+                            ✕ Close
+                          </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
 
-                  {/* Reassign History */}
-                  {q.reassignHistory && q.reassignHistory.length > 0 && (
-                    <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "14px 18px", marginBottom: 18 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e", marginBottom: 10 }}>
-                        🔄 Reassignment History ({q.reassignHistory.length})
-                      </div>
-                      {q.reassignHistory.map((h, i) => (
-                        <div key={i} style={{ background: "white", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
-                          <span style={{ background: "#f59e0b", color: "white", padding: "2px 8px", borderRadius: 6, fontWeight: 700, fontSize: 11 }}>#{i + 1}</span>
-                          <span style={{ fontWeight: 700, color: "#374151" }}>{h.from} → {h.to}</span>
-                          <span style={{ color: "#6b7280" }}>Reason: "<em>{h.reason}</em>"</span>
-                          {h.timestamp && <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: "auto" }}>{new Date(h.timestamp).toLocaleString()}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        <TicketTable rows={detailRow1} />
+                        <TicketTable rows={detailRow2} />
 
-                  {/* Feedback section — only for resolved */}
-                  {isResolved && (
-                    <>
-                      <div style={{ background: "white", border: "2px solid #e2e8f0", borderRadius: 12, padding: "16px 22px", marginBottom: 18, display: "flex", gap: 28, flexWrap: "wrap", alignItems: "center" }}>
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Time Score</div>
-                          <div style={{ fontSize: 26, fontWeight: 800, color: SCORE_COLOR(getTimeScore(q)), marginTop: 4 }}>{getTimeScore(q)}/10</div>
+                        <div style={{ background: "#fff8f2", border: "1px solid #fad8be", borderLeft: "4px solid #ff5a00", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#4a3e36" }}>
+                          <div style={{ fontSize: 10, fontWeight: 800, color: "#b0a898", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Issue Description</div>
+                          {q.description}
                         </div>
-                        <div style={{ fontSize: 22, color: "#d1d5db", fontWeight: 300 }}>+</div>
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Feedback Bonus</div>
-                          <div style={{ fontSize: 26, fontWeight: 800, color: getFeedbackBonus(previewRating) >= 0 ? "#10b981" : "#ef4444", marginTop: 4 }}>
-                            {previewRating ? (getFeedbackBonus(previewRating) >= 0 ? `+${getFeedbackBonus(previewRating)}` : `${getFeedbackBonus(previewRating)}`) : "—"}
-                          </div>
-                        </div>
-                        <div style={{ fontSize: 22, color: "#d1d5db", fontWeight: 300 }}>=</div>
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Final Score</div>
-                          <div style={{ fontSize: 32, fontWeight: 900, color: SCORE_COLOR(previewScore), marginTop: 4 }}>{previewScore !== null ? `${previewScore}/10` : "—"}</div>
-                        </div>
-                        {hasFeedback && (
-                          <div style={{ marginLeft: "auto", background: "#ecfdf5", border: "1px solid #86efac", borderRadius: 10, padding: "10px 16px", fontSize: 12, color: "#065f46" }}>
-                            ✅ Rating saved: <strong>{savedRating}/5</strong><br/>
-                            <span style={{ fontSize: 11, color: "#6b7280" }}>Update below if needed</span>
+
+                        {q.productImage && (
+                          <div style={{ marginBottom: 18 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>📷 Product Image</div>
+                            <img src={q.productImage} alt="Product"
+                              style={{ maxWidth: "100%", maxHeight: 250, borderRadius: 10, border: "2px solid #e0d8d0", cursor: "pointer" }}
+                              onClick={() => window.open(q.productImage, "_blank")}
+                            />
+                            <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>Click to view full size</div>
                           </div>
                         )}
-                      </div>
 
-                      <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 18, fontSize: 12, color: "#92400e" }}>
-                        ℹ️ Ask <strong>{q.assignTo}</strong> to forward the customer's WhatsApp reply, then enter it below.
-                      </div>
-
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
-                            Customer Rating ⭐ {hasFeedback && <span style={{ color: "#10b981", textTransform: "none", fontWeight: 400 }}>(already saved)</span>}
+                        {isRma && (
+                          <div style={{ background: "linear-gradient(135deg, #f5f3ff, #ede9fe)", border: "1.5px solid #c4b5fd", borderRadius: 12, padding: "16px 20px", marginBottom: 18 }}>
+                            <div style={{ fontSize: 14, fontWeight: 800, color: "#5b21b6", marginBottom: 12 }}>🔧 RMA Details</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 13 }}>
+                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Reason</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaReason}</div></div>
+                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Sent By</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaSentBy}</div></div>
+                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>RMA Center</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterName}</div></div>
+                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>City</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterCity}</div></div>
+                              <div style={{ gridColumn: "1/-1" }}><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Address</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterAddress}</div></div>
+                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Center Phone</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>📞 {q.rmaCenterPhone}</div></div>
+                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Sent At</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaSentAt ? new Date(q.rmaSentAt).toLocaleString() : "—"}</div></div>
+                            </div>
                           </div>
-                          <StarRating
-                            value={fb.rating !== undefined ? parseInt(fb.rating) : savedRating}
-                            onChange={val => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], rating: val } }))}
-                          />
-                          <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>Click stars to set rating (1 = worst, 5 = best)</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Customer Said Issue Resolved?</div>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            {["Yes", "No", "Partially"].map(opt => {
-                              const currentVal = fb.resolved !== undefined ? fb.resolved : (q.feedbackResolved || "");
-                              const isSelected = currentVal === opt;
-                              return (
-                                <button key={opt}
-                                  onClick={() => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], resolved: opt } }))}
-                                  style={{ padding: "8px 14px", borderRadius: 20, border: "2px solid", borderColor: isSelected ? "#3b82f6" : "#d1d5db", background: isSelected ? "#eff6ff" : "white", color: isSelected ? "#1d4ed8" : "#555", fontWeight: isSelected ? 700 : 400, fontSize: 12, cursor: "pointer" }}>
-                                  {opt === "Yes" ? "✅ Yes" : opt === "No" ? "❌ No" : "⚠️ Partially"}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div style={{ gridColumn: "1 / -1" }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Customer's Comment (paste from WhatsApp)</div>
-                          <input type="text"
-                            placeholder='e.g. "Issue fixed, very helpful!"'
-                            value={fb.comment !== undefined ? fb.comment : (q.feedbackComment || "")}
-                            onChange={e => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], comment: e.target.value } }))}
-                            style={{ width: "100%", padding: "11px 14px", border: "2px solid #d1d5db", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "white", color: "#111" }}
-                            onFocus={e => e.target.style.borderColor = "#3b82f6"}
-                            onBlur={e  => e.target.style.borderColor = "#d1d5db"}
-                          />
-                        </div>
-                      </div>
+                        )}
 
-                      <div style={{ marginTop: 20, display: "flex", gap: 12, alignItems: "center" }}>
-                        <button onClick={() => saveFeedback(q.id)} disabled={savingId === q.id}
-                          style={{
-                            background: savingId === q.id ? "#94a3b8" : "linear-gradient(135deg, #1d4ed8, #3b82f6)",
-                            color: "white", border: "none", padding: "12px 32px", borderRadius: 10,
-                            cursor: savingId === q.id ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 800,
-                            boxShadow: savingId === q.id ? "none" : "0 4px 14px rgba(59,130,246,0.4)", fontFamily: "inherit",
-                          }}>
-                          {savingId === q.id ? "⏳ Saving..." : hasFeedback ? "💾 Update Feedback & Score" : "💾 Save Feedback & Update Score"}
-                        </button>
-                        <span style={{ fontSize: 11, color: "#9ca3af" }}>Score updates immediately ✅</span>
-                      </div>
-                    </>
+                        {q.issueHistory && q.issueHistory.length > 0 && (
+                          <div style={{ background: "#eff6ff", border: "1.5px solid #93c5fd", borderRadius: 10, padding: "14px 18px", marginBottom: 18 }}>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: "#1e40af", marginBottom: 10 }}>
+                              🔁 Repeat Customer — {q.issueHistory.length} Previous Issue{q.issueHistory.length > 1 ? "s" : ""}
+                            </div>
+                            {q.issueHistory.map((h, i) => (
+                              <div key={i} style={{ background: "white", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", marginBottom: 8, fontSize: 12 }}>
+                                <div style={{ fontWeight: 600, color: "#374151", marginBottom: 4 }}>{h.description}</div>
+                                <div style={{ color: "#9ca3af", fontSize: 11 }}>
+                                  Raised by: {h.raisedByName} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {q.reassignHistory && q.reassignHistory.length > 0 && (
+                          <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "14px 18px", marginBottom: 18 }}>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e", marginBottom: 10 }}>
+                              🔄 Reassignment History ({q.reassignHistory.length})
+                            </div>
+                            {q.reassignHistory.map((h, i) => (
+                              <div key={i} style={{ background: "white", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
+                                <span style={{ background: "#f59e0b", color: "white", padding: "2px 8px", borderRadius: 6, fontWeight: 700, fontSize: 11 }}>#{i + 1}</span>
+                                <span style={{ fontWeight: 700, color: "#374151" }}>{h.from} → {h.to}</span>
+                                <span style={{ color: "#6b7280" }}>Reason: "<em>{h.reason}</em>"</span>
+                                {h.timestamp && <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: "auto" }}>{new Date(h.timestamp).toLocaleString()}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {isResolved && (
+                          <>
+                            <div style={{ background: "white", border: "2px solid #e2e8f0", borderRadius: 12, padding: "16px 22px", marginBottom: 18, display: "flex", gap: 28, flexWrap: "wrap", alignItems: "center" }}>
+                              <div style={{ textAlign: "center" }}>
+                                <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Time Score</div>
+                                <div style={{ fontSize: 26, fontWeight: 800, color: SCORE_COLOR(getTimeScore(q)), marginTop: 4 }}>{getTimeScore(q)}/10</div>
+                              </div>
+                              <div style={{ fontSize: 22, color: "#d1d5db", fontWeight: 300 }}>+</div>
+                              <div style={{ textAlign: "center" }}>
+                                <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Feedback Bonus</div>
+                                <div style={{ fontSize: 26, fontWeight: 800, color: getFeedbackBonus(previewRating) >= 0 ? "#10b981" : "#ef4444", marginTop: 4 }}>
+                                  {previewRating ? (getFeedbackBonus(previewRating) >= 0 ? `+${getFeedbackBonus(previewRating)}` : `${getFeedbackBonus(previewRating)}`) : "—"}
+                                </div>
+                              </div>
+                              <div style={{ fontSize: 22, color: "#d1d5db", fontWeight: 300 }}>=</div>
+                              <div style={{ textAlign: "center" }}>
+                                <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Final Score</div>
+                                <div style={{ fontSize: 32, fontWeight: 900, color: SCORE_COLOR(previewScore), marginTop: 4 }}>{previewScore !== null ? `${previewScore}/10` : "—"}</div>
+                              </div>
+                              {hasFeedback && (
+                                <div style={{ marginLeft: "auto", background: "#ecfdf5", border: "1px solid #86efac", borderRadius: 10, padding: "10px 16px", fontSize: 12, color: "#065f46" }}>
+                                  ✅ Rating saved: <strong>{savedRating}/5</strong><br/>
+                                  <span style={{ fontSize: 11, color: "#6b7280" }}>Update below if needed</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 18, fontSize: 12, color: "#92400e" }}>
+                              ℹ️ Ask <strong>{q.assignTo}</strong> to forward the customer's WhatsApp reply, then enter it below.
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                              <div>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
+                                  Customer Rating ⭐ {hasFeedback && <span style={{ color: "#10b981", textTransform: "none", fontWeight: 400 }}>(already saved)</span>}
+                                </div>
+                                <StarRating
+                                  value={fb.rating !== undefined ? parseInt(fb.rating) : savedRating}
+                                  onChange={val => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], rating: val } }))}
+                                />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Customer Said Issue Resolved?</div>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  {["Yes", "No", "Partially"].map(opt => {
+                                    const currentVal = fb.resolved !== undefined ? fb.resolved : (q.feedbackResolved || "");
+                                    const isSelected = currentVal === opt;
+                                    return (
+                                      <button key={opt}
+                                        onClick={() => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], resolved: opt } }))}
+                                        style={{ padding: "8px 14px", borderRadius: 20, border: "2px solid", borderColor: isSelected ? "#3b82f6" : "#d1d5db", background: isSelected ? "#eff6ff" : "white", color: isSelected ? "#1d4ed8" : "#555", fontWeight: isSelected ? 700 : 400, fontSize: 12, cursor: "pointer" }}>
+                                        {opt === "Yes" ? "✅ Yes" : opt === "No" ? "❌ No" : "⚠️ Partially"}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              <div style={{ gridColumn: "1 / -1" }}>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Customer's Comment</div>
+                                <input type="text"
+                                  placeholder='e.g. "Issue fixed, very helpful!"'
+                                  value={fb.comment !== undefined ? fb.comment : (q.feedbackComment || "")}
+                                  onChange={e => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], comment: e.target.value } }))}
+                                  style={{ width: "100%", padding: "11px 14px", border: "2px solid #d1d5db", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "white", color: "#111" }}
+                                />
+                              </div>
+                            </div>
+
+                            <div style={{ marginTop: 20, display: "flex", gap: 12, alignItems: "center" }}>
+                              <button onClick={() => saveFeedback(q.id)} disabled={savingId === q.id}
+                                style={{
+                                  background: savingId === q.id ? "#94a3b8" : "linear-gradient(135deg, #1d4ed8, #3b82f6)",
+                                  color: "white", border: "none", padding: "12px 32px", borderRadius: 10,
+                                  cursor: savingId === q.id ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 800,
+                                  boxShadow: savingId === q.id ? "none" : "0 4px 14px rgba(59,130,246,0.4)", fontFamily: "inherit",
+                                }}>
+                                {savingId === q.id ? "⏳ Saving..." : hasFeedback ? "💾 Update Feedback & Score" : "💾 Save Feedback & Update Score"}
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
                   )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                </>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-function Analytics() {
-  const [queries, setQueries] = useState([]);
-
-  useEffect(() => {
-    const load = () => fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(setQueries).catch(console.error);
-    load();
-    const id = setInterval(load, 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  const agents   = [...new Set(queries.map(q => q.assignTo).filter(Boolean))];
-  const colors   = ["#ff5a00","#3b82f6","#10b981","#f59e0b","#8b5cf6"];
-  const maxTotal = Math.max(...agents.map(a => queries.filter(q => q.assignTo === a).length), 1);
-
-  const getStats = agent => ({
-    open:     queries.filter(q => q.assignTo === agent && (q.status||"").toLowerCase() === "open").length,
-    pending:  queries.filter(q => q.assignTo === agent && (q.status||"").toLowerCase() === "pending").length,
-    resolved: queries.filter(q => q.assignTo === agent && (q.status||"").toLowerCase() === "resolved").length,
-    rma:      queries.filter(q => q.assignTo === agent && (q.status||"").toLowerCase() === "rma").length,
-    total:    queries.filter(q => q.assignTo === agent).length,
-  });
-
-  return (
-    <div className="tab-content">
-      <div className="tab-header">
-        <div><h2 className="tab-title">Support Analytics</h2><p className="tab-sub">Query volume per support agent</p></div>
-      </div>
-      {agents.length === 0 && <div className="empty-state">No data yet.</div>}
-      <div className="analytics-grid">
-        {agents.map((agent, i) => {
-          const s = getStats(agent);
-          return (
-            <div key={agent} className="agent-card">
-              <div className="agent-header">
-                <div className="agent-avatar" style={{ background: colors[i % colors.length] }}>{agent.charAt(0).toUpperCase()}</div>
-                <div><div className="agent-name">{agent}</div><div className="agent-total">{s.total} total queries</div></div>
-              </div>
-              <div className="bar-chart">
-                {[["Open",s.open,"#ff5a00"],["Pending",s.pending,"#f59e0b"],["Resolved",s.resolved,"#10b981"],["RMA",s.rma,"#7c3aed"]].map(([label,value,color]) => (
-                  <div key={label} className="bar-row">
-                    <span className="bar-label">{label}</span>
-                    <div className="bar-track"><div className="bar-fill" style={{ width:`${(value/maxTotal)*100}%`, background:color }} /></div>
-                    <span className="bar-value">{value}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="agent-footer">
-                <span className="resolve-rate">Resolution rate: <strong>{s.total ? Math.round((s.resolved/s.total)*100) : 0}%</strong></span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+function Analytics_OLD() {
+  // kept as placeholder — replaced by new Analytics above
+  return null;
 }
 
 function Performance() {
@@ -904,7 +1076,6 @@ function Performance() {
                   </div>
                 ))}
               </div>
-              {/* ✅ NEW: RMA count */}
               {stats.rma > 0 && (
                 <div style={{ margin: "8px 0", background: "#f5f3ff", borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#5b21b6", fontWeight: 600 }}>
                   🔧 {stats.rma} ticket{stats.rma > 1 ? "s" : ""} sent to RMA
