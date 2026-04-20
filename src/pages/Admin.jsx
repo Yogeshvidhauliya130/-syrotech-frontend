@@ -147,10 +147,12 @@ export default function Admin() {
 }
 
 // ✅ NEW Analytics — full ticket table
+
 function Analytics() {
-  const [tickets, setTickets] = useState([]);
-  const [filter, setFilter]   = useState("all");
-  const [search, setSearch]   = useState("");
+  const [tickets, setTickets]   = useState([]);
+  const [filter, setFilter]     = useState("all");
+  const [search, setSearch]     = useState("");
+  const [issuePopup, setIssuePopup] = useState(null); // ✅ NEW
 
   useEffect(() => {
     const load = () => fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(setTickets).catch(console.error);
@@ -159,7 +161,6 @@ function Analytics() {
     return () => clearInterval(id);
   }, []);
 
-  // ✅ Persistent ticket number map — oldest = Syro1
   const ticketNumberMap = {};
   [...tickets]
     .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
@@ -182,7 +183,6 @@ function Analytics() {
   const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
   const STATUS_BG    = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff" };
 
-  // Resolution rate per agent
   const getResolutionRate = (assignTo) => {
     const agentTickets = tickets.filter(t => t.assignTo === assignTo);
     if (!agentTickets.length) return "—";
@@ -192,30 +192,81 @@ function Analytics() {
 
   return (
     <div className="tab-content">
+
+      {/* ✅ Issue/Resolution Popup */}
+      {issuePopup && (
+        <div
+          onClick={() => setIssuePopup(null)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "white", borderRadius: 14, padding: "24px 28px",
+              maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#fad8be"}`
+            }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#c94500" }}>
+                {issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}
+              </div>
+              <button onClick={() => setIssuePopup(null)}
+                style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>
+                ✕ Close
+              </button>
+            </div>
+            {issuePopup.resolutionNotes ? (
+              <>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  🔧 What was solved:
+                </div>
+                <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>
+                  {issuePopup.resolutionNotes}
+                </div>
+                {issuePopup.resolutionTimeTaken && (
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
+                    ⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong>
+                  </div>
+                )}
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  📋 Original Issue Raised:
+                </div>
+                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #ff5a00" }}>
+                  {issuePopup.description}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#fff8f2", padding: "14px 16px", borderRadius: 10, border: "1px solid #fad8be", borderLeft: "4px solid #ff5a00" }}>
+                {issuePopup.description}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="tab-header">
         <div>
           <h2 className="tab-title">Analytics</h2>
           <p className="tab-sub">All tickets overview</p>
         </div>
-        {/* Summary pills */}
         <div className="tab-stats" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {[
-            ["all",      "All",       "#374151", "#f3f4f6"],
+            ["all",      "All",        "#374151", "#f3f4f6"],
             ["open",     "🔓 Open",    "#e04e00", "#fff4ee"],
             ["pending",  "⏳ Pending", "#b45309", "#fffbeb"],
             ["resolved", "✅ Resolved","#1a7a46", "#edfaf3"],
             ["rma",      "🔧 RMA",     "#7c3aed", "#f5f3ff"],
           ].map(([key, label, col, bg]) => (
-            <button key={key}
-              onClick={() => setFilter(key)}
-              style={{
-                padding: "6px 14px", borderRadius: 16, cursor: "pointer",
-                border: filter === key ? `2px solid ${col}` : "1px solid #d1d5db",
-                background: filter === key ? bg : "white",
-                color: filter === key ? col : "#555",
-                fontWeight: filter === key ? 700 : 400,
-                fontSize: 12, whiteSpace: "nowrap"
-              }}>
+            <button key={key} onClick={() => setFilter(key)} style={{
+              padding: "6px 14px", borderRadius: 16, cursor: "pointer",
+              border: filter === key ? `2px solid ${col}` : "1px solid #d1d5db",
+              background: filter === key ? bg : "white",
+              color: filter === key ? col : "#555",
+              fontWeight: filter === key ? 700 : 400,
+              fontSize: 12, whiteSpace: "nowrap"
+            }}>
               {label} <span style={{
                 marginLeft: 4, background: filter === key ? col : "#e5e7eb",
                 color: filter === key ? "white" : "#555",
@@ -226,12 +277,10 @@ function Analytics() {
         </div>
       </div>
 
-      {/* Search */}
       <div style={{ marginBottom: 14 }}>
         <input
           placeholder="🔍 Search by name, agent, phone, product..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          value={search} onChange={e => setSearch(e.target.value)}
           style={{
             width: "100%", padding: "10px 16px", border: "1.5px solid #d1d5db",
             borderRadius: 10, fontSize: 13, outline: "none", background: "white",
@@ -240,12 +289,12 @@ function Analytics() {
         />
       </div>
 
-      {/* ✅ Table */}
+      {/* ✅ Table — now with Issue, Device Info, updated Status columns */}
       <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1300, background: "white" }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-              {["Ticket No", "Assigned To", "Raised By", "Customer Info", "Status", "Resolution Rate", "Customer Rating"].map((h, i) => (
+              {["Ticket No", "Assigned To", "Raised By", "Customer Info", "Device Info", "Issue", "Status", "Resolution Rate", "Customer Rating"].map((h, i) => (
                 <th key={i} style={{
                   padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
                   textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
@@ -257,12 +306,13 @@ function Analytics() {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
+                <td colSpan={9} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
                   No tickets found.
                 </td>
               </tr>
             ) : filtered.map((ticket, idx) => {
               const s = (ticket.status || "pending").toLowerCase();
+              const isResolved = s === "resolved";
               return (
                 <tr key={ticket.id} style={{
                   borderBottom: "1px solid #f0ede8",
@@ -270,7 +320,7 @@ function Analytics() {
                   borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
                 }}>
 
-                  {/* ✅ Ticket No */}
+                  {/* Ticket No */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticketNumberMap[ticket.id]}</div>
                     <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.date || "—"}</div>
@@ -290,8 +340,8 @@ function Analytics() {
                     <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.raisedBy || ""}</div>
                   </td>
 
-                  {/* ✅ Customer Info — name, phone, email, city/address in one column */}
-                  <td style={{ padding: "12px 14px", minWidth: 180 }}>
+                  {/* Customer Info */}
+                  <td style={{ padding: "12px 14px", minWidth: 170 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{ticket.customer || "—"}</div>
                     {ticket.phone && <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone}</div>}
                     {ticket.email && <div style={{ fontSize: 11, color: "#6b7280" }}>✉️ {ticket.email}</div>}
@@ -300,26 +350,69 @@ function Analytics() {
                     )}
                   </td>
 
-                  {/* ✅ Status — open/pending/resolved/rma as badge */}
+                  {/* ✅ NEW: Device Info — product, serial, MAC */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                    <span style={{
-                      padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
-                      color: STATUS_COLOR[s], background: STATUS_BG[s],
-                      display: "inline-block"
-                    }}>
-                      {s.toUpperCase()}
-                    </span>
-                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
-                      {ticket.category} · {ticket.serialNo}
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{ticket.category || "—"}</div>
+                    <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>S/N: {ticket.serialNo || "—"}</div>
+                    {ticket.mac && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 1 }}>MAC: {ticket.mac}</div>}
+                  </td>
+
+                  {/* ✅ NEW: Issue — click to open popup */}
+                  <td style={{ padding: "12px 14px", maxWidth: 180 }}>
+                    <div
+                      onClick={() => setIssuePopup({
+                        description: ticket.description,
+                        resolutionNotes: ticket.resolutionNotes,
+                        resolutionTimeTaken: ticket.resolutionTimeTaken,
+                      })}
+                      style={{
+                        fontSize: 12, color: "#374151", lineHeight: 1.5,
+                        cursor: "pointer",
+                        overflow: "hidden", textOverflow: "ellipsis",
+                        whiteSpace: "nowrap", maxWidth: 160,
+                        textDecoration: "underline", textDecorationStyle: "dotted",
+                        textDecorationColor: "#9ca3af"
+                      }}
+                      title="Click to view full issue"
+                    >
+                      {(ticket.description || "—").slice(0, 35)}{(ticket.description || "").length > 35 ? "…" : ""}
                     </div>
-                    {ticket.resolvedAt && (
-                      <div style={{ fontSize: 10, color: "#10b981", marginTop: 2 }}>
-                        ✅ {new Date(ticket.resolvedAt).toLocaleDateString()}
+                    {isResolved && ticket.resolutionNotes && (
+                      <div
+                        onClick={() => setIssuePopup({
+                          description: ticket.description,
+                          resolutionNotes: ticket.resolutionNotes,
+                          resolutionTimeTaken: ticket.resolutionTimeTaken,
+                        })}
+                        style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>
+                        ✅ Resolved — click to view
                       </div>
                     )}
                   </td>
 
-                  {/* ✅ Resolution Rate (per agent) */}
+                  {/* ✅ UPDATED: Status — with raised & resolved date/time */}
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                    <span style={{
+                      padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                      color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block"
+                    }}>
+                      {s.toUpperCase()}
+                    </span>
+                    {/* Raised date/time */}
+                    {ticket.createdAt && (
+                      <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4 }}>
+                        🕐 Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong>
+                      </div>
+                    )}
+                    {/* Resolved date/time */}
+                    {ticket.resolvedAt && (
+                      <div style={{ fontSize: 10, color: "#10b981", marginTop: 2 }}>
+                        ✅ Solved: <strong>{new Date(ticket.resolvedAt).toLocaleString()}</strong>
+                      </div>
+                    )}
+                  </td>
+
+                  {/* Resolution Rate */}
                   <td style={{ padding: "12px 14px", textAlign: "center" }}>
                     <div style={{ fontSize: 14, fontWeight: 800, color: "#ff5a00" }}>
                       {getResolutionRate(ticket.assignTo)}
@@ -327,7 +420,7 @@ function Analytics() {
                     <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>agent rate</div>
                   </td>
 
-                  {/* ✅ Customer Rating — stars */}
+                  {/* Customer Rating */}
                   <td style={{ padding: "12px 14px" }}>
                     <StarDisplay value={ticket.feedbackRating} />
                     {ticket.feedbackComment && (
