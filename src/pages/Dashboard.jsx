@@ -374,7 +374,7 @@ export default function Dashboard() {
       {/* Navbar */}
       <div className="dash-navbar">
         <div className="dash-brand">
-          <div className="dash-logo">S</div>
+          <img src="/logo.png" alt="Syrotech" style={{ width: 38, height: 38, borderRadius: 8, objectFit: "contain" }} />
           <div>
             <div className="dash-brand-name">Syrotech Support</div>
             <div className="dash-brand-sub">Customer Portal</div>
