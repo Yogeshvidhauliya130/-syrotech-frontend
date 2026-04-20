@@ -785,50 +785,96 @@ function Performance() {
         })}
       </div>
 
-      {filteredTickets.length > 0 && (
-        <div className="detail-table-wrap">
-          <div className="detail-table-header-row">
-            <h3 className="detail-table-title">📋 Ticket Details — {periodLabel()}</h3>
-            <span className="detail-table-count">{filteredTickets.length} tickets</span>
+    {agents.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "#374151", margin: 0 }}>📋 Agent Summary — {periodLabel()}</h3>
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>{agents.length} agent{agents.length !== 1 ? "s" : ""}</span>
           </div>
-          <div className="detail-table">
-            <div className="detail-table-head" style={{ gridTemplateColumns: "0.8fr 1fr 1fr 0.9fr 0.8fr 0.5fr 0.6fr 0.5fr 0.6fr 0.6fr" }}>
-              <span>Agent</span><span>User</span><span>Product/S/N</span>
-              <span>Raised At</span><span>Resolved</span>
-              <span>Time</span><span>Time Sc.</span><span>Rating</span><span>Final</span><span>Status</span>
-            </div>
-            {filteredTickets.map(t => {
-              const s  = (t.status || "pending").toLowerCase();
-              const SC = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
-              const SB = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff" };
-              let timeTaken="—", timeScoreVal="—", finalScoreVal="—";
-              if (t.createdAt && t.resolvedAt) {
-                const hrs = (new Date(t.resolvedAt) - new Date(t.createdAt)) / (1000 * 60 * 60);
-                timeTaken    = `${hrs.toFixed(1)}h`;
-                timeScoreVal = `${getTimeScore(t)}/10`;
-                finalScoreVal= `${getCombinedScore(t)}/10`;
-              }
-              return (
-                <div key={t.id} className="detail-table-row" style={{ gridTemplateColumns: "0.8fr 1fr 1fr 0.9fr 0.8fr 0.5fr 0.6fr 0.5fr 0.6fr 0.6fr" }}>
-                  <span className="dt-agent">{t.assignTo || "—"}</span>
-                  <span style={{ fontSize: 12 }}>{t.raisedByName || t.raisedBy || "—"}</span>
-                  <span>
-                    <strong style={{ fontSize: 12 }}>{t.category}</strong>
-                    <div style={{ color:"#888", fontSize:11 }}>{t.serialNo}</div>
-                    {t.productImage && <div style={{ fontSize: 10, color: "#10b981" }}>📷</div>}
-                  </span>
-                  <span className="dt-time">{t.createdAt ? new Date(t.createdAt).toLocaleString() : "—"}</span>
-                  <span className="dt-time">{t.resolvedAt ? new Date(t.resolvedAt).toLocaleString() : "—"}</span>
-                  <span style={{ fontWeight:600, fontSize:12 }}>{timeTaken}</span>
-                  <span style={{ fontWeight:700, fontSize:12, color: SCORE_COLOR(timeScoreVal.split("/")[0]) }}>{timeScoreVal}</span>
-                  <span style={{ fontWeight:700, fontSize:12, color: t.feedbackRating ? "#f59e0b" : "#9ca3af" }}>
-                    {t.feedbackRating ? `${parseInt(t.feedbackRating)}⭐` : "—"}
-                  </span>
-                  <span style={{ fontWeight:900, fontSize:13, color: SCORE_COLOR(finalScoreVal.split("/")[0]) }}>{finalScoreVal}</span>
-                  <span className="dt-status" style={{ color:SC[s], background:SB[s], fontSize:11 }}>{s}</span>
-                </div>
-              );
-            })}
+          <div style={{ overflowX: "scroll", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700, background: "white" }}>
+              <thead>
+                <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)" }}>
+                  {["Support Person", "Resolved", "Open", "Resolution Rate", "Avg Time", "Avg Rating"].map((h, i) => (
+                    <th key={i} style={{
+                      padding: "12px 18px", fontSize: 11, fontWeight: 800, color: "white",
+                      textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
+                      borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap"
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {agents.map((agent, idx) => {
+                  const stats = getAgentStats(agent);
+                  const colors = ["#ff5a00","#3b82f6","#10b981","#f59e0b","#8b5cf6"];
+                  const col = colors[idx % colors.length];
+                  const resolutionRate = stats.total > 0 ? `${Math.round((stats.resolved / stats.total) * 100)}%` : "—";
+                  return (
+                    <tr key={agent} style={{
+                      borderBottom: "1px solid #f0ede8",
+                      background: idx % 2 === 0 ? "#faf7f4" : "white",
+                      borderLeft: `4px solid ${col}`,
+                    }}>
+                      {/* Support Person */}
+                      <td style={{ padding: "14px 18px", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: "50%", background: col, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, flexShrink: 0 }}>
+                            {agent.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{agent}</div>
+                            <div style={{ fontSize: 10, color: "#9ca3af" }}>{stats.total} total tickets</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Resolved */}
+                      <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: "#1a7a46" }}>{stats.resolved}</div>
+                        <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>tickets</div>
+                      </td>
+
+                      {/* Open */}
+                      <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: "#e04e00" }}>{stats.open}</div>
+                        <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>tickets</div>
+                      </td>
+
+                      {/* Resolution Rate */}
+                      <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: stats.total > 0 ? (parseInt(resolutionRate) >= 70 ? "#10b981" : parseInt(resolutionRate) >= 40 ? "#f59e0b" : "#ef4444") : "#9ca3af" }}>
+                          {resolutionRate}
+                        </div>
+                        <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>
+                          {stats.resolved}/{stats.total}
+                        </div>
+                      </td>
+
+                      {/* Avg Time */}
+                      <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: "#3b82f6" }}>
+                          {stats.avgHours === "—" ? "—" : `${stats.avgHours}h`}
+                        </div>
+                        <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>avg resolution</div>
+                      </td>
+
+                      {/* Avg Rating */}
+                      <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                        {stats.avgFeedback === "—" ? (
+                          <div style={{ fontSize: 13, color: "#d1d5db" }}>—</div>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: 20, fontWeight: 800, color: "#f59e0b" }}>⭐ {stats.avgFeedback}</div>
+                            <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{stats.feedbackCount} reviews</div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
