@@ -697,88 +697,64 @@ function Performance() {
         </div>
       </div>
 
-      <div className="sla-legend">
-        <strong>⏱️ Time Score (from raised) + ⭐ Feedback Bonus = 🏆 Final Score (max 10)</strong>
-        <div className="sla-legend-pills" style={{ marginTop: 8 }}>
-          {[["≤8h→10","#10b981"],["8-16h→8","#34d399"],["16-24h→6","#f59e0b"],["24-48h→4","#f97316"],["48h+→2","#ef4444"]].map(([l,c])=>(
-            <span key={l} className="sla-pill" style={{ border:`1px solid ${c}`,color:c }}>{l}</span>
-          ))}
-          <span style={{ margin:"0 6px",color:"#9ca3af",fontWeight:700 }}>+</span>
-          {[["5⭐+1","#10b981"],["4⭐+0.5","#34d399"],["3⭐ 0","#9ca3af"],["2⭐-0.5","#f97316"],["1⭐-1","#ef4444"]].map(([l,c])=>(
-            <span key={l} className="sla-pill" style={{ border:`1px solid ${c}`,color:c }}>{l}</span>
-          ))}
-        </div>
-      </div>
+     
 
       {agents.length === 0 && <div className="empty-state-box"><div style={{ fontSize: 48, marginBottom: 12 }}>📭</div><p>No data for the selected period.</p></div>}
 
-      <div className="perf-grid">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12, marginBottom: 24 }}>
         {agents.map((agent, i) => {
           const stats  = getAgentStats(agent);
           const colors = ["#ff5a00","#3b82f6","#10b981","#f59e0b","#8b5cf6"];
           const col    = colors[i % colors.length];
           return (
-            <div key={agent} className="perf-card" style={{ borderTop: `4px solid ${col}` }}>
-              <div className="perf-card-header">
-                <div className="perf-avatar" style={{ background: col }}>{agent.charAt(0)}</div>
-                <div className="perf-agent-info">
-                  <div className="perf-agent-name">{agent}</div>
-                  <div className="perf-agent-total">{stats.total} tickets · {periodLabel()}</div>
+            <div key={agent} style={{ background: "white", borderRadius: 10, padding: "14px 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.07)", borderTop: `3px solid ${col}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: col, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
+                  {agent.charAt(0)}
                 </div>
-                {stats.overdueCount > 0 && <span className="overdue-badge">⚠️ {stats.overdueCount} Overdue</span>}
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: "#374151" }}>{agent}</div>
+                  <div style={{ fontSize: 10, color: "#9ca3af" }}>{stats.total} tickets · {periodLabel()}</div>
+                </div>
+                {stats.overdueCount > 0 && (
+                  <span style={{ marginLeft: "auto", background: "#fef2f2", color: "#dc2626", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 8, border: "1px solid #fca5a5" }}>⚠️ {stats.overdueCount}</span>
+                )}
               </div>
-              <div className="perf-stats-grid">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, marginBottom: 10 }}>
                 {[
-                  ["Pending",  stats.pending,  "#b45309","#fffbeb"],
-                  ["Open",     stats.open,     "#e04e00","#fff4ee"],
-                  ["Resolved", stats.resolved, "#1a7a46","#edfaf3"],
-                  ["Within 24hr", stats.within24,"#0369a1","#eff6ff"],
+                  ["Pending", stats.pending,  "#b45309","#fffbeb"],
+                  ["Open",    stats.open,     "#e04e00","#fff4ee"],
+                  ["Resolved",stats.resolved, "#1a7a46","#edfaf3"],
+                  ["24hr",    stats.within24, "#0369a1","#eff6ff"],
                 ].map(([label,val,tc,bg]) => (
-                  <div key={label} className="perf-stat-box" style={{ background: bg }}>
-                    <div className="perf-stat-val" style={{ color: tc }}>{val}</div>
-                    <div className="perf-stat-label">{label}</div>
+                  <div key={label} style={{ background: bg, borderRadius: 6, padding: "6px 4px", textAlign: "center" }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: tc }}>{val}</div>
+                    <div style={{ fontSize: 9, color: "#9ca3af", marginTop: 1 }}>{label}</div>
                   </div>
                 ))}
               </div>
               {stats.rma > 0 && (
-                <div style={{ margin: "8px 0", background: "#f5f3ff", borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#5b21b6", fontWeight: 600 }}>
-                  🔧 {stats.rma} ticket{stats.rma > 1 ? "s" : ""} sent to RMA
+                <div style={{ background: "#f5f3ff", borderRadius: 6, padding: "4px 10px", fontSize: 11, color: "#5b21b6", fontWeight: 600, marginBottom: 8 }}>
+                  🔧 {stats.rma} RMA
                 </div>
               )}
-              <div className="perf-bottom">
-                <div>
-                  <div className="perf-meta-label">Avg Resolution</div>
-                  <div className="perf-meta-val">{stats.avgHours === "—" ? "—" : `${stats.avgHours}h`}</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div className="perf-meta-label">Customer Rating</div>
-                  <div style={{ fontWeight: 800, fontSize: 20, marginTop: 2, color: stats.avgFeedback === "—" ? "#9ca3af" : "#f59e0b" }}>
-                    {stats.avgFeedback === "—" ? "—" : `⭐ ${stats.avgFeedback}/5`}
-                  </div>
-                  {stats.feedbackCount > 0
-                    ? <div style={{ fontSize: 10, color: "#9ca3af" }}>{stats.feedbackCount} reviews</div>
-                    : <div style={{ fontSize: 10, color: "#d1d5db" }}>no reviews yet</div>
-                  }
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div className="perf-meta-label">Final Score</div>
-                  <div className="perf-score" style={{ color: SCORE_COLOR(stats.avgScore) }}>{stats.avgScore}</div>
-                  <div style={{ fontSize: 9, color: "#9ca3af" }}>resolution score</div>
-                </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b7280", marginBottom: 8 }}>
+                <span>⏱️ Avg: <strong>{stats.avgHours === "—" ? "—" : `${stats.avgHours}h`}</strong></span>
+                <span>⭐ {stats.avgFeedback === "—" ? "—" : `${stats.avgFeedback}/5`}</span>
+                <span>🏆 <strong style={{ color: SCORE_COLOR(stats.avgScore) }}>{stats.avgScore}/10</strong></span>
               </div>
               {stats.resolved > 0 && (
-                <div className="compliance-bar-wrap">
-                  <div className="compliance-bar-header">
-                    <span>24hr SLA Compliance</span>
-                    <span className="compliance-pct">{stats.compliance}%</span>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#9ca3af", marginBottom: 3 }}>
+                    <span>24hr SLA</span><span style={{ fontWeight: 700, color: stats.compliance >= 80 ? "#10b981" : stats.compliance >= 50 ? "#f59e0b" : "#ef4444" }}>{stats.compliance}%</span>
                   </div>
-                  <div className="compliance-track">
-                    <div className="compliance-fill" style={{ width: `${stats.compliance}%`, background: stats.compliance >= 80 ? "#10b981" : stats.compliance >= 50 ? "#f59e0b" : "#ef4444" }} />
+                  <div style={{ background: "#f3f4f6", borderRadius: 4, height: 5, overflow: "hidden" }}>
+                    <div style={{ height: "100%", borderRadius: 4, width: `${stats.compliance}%`, background: stats.compliance >= 80 ? "#10b981" : stats.compliance >= 50 ? "#f59e0b" : "#ef4444" }} />
                   </div>
                 </div>
               )}
-              <button className="export-btn" onClick={() => exportAgentExcel(agent)}>
-                ⬇️ Export {agent}'s Excel Report
+              <button style={{ marginTop: 10, width: "100%", background: "#f9f7f4", border: "1px solid #e0d8d0", borderRadius: 7, padding: "6px", fontSize: 11, cursor: "pointer", fontWeight: 600, color: "#555" }} onClick={() => exportAgentExcel(agent)}>
+                ⬇️ Export Excel
               </button>
             </div>
           );
