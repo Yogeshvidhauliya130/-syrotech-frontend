@@ -152,7 +152,28 @@ function Analytics() {
   const [tickets, setTickets]   = useState([]);
   const [filter, setFilter]     = useState("all");
   const [search, setSearch]     = useState("");
-  const [issuePopup, setIssuePopup] = useState(null); // ✅ NEW
+ const [issuePopup, setIssuePopup]     = useState(null);
+  const [feedbackData, setFeedbackData] = useState({});
+  const [savingId, setSavingId]         = useState(null);
+
+  const saveFeedback = (ticketId, ticket) => {
+    const fb = feedbackData[ticketId] || {};
+    const finalRating = fb.rating !== undefined ? parseInt(fb.rating) : (parseInt(ticket?.feedbackRating) || null);
+    if (!finalRating) { alert("Please select a star rating."); return; }
+    setSavingId(ticketId);
+    fetch(`${BASE_URL}/tickets/${ticketId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feedbackRating: finalRating, feedbackReceivedAt: new Date().toISOString() })
+    })
+      .then(r => r.json())
+      .then(updated => {
+        setTickets(prev => prev.map(t => t.id === ticketId ? { ...updated } : t));
+        setSavingId(null);
+        setFeedbackData(prev => { const n = { ...prev }; delete n[ticketId]; return n; });
+        alert(`✅ Rating saved: ${finalRating}/5`);
+      })
+      .catch(err => { console.error("Failed:", err); setSavingId(null); });
+  };
 
   useEffect(() => {
     const load = () => fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(setTickets).catch(console.error);
@@ -414,14 +435,43 @@ function Analytics() {
 
                   
 
-                  {/* Customer Rating */}
+                 {/* ✅ Customer Rating — with save feedback */}
                   <td style={{ padding: "12px 14px" }}>
-                    <StarDisplay value={ticket.feedbackRating} />
-                    {ticket.feedbackComment && (
-                      <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        "{ticket.feedbackComment}"
-                      </div>
-                    )}
+                    {(() => {
+                      const fb = feedbackData[ticket.id] || {};
+                      const savedRating = parseInt(ticket.feedbackRating) || 0;
+                      const hasFeedback = savedRating > 0;
+                      return (
+                        <>
+                          <StarRating
+                            value={fb.rating !== undefined ? parseInt(fb.rating) : savedRating}
+                            onChange={val => setFeedbackData(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], rating: val } }))}
+                          />
+                          {(fb.rating !== undefined || !hasFeedback) && (
+                            <button
+                              onClick={() => saveFeedback(ticket.id, ticket)}
+                              disabled={savingId === ticket.id}
+                              style={{
+                                marginTop: 6, background: savingId === ticket.id ? "#94a3b8" : "#1d4ed8",
+                                color: "white", border: "none", borderRadius: 6,
+                                padding: "4px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600, display: "block"
+                              }}>
+                              {savingId === ticket.id ? "⏳" : hasFeedback ? "💾 Update" : "💾 Save"}
+                            </button>
+                          )}
+                          {hasFeedback && fb.rating === undefined && (
+                            <div style={{ fontSize: 10, color: "#10b981", marginTop: 4 }}>
+                              ✅ {savedRating}/5
+                            </div>
+                          )}
+                          {ticket.feedbackComment && (
+                            <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              "{ticket.feedbackComment}"
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </td>
                 </tr>
               );
@@ -721,33 +771,7 @@ function QueryTracker() {
                     )}
                     {isRma && <div style={{ fontSize: 10, color: "#7c3aed", fontWeight: 700, marginTop: 3 }}>🔧 {q.rmaCenterCity}</div>}
 
-                    {/* Feedback section inline for resolved */}
-                    {isResolved && (
-                      <div style={{ marginTop: 8, borderTop: "1px dashed #e5e7eb", paddingTop: 8 }}>
-                        <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 4 }}>⭐ Feedback:</div>
-                        <StarRating
-                          value={fb.rating !== undefined ? parseInt(fb.rating) : savedRating}
-                          onChange={val => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], rating: val } }))}
-                        />
-                        {(fb.rating !== undefined || !hasFeedback) && (
-                          <button
-                            onClick={() => saveFeedback(q.id)}
-                            disabled={savingId === q.id}
-                            style={{
-                              marginTop: 6, background: savingId === q.id ? "#94a3b8" : "#1d4ed8",
-                              color: "white", border: "none", borderRadius: 6,
-                              padding: "4px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600
-                            }}>
-                            {savingId === q.id ? "⏳" : hasFeedback ? "💾 Update" : "💾 Save"}
-                          </button>
-                        )}
-                        {hasFeedback && fb.rating === undefined && (
-                          <div style={{ fontSize: 10, color: "#10b981", marginTop: 4 }}>
-                            ✅ Saved: {savedRating}/5
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  
                   </td>
                 </tr>
               );
