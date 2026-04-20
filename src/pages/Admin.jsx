@@ -447,10 +447,9 @@ function QueryTracker() {
   const [queries, setQueries]           = useState([]);
   const [filter, setFilter]             = useState("all");
   const [search, setSearch]             = useState("");
-  const [expandedId, setExpandedId]     = useState(null);
   const [feedbackData, setFeedbackData] = useState({});
   const [savingId, setSavingId]         = useState(null);
-  const [issuePopup, setIssuePopup]     = useState(null); // ✅ NEW
+  const [issuePopup, setIssuePopup]     = useState(null);
 
   const fetchData = () =>
     fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(data => {
@@ -489,7 +488,7 @@ function QueryTracker() {
       .then(updated => {
         const norm = { ...updated, feedbackRating: updated.feedbackRating ? parseInt(updated.feedbackRating) : null };
         setQueries(prev => prev.map(q => q.id === ticketId ? norm : q));
-        setSavingId(null); setExpandedId(null);
+        setSavingId(null);
         setFeedbackData(prev => { const n = { ...prev }; delete n[ticketId]; return n; });
         const timeScore = getTimeScore(norm);
         const bonus     = getFeedbackBonus(norm.feedbackRating);
@@ -603,12 +602,11 @@ function QueryTracker() {
 
       {filtered.length === 0 && <div className="empty-state">No queries found.</div>}
 
-      {/* ✅ TABLE with horizontal scrollbar — removed Change, Score, Feedback, Delete columns */}
       <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900, background: "white" }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #f9f7f4, #f4f0eb)", position: "sticky", top: 0, zIndex: 2 }}>
-              {["Raised By", "Assigned To", "Product / Serial", "Issue", "Date", "Status"].map((h, i) => (
+              {["Raised By", "Assigned To", "Product / Serial", "Issue", "Date & Time", "Status"].map((h, i) => (
                 <th key={i} style={{
                   padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#999",
                   textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
@@ -623,291 +621,141 @@ function QueryTracker() {
               const s          = (q.status || "pending").toLowerCase();
               const isResolved = s === "resolved";
               const isRma      = s === "rma";
-              const isExpanded = expandedId === q.id;
-              const fb         = feedbackData[q.id] || {};
               const savedRating    = parseInt(q.feedbackRating) || 0;
               const hasFeedback    = savedRating > 0;
+              const fb             = feedbackData[q.id] || {};
               const combinedScore  = (isResolved && q.createdAt && q.resolvedAt) ? getCombinedScore(q) : null;
               const previewRating  = fb.rating !== undefined ? parseInt(fb.rating) : savedRating;
               const previewScore   = (isResolved && q.createdAt && q.resolvedAt && previewRating)
                 ? Math.min(10, Math.max(1, getTimeScore(q) + getFeedbackBonus(previewRating))) : combinedScore;
 
-              const detailRow1 = [
-                ["Customer",  q.customer || "—"],
-                ["Phone",     q.phone    || "—"],
-                ["Serial No", q.serialNo || "—"],
-                ["MAC",       q.mac      || "—"],
-                ["Pincode",   q.pincode  || "—"],
-              ];
-              const detailRow2 = [
-                ["City",        q.city     || "—"],
-                ["Country",     q.country  || "—"],
-                ["Raised At",   q.createdAt  ? new Date(q.createdAt).toLocaleString()  : "—"],
-                ["Accepted At", q.acceptedAt ? new Date(q.acceptedAt).toLocaleString() : "—"],
-                ["Resolved At", q.resolvedAt ? new Date(q.resolvedAt).toLocaleString() : "—"],
-              ];
-
               return (
-                <>
-                  <tr key={q.id} style={{
-                    borderBottom: "1px solid #f0ede8",
-                    background: idx % 2 === 0 ? "#faf7f4" : "white",
-                    borderLeft: `4px solid ${isRma ? "#7c3aed" : q.reassignedFrom ? "#f59e0b" : (isResolved ? "#10b981" : "#e5e7eb")}`,
-                  }}>
+                <tr key={q.id} style={{
+                  borderBottom: "1px solid #f0ede8",
+                  background: idx % 2 === 0 ? "#faf7f4" : "white",
+                  borderLeft: `4px solid ${isRma ? "#7c3aed" : q.reassignedFrom ? "#f59e0b" : (isResolved ? "#10b981" : "#e5e7eb")}`,
+                }}>
 
-                    {/* Raised By */}
-                    <td style={{ padding: "14px 16px", borderRight: "1px solid #f0ede8" }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>{q.raisedByName || q.raisedBy || "—"}</div>
-                      {q.phone && <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>📞 {q.phone}</div>}
-                      {q.issueHistory && q.issueHistory.length > 0 && (
-                        <div style={{ fontSize: 10, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>
-                          🔁 {q.issueHistory.length} repeat
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Assigned To */}
-                    <td style={{ padding: "14px 16px", fontSize: 13, borderRight: "1px solid #f0ede8" }}>
-                      <div style={{ fontWeight: 600 }}>{q.assignTo || "—"}</div>
-                      {q.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", marginTop: 3, fontWeight: 700 }}>🔄 from {q.reassignedFrom}</div>}
-                    </td>
-
-                    {/* Product / Serial */}
-                    <td style={{ padding: "14px 16px", borderRight: "1px solid #f0ede8" }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>{q.category}</div>
-                      <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>S/N: {q.serialNo}</div>
-                      {q.productImage && <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700, marginTop: 2 }}>📷 Has image</div>}
-                    </td>
-
-                    {/* Issue */}
-                    <td style={{ padding: "14px 16px", maxWidth: 220, borderRight: "1px solid #f0ede8" }}>
-                      <div style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}>
-                        {(q.description || "").slice(0, 60)}{(q.description || "").length > 60 ? "..." : ""}
+                  {/* Raised By */}
+                  <td style={{ padding: "14px 16px", borderRight: "1px solid #f0ede8" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{q.raisedByName || q.raisedBy || "—"}</div>
+                    {q.phone && <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>📞 {q.phone}</div>}
+                    {q.issueHistory && q.issueHistory.length > 0 && (
+                      <div style={{ fontSize: 10, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>
+                        🔁 {q.issueHistory.length} repeat
                       </div>
-                    </td>
+                    )}
+                  </td>
 
-                    {/* Date */}
-                    <td style={{ padding: "14px 16px", fontSize: 12, color: "#888", whiteSpace: "nowrap", borderRight: "1px solid #f0ede8" }}>
-                      <div>{q.date || "—"}</div>
-                      {q.resolvedAt && <div style={{ fontSize: 10, color: "#1a7a46", marginTop: 2 }}>✅ {new Date(q.resolvedAt).toLocaleDateString()}</div>}
-                    </td>
+                  {/* Assigned To */}
+                  <td style={{ padding: "14px 16px", fontSize: 13, borderRight: "1px solid #f0ede8" }}>
+                    <div style={{ fontWeight: 600 }}>{q.assignTo || "—"}</div>
+                    {q.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", marginTop: 3, fontWeight: 700 }}>🔄 from {q.reassignedFrom}</div>}
+                  </td>
 
-                    {/* ✅ Status — click resolved to see resolution notes */}
-                    <td style={{ padding: "14px 16px" }}>
-                      <span
-                        onClick={() => {
-                          if (isResolved) {
-                            setIssuePopup({
-                              description: q.description,
-                              resolutionNotes: q.resolutionNotes,
-                              resolutionTimeTaken: q.resolutionTimeTaken,
-                            });
-                          }
-                        }}
-                        style={{
-                          display: "inline-block", padding: "4px 10px", borderRadius: 12,
-                          fontSize: 11, fontWeight: 700,
-                          color: SC[s] || "#333", background: SB[s] || "#f5f5f5",
-                          cursor: isResolved ? "pointer" : "default",
-                          border: isResolved ? "1.5px solid #6ee7b7" : "none",
-                        }}
-                        title={isResolved ? "Click to see resolution details" : ""}
-                      >
-                        {s.toUpperCase()}
-                      </span>
-                      {isResolved && q.resolutionNotes && (
-                        <div
-                          onClick={() => setIssuePopup({ description: q.description, resolutionNotes: q.resolutionNotes, resolutionTimeTaken: q.resolutionTimeTaken })}
-                          style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
-                          📋 View details
-                        </div>
-                      )}
-                      {isRma && <div style={{ fontSize: 10, color: "#7c3aed", fontWeight: 700, marginTop: 3 }}>🔧 {q.rmaCenterCity}</div>}
-                      {/* ✅ Expand button for resolved/rma */}
-                      {(isResolved || isRma) && (
-                        <div
-                          onClick={() => setExpandedId(isExpanded ? null : q.id)}
-                          style={{ fontSize: 10, color: "#3b82f6", marginTop: 4, cursor: "pointer", fontWeight: 600 }}>
-                          {isExpanded ? "▲ Less" : "▼ Details"}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
+                  {/* Product / Serial */}
+                  <td style={{ padding: "14px 16px", borderRight: "1px solid #f0ede8" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{q.category}</div>
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>S/N: {q.serialNo}</div>
+                    {q.productImage && <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700, marginTop: 2 }}>📷 Has image</div>}
+                  </td>
 
-                  {/* ✅ Expanded Panel */}
-                  {isExpanded && (isResolved || isRma) && (
-                    <tr key={`exp-${q.id}`}>
-                      <td colSpan={6} style={{ background: "#f8faff", borderTop: "2px dashed #bfdbfe", padding: "22px 28px 28px" }}>
+                  {/* Issue — clickable popup */}
+                  <td style={{ padding: "14px 16px", maxWidth: 220, borderRight: "1px solid #f0ede8" }}>
+                    <div
+                      onClick={() => setIssuePopup({ description: q.description, resolutionNotes: q.resolutionNotes, resolutionTimeTaken: q.resolutionTimeTaken })}
+                      style={{
+                        fontSize: 12, color: "#374151", lineHeight: 1.5, cursor: "pointer",
+                        textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af"
+                      }}
+                      title="Click to view full issue"
+                    >
+                      {(q.description || "—").slice(0, 55)}{(q.description || "").length > 55 ? "..." : ""}
+                    </div>
+                    {isResolved && q.resolutionNotes && (
+                      <div
+                        onClick={() => setIssuePopup({ description: q.description, resolutionNotes: q.resolutionNotes, resolutionTimeTaken: q.resolutionTimeTaken })}
+                        style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>
+                        ✅ Resolved — click to view
+                      </div>
+                    )}
+                  </td>
 
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-                          <div>
-                            <div style={{ fontSize: 15, fontWeight: 800, color: "#1e40af", marginBottom: 4 }}>
-                              📊 Ticket Details — <span style={{ color: "#ff5a00" }}>{q.customer || q.raisedByName}</span>
-                            </div>
-                            <div style={{ fontSize: 12, color: "#6b7280", display: "flex", gap: 10, flexWrap: "wrap" }}>
-                              <span>#{(q.id || "").slice(-8)}</span>
-                              <span>· {q.category}</span>
-                              <span>· {isRma ? `RMA by ${q.rmaSentBy}` : `Resolved by ${q.assignTo}`}</span>
-                              {q.feedbackSent && <span style={{ background: "#dcfce7", color: "#065f46", padding: "2px 8px", borderRadius: 8, fontSize: 11, fontWeight: 600 }}>✅ WhatsApp Sent</span>}
-                            </div>
-                          </div>
-                          <button onClick={() => setExpandedId(null)}
-                            style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13, color: "#64748b", fontWeight: 600 }}>
-                            ✕ Close
+                  {/* ✅ Date & Time — raised + resolved */}
+                  <td style={{ padding: "14px 16px", fontSize: 11, whiteSpace: "nowrap", borderRight: "1px solid #f0ede8" }}>
+                    <div style={{ color: "#6b7280" }}>
+                      🕐 <strong style={{ color: "#374151" }}>Raised:</strong><br/>
+                      {q.createdAt ? new Date(q.createdAt).toLocaleString() : (q.date || "—")}
+                    </div>
+                    {q.resolvedAt && (
+                      <div style={{ color: "#10b981", marginTop: 6 }}>
+                        ✅ <strong>Resolved:</strong><br/>
+                        {new Date(q.resolvedAt).toLocaleString()}
+                      </div>
+                    )}
+                  </td>
+
+                  {/* ✅ Status — click resolved to open popup, NO expand details */}
+                  <td style={{ padding: "14px 16px" }}>
+                    <span
+                      onClick={() => {
+                        if (isResolved) {
+                          setIssuePopup({
+                            description: q.description,
+                            resolutionNotes: q.resolutionNotes,
+                            resolutionTimeTaken: q.resolutionTimeTaken,
+                          });
+                        }
+                      }}
+                      style={{
+                        display: "inline-block", padding: "4px 10px", borderRadius: 12,
+                        fontSize: 11, fontWeight: 700,
+                        color: SC[s] || "#333", background: SB[s] || "#f5f5f5",
+                        cursor: isResolved ? "pointer" : "default",
+                        border: isResolved ? "1.5px solid #6ee7b7" : "none",
+                      }}
+                      title={isResolved ? "Click to see resolution details" : ""}
+                    >
+                      {s.toUpperCase()}
+                    </span>
+                    {isResolved && q.resolutionNotes && (
+                      <div
+                        onClick={() => setIssuePopup({ description: q.description, resolutionNotes: q.resolutionNotes, resolutionTimeTaken: q.resolutionTimeTaken })}
+                        style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
+                        📋 View details
+                      </div>
+                    )}
+                    {isRma && <div style={{ fontSize: 10, color: "#7c3aed", fontWeight: 700, marginTop: 3 }}>🔧 {q.rmaCenterCity}</div>}
+
+                    {/* Feedback section inline for resolved */}
+                    {isResolved && (
+                      <div style={{ marginTop: 8, borderTop: "1px dashed #e5e7eb", paddingTop: 8 }}>
+                        <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 4 }}>⭐ Feedback:</div>
+                        <StarRating
+                          value={fb.rating !== undefined ? parseInt(fb.rating) : savedRating}
+                          onChange={val => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], rating: val } }))}
+                        />
+                        {(fb.rating !== undefined || !hasFeedback) && (
+                          <button
+                            onClick={() => saveFeedback(q.id)}
+                            disabled={savingId === q.id}
+                            style={{
+                              marginTop: 6, background: savingId === q.id ? "#94a3b8" : "#1d4ed8",
+                              color: "white", border: "none", borderRadius: 6,
+                              padding: "4px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600
+                            }}>
+                            {savingId === q.id ? "⏳" : hasFeedback ? "💾 Update" : "💾 Save"}
                           </button>
-                        </div>
-
-                        <TicketTable rows={detailRow1} />
-                        <TicketTable rows={detailRow2} />
-
-                        <div style={{ background: "#fff8f2", border: "1px solid #fad8be", borderLeft: "4px solid #ff5a00", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#4a3e36" }}>
-                          <div style={{ fontSize: 10, fontWeight: 800, color: "#b0a898", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Issue Description</div>
-                          {q.description}
-                        </div>
-
-                        {q.productImage && (
-                          <div style={{ marginBottom: 18 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>📷 Product Image</div>
-                            <img src={q.productImage} alt="Product"
-                              style={{ maxWidth: "100%", maxHeight: 250, borderRadius: 10, border: "2px solid #e0d8d0", cursor: "pointer" }}
-                              onClick={() => window.open(q.productImage, "_blank")}
-                            />
-                            <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>Click to view full size</div>
+                        )}
+                        {hasFeedback && fb.rating === undefined && (
+                          <div style={{ fontSize: 10, color: "#10b981", marginTop: 4 }}>
+                            ✅ Saved: {savedRating}/5
                           </div>
                         )}
-
-                        {isRma && (
-                          <div style={{ background: "linear-gradient(135deg, #f5f3ff, #ede9fe)", border: "1.5px solid #c4b5fd", borderRadius: 12, padding: "16px 20px", marginBottom: 18 }}>
-                            <div style={{ fontSize: 14, fontWeight: 800, color: "#5b21b6", marginBottom: 12 }}>🔧 RMA Details</div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 13 }}>
-                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Reason</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaReason}</div></div>
-                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Sent By</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaSentBy}</div></div>
-                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>RMA Center</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterName}</div></div>
-                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>City</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterCity}</div></div>
-                              <div style={{ gridColumn: "1/-1" }}><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Address</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaCenterAddress}</div></div>
-                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Center Phone</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>📞 {q.rmaCenterPhone}</div></div>
-                              <div><span style={{ color: "#6b7280", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Sent At</span><div style={{ fontWeight: 600, color: "#374151", marginTop: 4 }}>{q.rmaSentAt ? new Date(q.rmaSentAt).toLocaleString() : "—"}</div></div>
-                            </div>
-                          </div>
-                        )}
-
-                        {q.issueHistory && q.issueHistory.length > 0 && (
-                          <div style={{ background: "#eff6ff", border: "1.5px solid #93c5fd", borderRadius: 10, padding: "14px 18px", marginBottom: 18 }}>
-                            <div style={{ fontSize: 13, fontWeight: 800, color: "#1e40af", marginBottom: 10 }}>
-                              🔁 Repeat Customer — {q.issueHistory.length} Previous Issue{q.issueHistory.length > 1 ? "s" : ""}
-                            </div>
-                            {q.issueHistory.map((h, i) => (
-                              <div key={i} style={{ background: "white", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", marginBottom: 8, fontSize: 12 }}>
-                                <div style={{ fontWeight: 600, color: "#374151", marginBottom: 4 }}>{h.description}</div>
-                                <div style={{ color: "#9ca3af", fontSize: 11 }}>
-                                  Raised by: {h.raisedByName} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {q.reassignHistory && q.reassignHistory.length > 0 && (
-                          <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "14px 18px", marginBottom: 18 }}>
-                            <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e", marginBottom: 10 }}>
-                              🔄 Reassignment History ({q.reassignHistory.length})
-                            </div>
-                            {q.reassignHistory.map((h, i) => (
-                              <div key={i} style={{ background: "white", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
-                                <span style={{ background: "#f59e0b", color: "white", padding: "2px 8px", borderRadius: 6, fontWeight: 700, fontSize: 11 }}>#{i + 1}</span>
-                                <span style={{ fontWeight: 700, color: "#374151" }}>{h.from} → {h.to}</span>
-                                <span style={{ color: "#6b7280" }}>Reason: "<em>{h.reason}</em>"</span>
-                                {h.timestamp && <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: "auto" }}>{new Date(h.timestamp).toLocaleString()}</span>}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {isResolved && (
-                          <>
-                            <div style={{ background: "white", border: "2px solid #e2e8f0", borderRadius: 12, padding: "16px 22px", marginBottom: 18, display: "flex", gap: 28, flexWrap: "wrap", alignItems: "center" }}>
-                              <div style={{ textAlign: "center" }}>
-                                <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Time Score</div>
-                                <div style={{ fontSize: 26, fontWeight: 800, color: SCORE_COLOR(getTimeScore(q)), marginTop: 4 }}>{getTimeScore(q)}/10</div>
-                              </div>
-                              <div style={{ fontSize: 22, color: "#d1d5db", fontWeight: 300 }}>+</div>
-                              <div style={{ textAlign: "center" }}>
-                                <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Feedback Bonus</div>
-                                <div style={{ fontSize: 26, fontWeight: 800, color: getFeedbackBonus(previewRating) >= 0 ? "#10b981" : "#ef4444", marginTop: 4 }}>
-                                  {previewRating ? (getFeedbackBonus(previewRating) >= 0 ? `+${getFeedbackBonus(previewRating)}` : `${getFeedbackBonus(previewRating)}`) : "—"}
-                                </div>
-                              </div>
-                              <div style={{ fontSize: 22, color: "#d1d5db", fontWeight: 300 }}>=</div>
-                              <div style={{ textAlign: "center" }}>
-                                <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Final Score</div>
-                                <div style={{ fontSize: 32, fontWeight: 900, color: SCORE_COLOR(previewScore), marginTop: 4 }}>{previewScore !== null ? `${previewScore}/10` : "—"}</div>
-                              </div>
-                              {hasFeedback && (
-                                <div style={{ marginLeft: "auto", background: "#ecfdf5", border: "1px solid #86efac", borderRadius: 10, padding: "10px 16px", fontSize: 12, color: "#065f46" }}>
-                                  ✅ Rating saved: <strong>{savedRating}/5</strong><br/>
-                                  <span style={{ fontSize: 11, color: "#6b7280" }}>Update below if needed</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 18, fontSize: 12, color: "#92400e" }}>
-                              ℹ️ Ask <strong>{q.assignTo}</strong> to forward the customer's WhatsApp reply, then enter it below.
-                            </div>
-
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                              <div>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
-                                  Customer Rating ⭐ {hasFeedback && <span style={{ color: "#10b981", textTransform: "none", fontWeight: 400 }}>(already saved)</span>}
-                                </div>
-                                <StarRating
-                                  value={fb.rating !== undefined ? parseInt(fb.rating) : savedRating}
-                                  onChange={val => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], rating: val } }))}
-                                />
-                              </div>
-                              <div>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Customer Said Issue Resolved?</div>
-                                <div style={{ display: "flex", gap: 8 }}>
-                                  {["Yes", "No", "Partially"].map(opt => {
-                                    const currentVal = fb.resolved !== undefined ? fb.resolved : (q.feedbackResolved || "");
-                                    const isSelected = currentVal === opt;
-                                    return (
-                                      <button key={opt}
-                                        onClick={() => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], resolved: opt } }))}
-                                        style={{ padding: "8px 14px", borderRadius: 20, border: "2px solid", borderColor: isSelected ? "#3b82f6" : "#d1d5db", background: isSelected ? "#eff6ff" : "white", color: isSelected ? "#1d4ed8" : "#555", fontWeight: isSelected ? 700 : 400, fontSize: 12, cursor: "pointer" }}>
-                                        {opt === "Yes" ? "✅ Yes" : opt === "No" ? "❌ No" : "⚠️ Partially"}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              <div style={{ gridColumn: "1 / -1" }}>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Customer's Comment</div>
-                                <input type="text"
-                                  placeholder='e.g. "Issue fixed, very helpful!"'
-                                  value={fb.comment !== undefined ? fb.comment : (q.feedbackComment || "")}
-                                  onChange={e => setFeedbackData(prev => ({ ...prev, [q.id]: { ...prev[q.id], comment: e.target.value } }))}
-                                  style={{ width: "100%", padding: "11px 14px", border: "2px solid #d1d5db", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "white", color: "#111" }}
-                                />
-                              </div>
-                            </div>
-
-                            <div style={{ marginTop: 20, display: "flex", gap: 12, alignItems: "center" }}>
-                              <button onClick={() => saveFeedback(q.id)} disabled={savingId === q.id}
-                                style={{
-                                  background: savingId === q.id ? "#94a3b8" : "linear-gradient(135deg, #1d4ed8, #3b82f6)",
-                                  color: "white", border: "none", padding: "12px 32px", borderRadius: 10,
-                                  cursor: savingId === q.id ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 800,
-                                  boxShadow: savingId === q.id ? "none" : "0 4px 14px rgba(59,130,246,0.4)", fontFamily: "inherit",
-                                }}>
-                                {savingId === q.id ? "⏳ Saving..." : hasFeedback ? "💾 Update Feedback & Score" : "💾 Save Feedback & Update Score"}
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </>
+                      </div>
+                    )}
+                  </td>
+                </tr>
               );
             })}
           </tbody>
