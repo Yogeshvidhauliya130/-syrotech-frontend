@@ -1,14 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
-// const BASE_URL = "http://localhost:3001";
 const BASE_URL = "https://syrotech-backend.onrender.com";
 
 const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
 const STATUS_BG    = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff" };
 const STATUS_ICON  = { open: "🔓", pending: "⏳", resolved: "✅", rma: "🔧" };
-const STEPS        = ["pending", "open", "resolved"];
+
+const openImageInNewTab = (imgSrc) => {
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <html>
+      <head><title>Product Image</title></head>
+      <body style="margin:0;background:#111;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:20px;box-sizing:border-box;">
+        <img src="${imgSrc}" style="max-width:100%;height:auto;border-radius:8px;" />
+      </body>
+    </html>
+  `);
+  win.document.close();
+};
 
 export default function Dashboard() {
   const navigate    = useNavigate();
@@ -17,7 +28,7 @@ export default function Dashboard() {
   const [form, setForm] = useState({
     category: "", serialNo: "", mac: "", customer: "",
     email: "", phone: "", city: "", country: "", pincode: "",
-    description: "", assignTo: "", productImage: ""  // ✅ NEW: productImage
+    description: "", assignTo: "", productImage: ""
   });
   const [errors, setErrors]                 = useState({});
   const [tickets, setTickets]               = useState([]);
@@ -25,7 +36,13 @@ export default function Dashboard() {
   const [activeTab, setActiveTab]           = useState("raise");
   const [submitting, setSubmitting]         = useState(false);
   const [successMsg, setSuccessMsg]         = useState("");
-  const [imagePreview, setImagePreview]     = useState(""); // ✅ NEW
+  const [imagePreview, setImagePreview]     = useState("");
+  const [expandedImage, setExpandedImage]   = useState(null);
+  const [issuePopup, setIssuePopup]         = useState(null);
+
+  const [dateSort, setDateSort]           = useState("newest");
+  const [productFilter, setProductFilter] = useState("all");
+  const [statusFilter, setStatusFilter]   = useState("all");
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -47,7 +64,6 @@ export default function Dashboard() {
     return () => clearInterval(id);
   }, []);
 
-  // ✅ SMART FILTER
   const getFilteredSupportPersons = () => {
     const product = form.category;
     const city    = (form.city    || "").toLowerCase().trim();
@@ -104,7 +120,6 @@ export default function Dashboard() {
   const filteredSupportPersons = getFilteredSupportPersons();
   const filterMessage          = getFilterMessage();
 
-  // ✅ NEW: Image upload handler
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -155,7 +170,6 @@ export default function Dashboard() {
     if (!form.pincode.trim()) newErrors.pincode = "Pincode is required.";
     else if (!/^\d{6}$/.test(form.pincode.trim())) newErrors.pincode = "Enter a valid 6-digit pincode.";
     if (!form.assignTo)       newErrors.assignTo = "Please assign a support person.";
-    if (!form.productImage)   newErrors.productImage = "Product image is required.";
     if (!form.description.trim()) newErrors.description = "Description is required.";
     else if (form.description.trim().length < 20) newErrors.description = "Description must be at least 20 characters.";
     else if (form.description.trim().length > 500) newErrors.description = "Description cannot exceed 500 characters.";
@@ -171,7 +185,6 @@ export default function Dashboard() {
       return;
     }
 
-    // ✅ NEW: Check same customer (same phone + product + serial)
     const cleanPhone = form.phone.replace(/\s+/g, "");
     const sameCustomerTicket = tickets.find(t =>
       t.phone === cleanPhone &&
@@ -180,7 +193,6 @@ export default function Dashboard() {
     );
 
     if (sameCustomerTicket) {
-      // ✅ Add new issue to existing ticket instead of creating new
       setSubmitting(true);
       const issueEntry = {
         description:  form.description,
@@ -196,7 +208,6 @@ export default function Dashboard() {
         assignTo:     form.assignTo,
         date:         new Date().toISOString().slice(0, 10),
       };
-      // If ticket was resolved, reopen it
       if (sameCustomerTicket.status === "resolved" || sameCustomerTicket.status === "rma") {
         updates.status     = "pending";
         updates.resolvedAt = null;
@@ -204,7 +215,6 @@ export default function Dashboard() {
         updates.rmaStatus  = false;
         updates.rmaReason  = "";
       }
-      // Update image if new one uploaded
       if (form.productImage) updates.productImage = form.productImage;
 
       fetch(`${BASE_URL}/tickets/${sameCustomerTicket.id}`, {
@@ -218,7 +228,7 @@ export default function Dashboard() {
           setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
           setImagePreview("");
           setErrors({});
-          setSuccessMsg(`✅ Same customer found! Issue updated in existing Ticket #${sameCustomerTicket.id.slice(-8)}. Status reset to PENDING.`);
+          setSuccessMsg(`✅ Same customer found! Issue updated in existing Ticket. Status reset to PENDING.`);
           setActiveTab("mytickets");
           setTimeout(() => setSuccessMsg(""), 6000);
         })
@@ -251,7 +261,7 @@ export default function Dashboard() {
         setActiveTab("mytickets");
         setTimeout(() => setSuccessMsg(""), 4000);
       })
-      .catch(() => setErrors({ submit: "❌ Failed to submit ticket. Make sure backend is running on port 3001." }))
+      .catch(() => setErrors({ submit: "❌ Failed to submit ticket." }))
       .finally(() => setSubmitting(false));
   };
 
@@ -259,6 +269,32 @@ export default function Dashboard() {
     .filter(t => t.raisedBy === currentUser?.email)
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+  // ✅ Persistent ticket number map — oldest ticket = Syro1, next = Syro2, etc.
+  const ticketNumberMap = {};
+  [...myTickets]
+    .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
+    .forEach((t, i) => { ticketNumberMap[t.id] = i + 1; });
+
+  const displayTickets = myTickets
+    .filter(t => productFilter === "all" || t.category === productFilter)
+    .filter(t => statusFilter === "all" || (t.status || "pending").toLowerCase() === statusFilter)
+    .slice()
+    .sort((a, b) => {
+      const da = new Date(a.createdAt || a.date).getTime();
+      const db = new Date(b.createdAt || b.date).getTime();
+      return dateSort === "newest" ? db - da : da - db;
+    });
+
+  const uniqueProducts = [...new Set(myTickets.map(t => t.category).filter(Boolean))];
+
+  const statusCounts = {
+    all:      myTickets.length,
+    pending:  myTickets.filter(t => t.status === "pending").length,
+    open:     myTickets.filter(t => t.status === "open").length,
+    resolved: myTickets.filter(t => t.status === "resolved").length,
+    rma:      myTickets.filter(t => t.status === "rma").length,
+  };
 
   const borderColor = (field) => errors[field] ? "#ef4444" : "#ddd5c8";
   const inputStyle  = (field) => ({
@@ -273,6 +309,67 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-wrapper">
+
+      {/* ✅ Issue/Resolution Popup Modal */}
+      {issuePopup && (
+        <div
+          onClick={() => setIssuePopup(null)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "white", borderRadius: 14, padding: "24px 28px",
+              maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              border: "2px solid #fad8be"
+            }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#c94500" }}>
+                {issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}
+              </div>
+              <button onClick={() => setIssuePopup(null)}
+                style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>
+                ✕ Close
+              </button>
+            </div>
+
+            {/* ✅ Show resolution notes FIRST and prominently if available */}
+            {issuePopup.resolutionNotes ? (
+              <>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  🔧 What was solved (by {issuePopup.resolvedBy || "Support"}):
+                </div>
+                <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>
+                  {issuePopup.resolutionNotes}
+                </div>
+                {issuePopup.resolutionTimeTaken && (
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+                    ⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong>
+                  </div>
+                )}
+                {issuePopup.resolvedAt && (
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 14 }}>
+                    📅 Resolved on: <strong>{new Date(issuePopup.resolvedAt).toLocaleString()}</strong>
+                  </div>
+                )}
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  📋 Original Issue:
+                </div>
+                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #ff5a00" }}>
+                  {issuePopup.description}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#fff8f2", padding: "14px 16px", borderRadius: 10, border: "1px solid #fad8be", borderLeft: "4px solid #ff5a00" }}>
+                {issuePopup.description}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Navbar */}
       <div className="dash-navbar">
@@ -332,8 +429,6 @@ export default function Dashboard() {
             {errors.submit && <div className="form-error-banner">{errors.submit}</div>}
 
             <div className="form-grid">
-
-              {/* Product */}
               <div className="form-field">
                 <label className="form-label">Product <span className="req">*</span></label>
                 <select name="category" value={form.category} onChange={handleChange} style={inputStyle("category")}>
@@ -345,7 +440,6 @@ export default function Dashboard() {
                 {errors.category && <span className="field-error">{errors.category}</span>}
               </div>
 
-              {/* Serial Number */}
               <div className="form-field">
                 <label className="form-label">Serial Number <span className="req">*</span></label>
                 <input name="serialNo" placeholder="e.g. SYR-20240001"
@@ -353,14 +447,12 @@ export default function Dashboard() {
                 {errors.serialNo && <span className="field-error">{errors.serialNo}</span>}
               </div>
 
-              {/* MAC Address */}
               <div className="form-field">
                 <label className="form-label">MAC Address</label>
                 <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF"
                   value={form.mac} onChange={handleChange} style={inputStyle("mac")} />
               </div>
 
-              {/* Customer Name */}
               <div className="form-field">
                 <label className="form-label">Customer Name <span className="req">*</span></label>
                 <input name="customer" placeholder="Full name (letters only)"
@@ -368,7 +460,6 @@ export default function Dashboard() {
                 {errors.customer && <span className="field-error">{errors.customer}</span>}
               </div>
 
-              {/* Customer Email */}
               <div className="form-field">
                 <label className="form-label">Customer Email <span className="req">*</span></label>
                 <input name="email" placeholder="customer@email.com"
@@ -376,12 +467,8 @@ export default function Dashboard() {
                 {errors.email && <span className="field-error">{errors.email}</span>}
               </div>
 
-              {/* Phone */}
               <div className="form-field">
-                <label className="form-label">
-                  Contact Number <span className="req">*</span>
-                  <span className="form-hint"> (10 digits)</span>
-                </label>
+                <label className="form-label">Contact Number <span className="req">*</span><span className="form-hint"> (10 digits)</span></label>
                 <input name="phone" placeholder="e.g. 9876543210"
                   value={form.phone} onChange={handleChange} maxLength={10} style={inputStyle("phone")} />
                 {errors.phone
@@ -390,7 +477,6 @@ export default function Dashboard() {
                 }
               </div>
 
-              {/* City */}
               <div className="form-field">
                 <label className="form-label">City <span className="req">*</span></label>
                 <input name="city" placeholder="e.g. Mumbai"
@@ -398,7 +484,6 @@ export default function Dashboard() {
                 {errors.city && <span className="field-error">{errors.city}</span>}
               </div>
 
-              {/* Country */}
               <div className="form-field">
                 <label className="form-label">Country <span className="req">*</span></label>
                 <select name="country" value={form.country} onChange={handleChange} style={inputStyle("country")}>
@@ -422,12 +507,8 @@ export default function Dashboard() {
                 {errors.country && <span className="field-error">{errors.country}</span>}
               </div>
 
-              {/* Pincode */}
               <div className="form-field">
-                <label className="form-label">
-                  Pincode <span className="req">*</span>
-                  <span className="form-hint"> (6 digits)</span>
-                </label>
+                <label className="form-label">Pincode <span className="req">*</span><span className="form-hint"> (6 digits)</span></label>
                 <input name="pincode" placeholder="e.g. 400001"
                   value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
                 {errors.pincode
@@ -436,28 +517,19 @@ export default function Dashboard() {
                 }
               </div>
 
-              {/* Assign Support — Smart Filtered */}
               <div className="form-field">
                 <label className="form-label">
                   Assign Support Person <span className="req">*</span>
                   {form.category && <span className="form-hint"> (filtered by product & location)</span>}
                 </label>
                 {filterMessage && (
-                  <div style={{
-                    fontSize: 11, fontWeight: 600,
-                    color: filterMessage.color, background: filterMessage.bg,
-                    padding: "6px 10px", borderRadius: 6, marginBottom: 6,
-                    border: `1px solid ${filterMessage.color}22`,
-                  }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: filterMessage.color, background: filterMessage.bg, padding: "6px 10px", borderRadius: 6, marginBottom: 6, border: `1px solid ${filterMessage.color}22` }}>
                     {filterMessage.msg}
                   </div>
                 )}
                 <select name="assignTo" value={form.assignTo} onChange={handleChange} style={inputStyle("assignTo")}>
                   <option value="">
-                    {form.category
-                      ? `Choose ${form.category} specialist${form.city ? ` in ${form.city}` : ""}`
-                      : "Select product first to filter specialists"
-                    }
+                    {form.category ? `Choose ${form.category} specialist${form.city ? ` in ${form.city}` : ""}` : "Select product first to filter specialists"}
                   </option>
                   {filteredSupportPersons.map(p => (
                     <option key={p.email} value={p.name}>
@@ -468,15 +540,14 @@ export default function Dashboard() {
                 </select>
                 {errors.assignTo && <span className="field-error">{errors.assignTo}</span>}
               </div>
-
             </div>
 
-            {/* ✅ NEW: Product Image Upload */}
+            {/* Product Image — OPTIONAL */}
             <div className="form-field" style={{ padding: "20px 36px 0" }}>
               <label className="form-label">
-  Product Image <span className="req">*</span>
-  <span className="form-hint"> (upload photo showing serial no & MAC address)</span>
-</label>
+                Product Image
+                <span className="form-hint"> (optional — upload photo showing serial no & MAC address)</span>
+              </label>
               <div style={{
                 border: `2px dashed ${errors.productImage ? "#ef4444" : "#ddd5c8"}`,
                 borderRadius: 10, padding: "16px 20px",
@@ -485,17 +556,10 @@ export default function Dashboard() {
                 {!imagePreview ? (
                   <div>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
-                    <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>
-                      Upload product photo (max 3MB)
-                    </div>
-                    <label style={{
-                      background: "#ff5a00", color: "white",
-                      padding: "8px 20px", borderRadius: 8, cursor: "pointer",
-                      fontSize: 13, fontWeight: 600, display: "inline-block",
-                    }}>
+                    <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>Upload product photo (max 3MB)</div>
+                    <label style={{ background: "#ff5a00", color: "white", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-block" }}>
                       Choose Image
-                      <input type="file" accept="image/*" onChange={handleImageUpload}
-                        style={{ display: "none" }} />
+                      <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
                     </label>
                   </div>
                 ) : (
@@ -503,27 +567,17 @@ export default function Dashboard() {
                     <img src={imagePreview} alt="Product"
                       style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
                     <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
-                      <label style={{
-                        background: "#f0ebe3", color: "#555", border: "1px solid #ddd5c8",
-                        padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12,
-                      }}>
+                      <label style={{ background: "#f0ebe3", color: "#555", border: "1px solid #ddd5c8", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>
                         Change Image
-                        <input type="file" accept="image/*" onChange={handleImageUpload}
-                          style={{ display: "none" }} />
+                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
                       </label>
                       <button type="button"
                         onClick={() => { setImagePreview(""); setForm(prev => ({ ...prev, productImage: "" })); }}
-                        style={{
-                          background: "#fee2e2", color: "#dc2626",
-                          border: "1px solid #fca5a5", padding: "6px 14px",
-                          borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
-                        }}>
+                        style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
                         Remove
                       </button>
                     </div>
-                    <div style={{ fontSize: 11, color: "#10b981", marginTop: 8, fontWeight: 600 }}>
-                      ✅ Image uploaded — serial no & MAC will be visible
-                    </div>
+                    <div style={{ fontSize: 11, color: "#10b981", marginTop: 8, fontWeight: 600 }}>✅ Image uploaded</div>
                   </div>
                 )}
               </div>
@@ -547,9 +601,7 @@ export default function Dashboard() {
                   : <span className="field-hint">{form.description.length}/500 characters</span>
                 }
                 <span className={`char-count ${form.description.length < 20 ? "char-short" : form.description.length > 450 ? "char-warn" : "char-ok"}`}>
-                  {form.description.length < 20
-                    ? `${20 - form.description.length} more chars needed`
-                    : `${500 - form.description.length} chars left`}
+                  {form.description.length < 20 ? `${20 - form.description.length} more chars needed` : `${500 - form.description.length} chars left`}
                 </span>
               </div>
             </div>
@@ -569,222 +621,381 @@ export default function Dashboard() {
                 <h2 className="tickets-title">My Tickets</h2>
                 <p className="tickets-sub">Track the status of all your raised tickets</p>
               </div>
-              <button className="btn-raise-new" onClick={() => setActiveTab("raise")}>
-                + Raise New Ticket
-              </button>
+              <button className="btn-raise-new" onClick={() => setActiveTab("raise")}>+ Raise New Ticket</button>
             </div>
-
-            {myTickets.length > 0 && (
-              <div className="tickets-summary">
-                {[
-                  ["pending","⏳","#fffbeb","#b45309"],
-                  ["open",   "🔓","#fff4ee","#e04e00"],
-                  ["resolved","✅","#edfaf3","#1a7a46"],
-                  ["rma",    "🔧","#f5f3ff","#7c3aed"],
-                ].map(([s, icon, bg, col]) => (
-                  myTickets.filter(t => t.status === s).length > 0 && (
-                    <div key={s} className="summary-pill" style={{ background: bg, color: col }}>
-                      {icon} {myTickets.filter(t => t.status === s).length}{" "}
-                      {s.toUpperCase()}
-                    </div>
-                  )
-                ))}
-              </div>
-            )}
 
             {myTickets.length === 0 ? (
               <div className="tickets-empty">
                 <div className="tickets-empty-icon">🎫</div>
                 <p className="tickets-empty-text">You haven't raised any tickets yet.</p>
-                <button className="btn-raise-new" onClick={() => setActiveTab("raise")}>
-                  Raise First Ticket
-                </button>
+                <button className="btn-raise-new" onClick={() => setActiveTab("raise")}>Raise First Ticket</button>
               </div>
             ) : (
-              <div className="tickets-list">
-                {myTickets.map(ticket => {
-                  const s           = (ticket.status || "pending").toLowerCase();
-                  const currentStep = STEPS.indexOf(s);
-                  return (
-                    <div key={ticket.id} className="ticket-card"
-                      style={{ borderLeftColor: STATUS_COLOR[s] || "#ccc" }}>
-
-                      <div className="ticket-card-header">
-                        <div className="ticket-card-title-row">
-                          <span className="ticket-product">{ticket.category}</span>
-                          <span className="ticket-id">Ticket #{ticket.id?.slice(-8)}</span>
-                        </div>
-                        <span className="ticket-status-badge"
-                          style={{ color: STATUS_COLOR[s], background: STATUS_BG[s] }}>
-                          {STATUS_ICON[s] || "🎫"} {s.toUpperCase()}
+              <>
+                {/* FILTER BAR */}
+                <div style={{
+                  background: "white", borderRadius: 12,
+                  border: "1.5px solid #e0d8d0",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                  marginBottom: 14, padding: "14px 16px",
+                  display: "flex", flexDirection: "column", gap: 12
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📋 Status:</span>
+                    {[
+                      ["all",      "All",        "#374151", "#f3f4f6"],
+                      ["pending",  "⏳ Pending",  "#b45309", "#fffbeb"],
+                      ["open",     "🔓 Open",     "#e04e00", "#fff4ee"],
+                      ["resolved", "✅ Resolved", "#1a7a46", "#edfaf3"],
+                      ["rma",      "🔧 RMA",      "#7c3aed", "#f5f3ff"],
+                    ].map(([key, label, col, bg]) => (
+                      <button key={key} onClick={() => setStatusFilter(key)} style={{
+                        padding: "5px 12px", borderRadius: 16,
+                        border: statusFilter === key ? `2px solid ${col}` : "1px solid #d1d5db",
+                        background: statusFilter === key ? bg : "white",
+                        color: statusFilter === key ? col : "#555",
+                        fontWeight: statusFilter === key ? 700 : 400,
+                        fontSize: 12, cursor: "pointer", whiteSpace: "nowrap"
+                      }}>
+                        {label}
+                        <span style={{
+                          marginLeft: 5,
+                          background: statusFilter === key ? col : "#e5e7eb",
+                          color: statusFilter === key ? "white" : "#555",
+                          borderRadius: 10, padding: "1px 6px", fontSize: 10, fontWeight: 700
+                        }}>
+                          {statusCounts[key] ?? 0}
                         </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ height: 1, background: "#f0ede8" }} />
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🔧 Product:</span>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {["all", ...uniqueProducts].map(p => (
+                          <button key={p} onClick={() => setProductFilter(p)} style={{
+                            padding: "5px 12px", borderRadius: 16,
+                            border: productFilter === p ? "none" : "1px solid #d1d5db",
+                            background: productFilter === p ? "#ff5a00" : "white",
+                            color: productFilter === p ? "white" : "#555",
+                            fontWeight: productFilter === p ? 700 : 400,
+                            fontSize: 12, cursor: "pointer", whiteSpace: "nowrap"
+                          }}>
+                            {p === "all" ? "All Products" : p}
+                          </button>
+                        ))}
                       </div>
-
-                      <div className="ticket-details-grid">
-                        <div className="labels-row">
-                          <div className="ticket-detail-item"><span className="detail-label">Serial No</span></div>
-                          <div className="ticket-detail-item"><span className="detail-label">Assigned To</span></div>
-                          <div className="ticket-detail-item"><span className="detail-label">Date Raised</span></div>
-                          <div className="ticket-detail-item"><span className="detail-label">Customer</span></div>
-                          <div className="ticket-detail-item"><span className="detail-label">Contact</span></div>
-                          {ticket.city    && <div className="ticket-detail-item"><span className="detail-label">City</span></div>}
-                          {ticket.country && <div className="ticket-detail-item"><span className="detail-label">Country</span></div>}
-                          {ticket.resolvedAt && <div className="ticket-detail-item"><span className="detail-label">Resolved On</span></div>}
-                        </div>
-                        <div className="values-row">
-                          <div className="ticket-detail-item"><span className="detail-value">{ticket.serialNo}</span></div>
-                          <div className="ticket-detail-item"><span className="detail-value">{ticket.assignTo || "—"}</span></div>
-                          <div className="ticket-detail-item"><span className="detail-value">{ticket.date}</span></div>
-                          <div className="ticket-detail-item"><span className="detail-value">{ticket.customer || "—"}</span></div>
-                          <div className="ticket-detail-item"><span className="detail-value">{ticket.phone || "—"}</span></div>
-                          {ticket.city    && <div className="ticket-detail-item"><span className="detail-value">{ticket.city}</span></div>}
-                          {ticket.country && <div className="ticket-detail-item"><span className="detail-value">{ticket.country}</span></div>}
-                          {ticket.resolvedAt && <div className="ticket-detail-item"><span className="detail-value">{new Date(ticket.resolvedAt).toLocaleDateString()}</span></div>}
-                        </div>
-                      </div>
-
-                      {/* ✅ NEW: Product Image */}
-                      {ticket.productImage && (
-                        <div style={{ margin: "0 24px 14px" }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
-                            📷 Product Image
-                          </div>
-                          <img src={ticket.productImage} alt="Product"
-                            style={{ maxWidth: "100%", maxHeight: 180, borderRadius: 8, border: "2px solid #e0d8d0", cursor: "pointer" }}
-                            onClick={() => window.open(ticket.productImage, "_blank")}
-                          />
-                        </div>
-                      )}
-
-                      {/* ✅ NEW: RMA Info */}
-                      {ticket.rmaStatus && (
-                        <div style={{
-                          margin: "0 24px 14px",
-                          background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
-                          border: "1.5px solid #c4b5fd", borderRadius: 10, padding: "12px 16px",
-                        }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: "#5b21b6", marginBottom: 6 }}>
-                            🔧 Product Sent to RMA Center
-                          </div>
-                          <div style={{ fontSize: 12, color: "#6d28d9", lineHeight: 1.8 }}>
-                            <div>Reason: <strong>{ticket.rmaReason}</strong></div>
-                            <div>Center: <strong>{ticket.rmaCenterName}</strong></div>
-                            <div>Address: {ticket.rmaCenterAddress}</div>
-                            <div>📞 {ticket.rmaCenterPhone}</div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ✅ NEW: Issue History */}
-                      {ticket.issueHistory && ticket.issueHistory.length > 0 && (
-                        <div style={{ margin: "0 24px 14px" }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                            🔁 Previous Issues ({ticket.issueHistory.length})
-                          </div>
-                          {ticket.issueHistory.map((h, i) => (
-                            <div key={i} style={{
-                              background: "#f9f7f4", border: "1px solid #e8ddd4",
-                              borderRadius: 8, padding: "8px 12px", marginBottom: 6, fontSize: 12,
-                            }}>
-                              <div style={{ color: "#555", marginBottom: 2 }}>
-                                {h.description}
-                              </div>
-                              <div style={{ color: "#9ca3af", fontSize: 11 }}>
-                                Raised on: {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {ticket.reassignedFrom && (
-                        <div style={{
-                          margin: "0 24px 14px",
-                          background: "#fffbeb", border: "1px solid #fde68a",
-                          borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#92400e",
-                        }}>
-                          🔄 This ticket was reassigned to <strong>{ticket.assignTo}</strong>
-                          {ticket.reassignReason && <> — Reason: "<em>{ticket.reassignReason}</em>"</>}
-                        </div>
-                      )}
-
-                      <div className="ticket-description">
-                        <span className="detail-label">Issue: </span>
-                        {ticket.description}
-                      </div>
-
-                      {ticket.feedbackRating && (
-                        <div style={{
-                          margin: "0 24px 16px", background: "#eff6ff",
-                          border: "1.5px solid #93c5fd", borderRadius: 10, padding: "12px 16px",
-                        }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#1e40af", marginBottom: 6, textTransform: "uppercase" }}>
-                            ⭐ Your Feedback
-                          </div>
-                          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
-                            <span style={{ color: "#f59e0b", fontWeight: 700 }}>
-                              {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
-                            </span>
-                            {ticket.feedbackResolved && <span>Resolved: <strong>{ticket.feedbackResolved}</strong></span>}
-                            {ticket.feedbackComment  && <span>"{ticket.feedbackComment}"</span>}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Progress — only for non-RMA */}
-                      {s !== "rma" && (
-                        <div className="ticket-progress">
-                          <div className="progress-label">TICKET PROGRESS</div>
-                          <div className="progress-steps">
-                            {STEPS.map((step, i) => {
-                              const stepIdx = STEPS.indexOf(step);
-                              const done    = stepIdx <= currentStep;
-                              const active  = stepIdx === currentStep;
-                              return (
-                                <div key={step} className="step-wrapper"
-                                  style={{ flex: i < STEPS.length - 1 ? 1 : 0 }}>
-                                  <div className="step-item">
-                                    <div className="step-circle" style={{
-                                      background: done ? (STATUS_COLOR[step] || "#ff5a00") : "#e5e7eb",
-                                      color:      done ? "white" : "#9ca3af",
-                                      boxShadow:  active ? `0 0 0 4px ${STATUS_BG[step]}` : "none",
-                                      border:     active ? `2px solid ${STATUS_COLOR[step]}` : "2px solid transparent",
-                                    }}>
-                                      {stepIdx < currentStep ? "✓" : STATUS_ICON[step]}
-                                    </div>
-                                    <span className="step-label" style={{ color: done ? "#333" : "#9ca3af", fontWeight: done ? 600 : 400 }}>
-                                      {step}
-                                    </span>
-                                  </div>
-                                  {i < STEPS.length - 1 && (
-                                    <div className="step-connector"
-                                      style={{ background: stepIdx < currentStep ? "#10b981" : "#e5e7eb" }} />
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {(ticket.acceptedAt || ticket.resolvedAt) && (
-                        <div className="ticket-timestamps">
-                          {ticket.acceptedAt && (
-                            <span className="timestamp open">
-                              🔓 Accepted: {new Date(ticket.acceptedAt).toLocaleString()}
-                            </span>
-                          )}
-                          {ticket.resolvedAt && (
-                            <span className="timestamp resolved">
-                              ✅ Resolved: {new Date(ticket.resolvedAt).toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
+
+                    <div style={{ width: 1, height: 24, background: "#e0d8d0", flexShrink: 0 }} />
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📅 Sort by Date:</span>
+                      <select
+                        value={dateSort}
+                        onChange={e => setDateSort(e.target.value)}
+                        style={{
+                          padding: "6px 14px", borderRadius: 8,
+                          border: "1.5px solid #d1d5db", fontSize: 12,
+                          cursor: "pointer", background: "white", color: "#374151",
+                          outline: "none", minWidth: 160, fontWeight: 600,
+                        }}
+                      >
+                        <option value="newest">🔽 Newest First</option>
+                        <option value="oldest">🔼 Oldest First</option>
+                      </select>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", fontSize: 12, color: "#9ca3af", whiteSpace: "nowrap" }}>
+                      Showing <strong style={{ color: "#374151" }}>{displayTickets.length}</strong> of <strong style={{ color: "#374151" }}>{myTickets.length}</strong> tickets
+                    </div>
+                  </div>
+                </div>
+
+                {/* ✅ TABLE — simple bottom scrollbar always visible */}
+                <div style={{
+                  borderRadius: 12,
+                  border: "1.5px solid #e0d8d0",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                  overflowX: "scroll",
+overflowY: "auto",
+maxHeight: "72vh",
+                }}>
+                  <table style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    background: "white",
+                    minWidth: 1200,
+                  }}>
+                    <colgroup>
+                      <col style={{ width: 85 }} />
+                      <col style={{ width: 100 }} />
+                      <col style={{ width: 110 }} />
+                      <col style={{ width: 120 }} />
+                      <col style={{ width: 110 }} />
+                      <col style={{ width: 120 }} />
+                      <col style={{ width: 100 }} />
+                      <col style={{ width: 110 }} />
+                      <col style={{ width: 105 }} />
+                      <col style={{ width: 75 }} />
+                      <col style={{ width: 220 }} />
+                      <col style={{ width: 95 }} />
+                    </colgroup>
+                    <thead>
+                      <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)" }}>
+                        {["Ticket No","Date","Product","Serial No","Customer","Phone","City","Assigned To","Status","Image","Issue","RMA"].map((h, i) => (
+                          <th key={i} style={{
+                            padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white",
+                            textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left",
+                            borderRight: "1px solid rgba(255,255,255,0.2)",
+                            whiteSpace: "nowrap"
+                          }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayTickets.length === 0 ? (
+                        <tr>
+                          <td colSpan={12} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
+                            No tickets found for selected filters.
+                          </td>
+                        </tr>
+                      ) : (
+                        displayTickets.reduce((acc, ticket, idx) => {
+                          const s = (ticket.status || "pending").toLowerCase();
+
+                          acc.push(
+                            <tr key={ticket.id} style={{
+                              borderBottom: "1px solid #f0ede8",
+                              background: idx % 2 === 0 ? "#faf7f4" : "white",
+                              borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
+                            }}>
+
+                              {/* ✅ Ticket No — persistent Syro1, Syro2... | row count below */}
+                              <td style={{ padding: "12px 10px", whiteSpace: "nowrap" }}>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>
+                                  Syro{ticketNumberMap[ticket.id]}
+                                </div>
+                                {/* ✅ Row count instead of hash */}
+                                <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
+                              </td>
+
+                              {/* Date */}
+                              <td style={{ padding: "12px 10px" }}>
+                                <div style={{ fontSize: 11, color: "#374151", fontWeight: 600, whiteSpace: "nowrap" }}>{ticket.date || "—"}</div>
+                                {ticket.resolvedAt && (
+                                  <div style={{ fontSize: 10, color: "#10b981", whiteSpace: "nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>
+                                )}
+                              </td>
+
+                              {/* Product */}
+                              <td style={{ padding: "12px 10px" }}>
+                                <div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.category}</div>
+                              </td>
+
+                              {/* Serial No */}
+                              <td style={{ padding: "12px 10px" }}>
+                                <div style={{ fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.serialNo}</div>
+                                {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap" }}>MAC: {ticket.mac}</div>}
+                              </td>
+
+                              {/* Customer */}
+                              <td style={{ padding: "12px 10px", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {ticket.customer || "—"}
+                              </td>
+
+                              {/* Phone */}
+                              <td style={{ padding: "12px 10px", fontSize: 12, whiteSpace: "nowrap" }}>
+                                {ticket.phone || "—"}
+                              </td>
+
+                              {/* City */}
+                              <td style={{ padding: "12px 10px" }}>
+                                <div style={{ fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.city || "—"}</div>
+                                {ticket.country && <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.country}</div>}
+                              </td>
+
+                              {/* Assigned To */}
+                              <td style={{ padding: "12px 10px" }}>
+                                <div style={{ fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.assignTo || "—"}</div>
+                                {ticket.reassignedFrom && (
+                                  <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>
+                                )}
+                              </td>
+
+                              {/* ✅ Status — click RESOLVED to see what support person solved */}
+                              <td style={{ padding: "12px 10px" }}>
+                                <span
+                                 onClick={() => {
+  if (s === "resolved") {
+    console.log("resolutionNotes =", ticket.resolutionNotes);
+    setIssuePopup({
+      description: ticket.description,
+      resolutionNotes: ticket.resolutionNotes,
+                                        resolutionTimeTaken: ticket.resolutionTimeTaken,
+                                        resolvedBy: ticket.resolvedBy,
+                                        resolvedAt: ticket.resolvedAt,
+                                      });
+                                    }
+                                  }}
+                                  style={{
+                                    padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700,
+                                    color: STATUS_COLOR[s], background: STATUS_BG[s],
+                                    display: "inline-block", whiteSpace: "nowrap",
+                                    cursor: s === "resolved" ? "pointer" : "default",
+                                    border: s === "resolved" ? "1.5px solid #6ee7b7" : "none",
+                                  }}
+                                  title={s === "resolved" ? "Click to see resolution details" : ""}
+                                >
+                                  {STATUS_ICON[s]} {s.toUpperCase()}
+                                </span>
+                                {s === "resolved" && ticket.resolutionNotes && (
+                                  <div
+                                    onClick={() => setIssuePopup({
+                                      description: ticket.description,
+                                      resolutionNotes: ticket.resolutionNotes,
+                                      resolutionTimeTaken: ticket.resolutionTimeTaken,
+                                      resolvedBy: ticket.resolvedBy,
+                                      resolvedAt: ticket.resolvedAt,
+                                    })}
+                                    style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
+                                    📋 View details
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Image */}
+                              <td style={{ padding: "12px 6px", textAlign: "center" }}>
+                                {ticket.productImage ? (
+                                  <button
+                                    onClick={() => setExpandedImage(prev => prev === ticket.id ? null : ticket.id)}
+                                    style={{
+                                      background: expandedImage === ticket.id ? "#dcfce7" : "#f0fdf4",
+                                      border: "1.5px solid #86efac",
+                                      borderRadius: 6, padding: "4px 8px", cursor: "pointer",
+                                      fontSize: 10, fontWeight: 700, color: "#065f46",
+                                      whiteSpace: "nowrap"
+                                    }}>
+                                    📷 {expandedImage === ticket.id ? "Hide" : "View"}
+                                  </button>
+                                ) : (
+                                  <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
+                                )}
+                              </td>
+
+                              {/* Issue — click to open popup */}
+                              <td style={{ padding: "12px 10px" }}>
+                                <div
+                                  onClick={() => setIssuePopup({
+                                    description: ticket.description,
+                                    resolutionNotes: ticket.resolutionNotes,
+                                    resolutionTimeTaken: ticket.resolutionTimeTaken,
+                                    resolvedBy: ticket.resolvedBy,
+                                    resolvedAt: ticket.resolvedAt,
+                                  })}
+                                  style={{
+                                    fontSize: 12, color: "#374151", lineHeight: 1.6,
+                                    cursor: "pointer",
+                                    overflow: "hidden", textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap", maxWidth: 200,
+                                    textDecoration: "underline", textDecorationStyle: "dotted",
+                                    textDecorationColor: "#9ca3af"
+                                  }}
+                                  title="Click to view full issue"
+                                >
+                                  {ticket.description?.length > 40
+                                    ? ticket.description.slice(0, 40) + "…"
+                                    : ticket.description || "—"}
+                                </div>
+                                {s === "resolved" && ticket.resolutionNotes && (
+                                  <div
+                                    onClick={() => setIssuePopup({
+                                      description: ticket.description,
+                                      resolutionNotes: ticket.resolutionNotes,
+                                      resolutionTimeTaken: ticket.resolutionTimeTaken,
+                                      resolvedBy: ticket.resolvedBy,
+                                      resolvedAt: ticket.resolvedAt,
+                                    })}
+                                    style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>
+                                    ✅ Resolved — click to view
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* RMA */}
+                              <td style={{ padding: "12px 10px", maxWidth: 80, overflow: "hidden" }}>
+                                {ticket.rmaStatus ? (
+                                  <div title={ticket.rmaCenterName}>
+                                    <span style={{ background: "#f5f3ff", color: "#7c3aed", padding: "2px 6px", borderRadius: 6, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>🔧 RMA</span>
+                                    <div style={{ fontSize: 9, color: "#6d28d9", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 75 }}>{ticket.rmaCenterName}</div>
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+
+                          if (expandedImage === ticket.id && ticket.productImage) {
+                            acc.push(
+                              <tr key={`img-${ticket.id}`}>
+                                <td colSpan={12} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
+                                  <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
+                                    <img
+                                      src={ticket.productImage}
+                                      alt="Product"
+                                      style={{ maxHeight: 220, maxWidth: 300, borderRadius: 10, border: "2px solid #86efac", cursor: "pointer", objectFit: "contain", background: "white" }}
+                                      onClick={() => openImageInNewTab(ticket.productImage)}
+                                    />
+                                    <div style={{ fontSize: 13, color: "#065f46" }}>
+                                      <div style={{ fontWeight: 800, marginBottom: 6, fontSize: 14 }}>📷 Product Image</div>
+                                      <div style={{ color: "#6b7280", marginBottom: 4 }}>Product: <strong>{ticket.category}</strong></div>
+                                      <div style={{ color: "#6b7280", marginBottom: 4 }}>Serial No: <strong>{ticket.serialNo}</strong></div>
+                                      {ticket.mac && <div style={{ color: "#6b7280", marginBottom: 4 }}>MAC: <strong>{ticket.mac}</strong></div>}
+                                      <div style={{ color: "#9ca3af", fontSize: 12, marginTop: 8 }}>Click image to open full size</div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          }
+
+                          if (ticket.feedbackRating) {
+                            acc.push(
+                              <tr key={`fb-${ticket.id}`} style={{ background: "#eff6ff" }}>
+                                <td colSpan={12} style={{ padding: "8px 20px" }}>
+                                  <span style={{ fontSize: 12, color: "#1e40af", fontWeight: 600 }}>
+                                    ⭐ Your Feedback: {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
+                                    {ticket.feedbackComment && ` — "${ticket.feedbackComment}"`}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          }
+
+                          if (ticket.rmaStatus) {
+                            acc.push(
+                              <tr key={`rma-${ticket.id}`} style={{ background: "#f5f3ff" }}>
+                                <td colSpan={12} style={{ padding: "8px 20px" }}>
+                                  <span style={{ fontSize: 12, color: "#5b21b6", fontWeight: 600 }}>
+                                    🔧 RMA Center: {ticket.rmaCenterName} | {ticket.rmaCenterAddress} | 📞 {ticket.rmaCenterPhone}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          }
+
+                          return acc;
+                        }, [])
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}

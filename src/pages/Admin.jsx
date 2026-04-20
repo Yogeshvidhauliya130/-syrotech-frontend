@@ -836,7 +836,7 @@ function Performance() {
       <div className="tab-header">
         <div>
           <h2 className="tab-title">Support Performance</h2>
-          <p className="tab-sub">Time Score + Customer Feedback = Final Score</p>
+          <p className="tab-sub">Ticket Resolution Performance — Time Score + Customer Feedback</p>
         </div>
         {agents.length > 0 && <button className="export-all-btn" onClick={exportAllExcel}>⬇️ Export All to Excel</button>}
       </div>
@@ -928,7 +928,7 @@ function Performance() {
                 <div style={{ textAlign: "right" }}>
                   <div className="perf-meta-label">Final Score</div>
                   <div className="perf-score" style={{ color: SCORE_COLOR(stats.avgScore) }}>{stats.avgScore}</div>
-                  <div style={{ fontSize: 9, color: "#9ca3af" }}>time + feedback</div>
+                  <div style={{ fontSize: 9, color: "#9ca3af" }}>resolution score</div>
                 </div>
               </div>
               {stats.resolved > 0 && (
