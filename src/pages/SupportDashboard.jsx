@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import "./Dashboard.css";
 
 const BASE_URL = "https://syrotech-backend.onrender.com";
 const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
@@ -98,25 +99,47 @@ function getFilteredRMACenters(rmaCenters, ticket) {
   return rmaCenters;
 }
 
+const openImageInNewTab = (imgSrc) => {
+  const win = window.open("", "_blank");
+  win.document.write(`<html><head><title>Product Image</title></head><body style="margin:0;background:#111;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:20px;box-sizing:border-box;"><img src="${imgSrc}" style="max-width:100%;height:auto;border-radius:8px;" /></body></html>`);
+  win.document.close();
+};
+
 export default function SupportDashboard() {
   const navigate    = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const autoAcceptingRef = useRef(new Set());
 
-  const [tickets, setTickets]                 = useState([]);
-  const [filter, setFilter]                   = useState("all");
+  // ── Tickets / support state ──
+  const [tickets, setTickets]                     = useState([]);
+  const [filter, setFilter]                       = useState("all");
   const [allSupportPersons, setAllSupportPersons] = useState([]);
-  const [rmaCenters, setRmaCenters]           = useState([]);
-  const [reassignForm, setReassignForm]       = useState({});
-  const [rmaForm, setRmaForm]                 = useState({});
-  const [reassigning, setReassigning]         = useState(null);
-  const [submittingRma, setSubmittingRma]     = useState(null);
-  const [expandedRow, setExpandedRow]         = useState(null);
-  const [expandedImage, setExpandedImage]     = useState(null);
-  const [dateSort, setDateSort]               = useState("newest");
-  const [resolveForm, setResolveForm]         = useState({});
-  const [issuePopup, setIssuePopup]           = useState(null);
+  const [rmaCenters, setRmaCenters]               = useState([]);
+  const [reassignForm, setReassignForm]           = useState({});
+  const [rmaForm, setRmaForm]                     = useState({});
+  const [reassigning, setReassigning]             = useState(null);
+  const [submittingRma, setSubmittingRma]         = useState(null);
+  const [expandedRow, setExpandedRow]             = useState(null);
+  const [expandedImage, setExpandedImage]         = useState(null);
+  const [dateSort, setDateSort]                   = useState("newest");
+  const [resolveForm, setResolveForm]             = useState({});
+  const [issuePopup, setIssuePopup]               = useState(null);
 
+  // ── Tab ──
+  const [activeTab, setActiveTab] = useState("tickets");
+
+  // ── Raise Ticket form state ──
+  const [form, setForm] = useState({
+    category: "", serialNo: "", mac: "", customer: "",
+    email: "", phone: "", city: "", country: "", pincode: "",
+    description: "", assignTo: "", productImage: ""
+  });
+  const [formErrors, setFormErrors]   = useState({});
+  const [submitting, setSubmitting]   = useState(false);
+  const [successMsg, setSuccessMsg]   = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+
+  // ── Fetch tickets ──
   const fetchTickets = () => {
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
@@ -165,6 +188,7 @@ export default function SupportDashboard() {
       .catch(console.error);
   }, []);
 
+  // ── Ticket actions ──
   const updateStatus = (id, status) => {
     const ticket  = tickets.find(t => t.id === id);
     const now     = new Date().toISOString();
@@ -236,10 +260,10 @@ export default function SupportDashboard() {
       .catch(err => { console.error("RMA failed:", err); setSubmittingRma(null); });
   };
 
+  // ✅ Time Taken removed — only notes required
   const handleResolveSubmit = (ticketId) => {
     const rf = resolveForm[ticketId] || {};
     if (!rf.notes?.trim()) { alert("Please describe what issue was solved."); return; }
-    if (!rf.timeTaken)     { alert("Please select how much time it took."); return; }
     const now = new Date().toISOString();
     fetch(`${BASE_URL}/tickets/${ticketId}`, {
       method: "PATCH",
@@ -248,7 +272,6 @@ export default function SupportDashboard() {
         status: "resolved",
         resolvedAt: now,
         resolutionNotes: rf.notes.trim(),
-        resolutionTimeTaken: rf.timeTaken,
         resolvedBy: currentUser?.name,
       })
     })
@@ -279,6 +302,214 @@ export default function SupportDashboard() {
     navigate("/", { replace: true });
   };
 
+  // ── Raise Ticket logic (same as Dashboard) ──
+  const getFilteredSupportPersons = () => {
+    const product = form.category;
+    const city    = (form.city    || "").toLowerCase().trim();
+    const country = (form.country || "").toLowerCase().trim();
+    if (!product) return allSupportPersons.filter(u => u.role === "support" && u.approved);
+    const pool = allSupportPersons.filter(u => u.role === "support" && u.approved);
+    const level1 = pool.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
+        city && p.city && p.city.toLowerCase().trim() === city;
+    });
+    if (level1.length > 0) return level1;
+    const level2 = pool.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
+        country && p.country && p.country.toLowerCase().trim() === country;
+    });
+    if (level2.length > 0) return level2;
+    const level3 = pool.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase());
+    });
+    if (level3.length > 0) return level3;
+    return pool;
+  };
+
+  const getFilterMessage = () => {
+    const product = form.category;
+    const city    = (form.city    || "").toLowerCase().trim();
+    const country = (form.country || "").toLowerCase().trim();
+    if (!product) return null;
+    const pool = allSupportPersons.filter(u => u.role === "support" && u.approved);
+    const level1 = pool.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
+        city && p.city && p.city.toLowerCase().trim() === city;
+    });
+    if (level1.length > 0 && city)
+      return { msg: `✅ Showing ${product} specialists in ${form.city}`, color: "#10b981", bg: "#ecfdf5" };
+    const level2 = pool.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
+        country && p.country && p.country.toLowerCase().trim() === country;
+    });
+    if (level2.length > 0 && country)
+      return { msg: `⚠️ No specialist in ${form.city || "your city"} — showing ${product} specialists in ${form.country}`, color: "#f59e0b", bg: "#fffbeb" };
+    const level3 = pool.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase());
+    });
+    if (level3.length > 0)
+      return { msg: `ℹ️ No location match — showing all ${product} specialists`, color: "#3b82f6", bg: "#eff6ff" };
+    return { msg: `⚠️ No specialist found for ${product} — showing all support persons`, color: "#ef4444", bg: "#fef2f2" };
+  };
+
+  const filteredSupportPersons = getFilteredSupportPersons();
+  const filterMessage          = getFilterMessage();
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      setFormErrors(prev => ({ ...prev, productImage: "Image must be less than 3MB" }));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setForm(prev => ({ ...prev, productImage: ev.target.result }));
+      setImagePreview(ev.target.result);
+      setFormErrors(prev => ({ ...prev, productImage: "" }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
+    if (name === "pincode"  && value !== "" && !/^\d*$/.test(value))          return;
+    if (name === "category" || name === "city" || name === "country") {
+      setForm(prev => ({ ...prev, [name]: value, assignTo: "" }));
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+    setFormErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.category)        e.category    = "Please select a product.";
+    if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
+    if (!form.customer.trim()) e.customer    = "Customer name is required.";
+    else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
+    else if (form.customer.trim().length < 2) e.customer = "Enter a valid full name.";
+    if (!form.email.trim())    e.email       = "Customer email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
+    if (!form.phone.trim())    e.phone       = "Contact number is required.";
+    else if (!/^\d{10}$/.test(form.phone.replace(/\s+/g, ""))) e.phone = "Enter a valid 10-digit phone number.";
+    if (!form.city.trim())     e.city        = "City is required.";
+    if (!form.country)         e.country     = "Please select a country.";
+    if (!form.pincode.trim())  e.pincode     = "Pincode is required.";
+    else if (!/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode.";
+    if (!form.assignTo)        e.assignTo    = "Please assign a support person.";
+    if (!form.description.trim()) e.description = "Description is required.";
+    else if (form.description.trim().length < 20) e.description = "Description must be at least 20 characters.";
+    else if (form.description.trim().length > 500) e.description = "Description cannot exceed 500 characters.";
+    return e;
+  };
+
+  const handleSubmit = () => {
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setFormErrors(validationErrors);
+      const firstErr = document.querySelector(".field-error");
+      if (firstErr) firstErr.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const cleanPhone = form.phone.replace(/\s+/g, "");
+    const allTickets_ref = tickets;
+    fetch(`${BASE_URL}/tickets`)
+      .then(r => r.json())
+      .then(allTickets => {
+        const sameCustomerTicket = allTickets.find(t =>
+          t.phone === cleanPhone &&
+          t.category === form.category &&
+          t.serialNo.trim().toLowerCase() === form.serialNo.trim().toLowerCase()
+        );
+        if (sameCustomerTicket) {
+          setSubmitting(true);
+          const issueEntry = {
+            description:  form.description,
+            raisedBy:     currentUser?.email,
+            raisedByName: currentUser?.name,
+            raisedAt:     new Date().toISOString(),
+            assignTo:     form.assignTo,
+          };
+          const existingHistory = Array.isArray(sameCustomerTicket.issueHistory) ? sameCustomerTicket.issueHistory : [];
+          const updates = {
+            issueHistory: [...existingHistory, issueEntry],
+            description:  form.description,
+            assignTo:     form.assignTo,
+            date:         new Date().toISOString().slice(0, 10),
+          };
+          if (sameCustomerTicket.status === "resolved" || sameCustomerTicket.status === "rma") {
+            updates.status     = "pending";
+            updates.resolvedAt = null;
+            updates.acceptedAt = null;
+            updates.rmaStatus  = false;
+            updates.rmaReason  = "";
+          }
+          if (form.productImage) updates.productImage = form.productImage;
+          fetch(`${BASE_URL}/tickets/${sameCustomerTicket.id}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updates),
+          })
+            .then(r => r.json())
+            .then(() => {
+              setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+              setImagePreview(""); setFormErrors({});
+              setSuccessMsg("✅ Same customer found! Issue updated in existing Ticket. Status reset to PENDING.");
+              setActiveTab("tickets");
+              fetchTickets();
+              setTimeout(() => setSuccessMsg(""), 6000);
+            })
+            .catch(() => setFormErrors({ submit: "❌ Failed to update ticket." }))
+            .finally(() => setSubmitting(false));
+          return;
+        }
+        setSubmitting(true);
+        const newTicket = {
+          ...form,
+          phone:        cleanPhone,
+          status:       "pending",
+          raisedBy:     currentUser?.email || "unknown",
+          raisedByName: currentUser?.name  || "Unknown",
+          date:         new Date().toISOString().slice(0, 10),
+          createdAt:    new Date().toISOString(),
+        };
+        fetch(`${BASE_URL}/tickets`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newTicket)
+        })
+          .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
+          .then(() => {
+            setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+            setImagePreview(""); setFormErrors({});
+            setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING");
+            setActiveTab("tickets");
+            fetchTickets();
+            setTimeout(() => setSuccessMsg(""), 4000);
+          })
+          .catch(() => setFormErrors({ submit: "❌ Failed to submit ticket." }))
+          .finally(() => setSubmitting(false));
+      })
+      .catch(() => setFormErrors({ submit: "❌ Failed to check existing tickets." }));
+  };
+
+  const borderColor = (field) => formErrors[field] ? "#ef4444" : "#ddd5c8";
+  const inputStyle  = (field) => ({
+    width: "100%", padding: "11px 14px",
+    border: `2px solid ${borderColor(field)}`,
+    borderRadius: 10, fontSize: 13.5, boxSizing: "border-box",
+    outline: "none", transition: "border-color 0.2s, box-shadow 0.25s",
+    background: formErrors[field] ? "#fff5f5" : "#f0ebe3",
+    fontFamily: "DM Sans, sans-serif", color: "#111",
+  });
+
+  // ── Stats ──
   const counts = {
     all:      tickets.length,
     pending:  tickets.filter(t => t.status === "pending").length,
@@ -310,579 +541,593 @@ export default function SupportDashboard() {
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8" }}>
 
-      {/* ✅ Issue Popup Modal — shows resolutionNotes FIRST */}
+      {/* Issue Popup Modal */}
       {issuePopup && (
-        <div
-          onClick={() => setIssuePopup(null)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
-            padding: 20
-          }}>
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: "white", borderRadius: 14, padding: "24px 28px",
-              maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-              border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#e5e7eb"}`
-            }}>
+        <div onClick={() => setIssuePopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#e5e7eb"}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#059669" }}>
                 {issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}
               </div>
-              <button onClick={() => setIssuePopup(null)}
-                style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>
-                ✕ Close
-              </button>
+              <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
-
-            {/* ✅ If resolved — show WHAT WAS SOLVED first, then original issue below */}
             {issuePopup.resolutionNotes ? (
               <>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                  🔧 What was solved:
-                </div>
-                <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>
-                  {issuePopup.resolutionNotes}
-                </div>
-                {issuePopup.resolutionTimeTaken && (
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
-                    ⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong>
-                  </div>
-                )}
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                  📋 Original Issue Raised:
-                </div>
-                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #10b981" }}>
-                  {issuePopup.description}
-                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>🔧 What was solved:</div>
+                <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>{issuePopup.resolutionNotes}</div>
+                {issuePopup.resolutionTimeTaken && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong></div>}
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>📋 Original Issue Raised:</div>
+                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #10b981" }}>{issuePopup.description}</div>
               </>
             ) : (
-              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#f9fafb", padding: "14px 16px", borderRadius: 10, border: "1px solid #e5e7eb", borderLeft: "4px solid #10b981" }}>
-                {issuePopup.description}
-              </div>
+              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#f9fafb", padding: "14px 16px", borderRadius: 10, border: "1px solid #e5e7eb", borderLeft: "4px solid #10b981" }}>{issuePopup.description}</div>
             )}
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div style={{
-        background: "linear-gradient(135deg, #10b981, #059669)", color: "white",
-        padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center",
-        boxShadow: "0 2px 12px rgba(16,185,129,0.3)"
-      }}>
+      {/* ✅ Header with logo */}
+      <div style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "white", padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(16,185,129,0.3)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ background: "white", color: "#10b981", width: 38, height: 38, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 18 }}>S</div>
+          <img src="/logo.png" alt="Syrotech" style={{ width: 38, height: 38, borderRadius: 8, objectFit: "contain", background: "white", padding: 2 }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>Syrotech — Support Portal</div>
             <div style={{ fontSize: 11, opacity: 0.85 }}>🛠️ {currentUser?.name}</div>
           </div>
         </div>
-        <button onClick={handleLogout}
-          style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "white", padding: "6px 16px", borderRadius: 6, cursor: "pointer" }}>
+        <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "white", padding: "6px 16px", borderRadius: 6, cursor: "pointer" }}>
           Logout
         </button>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
+      {/* ✅ Tabs */}
+      <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
+        {[
+          ["tickets",  `📋 My Tickets (${tickets.length})`],
+          ["raise",    "🎫 Raise Ticket"],
+        ].map(([key, label]) => (
+          <button key={key} onClick={() => setActiveTab(key)} style={{
+            padding: "14px 22px", fontSize: 13, fontWeight: activeTab === key ? 800 : 500,
+            color: activeTab === key ? "#059669" : "#6b7280",
+            background: "none", border: "none", borderBottom: activeTab === key ? "3px solid #10b981" : "3px solid transparent",
+            cursor: "pointer", whiteSpace: "nowrap", marginBottom: -2,
+          }}>{label}</button>
+        ))}
+      </div>
 
-        {/* Top Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
-          {[
-            ["Total Tickets",  counts.all,         "🎫", "#3b82f6", "#eff6ff"],
-            ["Resolved",       counts.resolved,     "✅", "#10b981", "#ecfdf5"],
-            ["Avg Resolution", `${avgHours}h`,      "⏱️", "#f59e0b", "#fffbeb"],
-            ["Resolution %",   `${resolutionPct}%`, "📊", "#8b5cf6", "#f5f3ff"],
-          ].map(([label, val, icon, col, bg]) => (
-            <div key={label} style={{ background: "white", borderRadius: 12, padding: "18px 20px", boxShadow: "0 2px 8px rgba(0,0,0,0.07)", borderTop: `4px solid ${col}` }}>
-              <div style={{ fontSize: 24 }}>{icon}</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: col, marginTop: 6 }}>{val}</div>
-              <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{label}</div>
-            </div>
-          ))}
+      {/* ✅ Success message */}
+      {successMsg && (
+        <div style={{ margin: "16px 28px 0", background: "#ecfdf5", border: "1.5px solid #6ee7b7", borderRadius: 10, padding: "12px 20px", fontSize: 14, fontWeight: 600, color: "#065f46" }}>
+          {successMsg}
         </div>
+      )}
 
-        {/* 24hr Banner */}
-        {counts.resolved > 0 && (
-          <div style={{ background: within24 === counts.resolved ? "#ecfdf5" : "#fffbeb", border: `1px solid ${within24 === counts.resolved ? "#6ee7b7" : "#fcd34d"}`, borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 20 }}>{within24 === counts.resolved ? "🎯" : "⚠️"}</span>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>
-              24hr Compliance: {within24}/{counts.resolved} tickets resolved within 24 hours
-              {within24 < counts.resolved && " — Some tickets exceeded the 24hr limit"}
-            </span>
+      {/* ══ RAISE TICKET TAB ══ */}
+      {activeTab === "raise" && (
+        <div style={{ maxWidth: 1100, margin: "28px auto", padding: "0 16px" }}>
+          <div className="form-card">
+            <div className="form-card-header">
+              <div className="form-card-icon">🎫</div>
+              <div>
+                <h2 className="form-card-title">Raise New Support Ticket</h2>
+                <p className="form-card-sub">All fields marked <span style={{ color: "#ff6b35" }}>*</span> are required.</p>
+              </div>
+            </div>
+
+            {formErrors.submit && <div className="form-error-banner">{formErrors.submit}</div>}
+
+            <div className="form-grid">
+              <div className="form-field">
+                <label className="form-label">Product <span className="req">*</span></label>
+                <select name="category" value={form.category} onChange={handleChange} style={inputStyle("category")}>
+                  <option value="">Select Product</option>
+                  <option>Router</option><option>ONU</option><option>Switch</option>
+                </select>
+                {formErrors.category && <span className="field-error">{formErrors.category}</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Serial Number <span className="req">*</span></label>
+                <input name="serialNo" placeholder="e.g. SYR-20240001" value={form.serialNo} onChange={handleChange} style={inputStyle("serialNo")} />
+                {formErrors.serialNo && <span className="field-error">{formErrors.serialNo}</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">MAC Address</label>
+                <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF" value={form.mac} onChange={handleChange} style={inputStyle("mac")} />
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Customer Name <span className="req">*</span></label>
+                <input name="customer" placeholder="Full name (letters only)" value={form.customer} onChange={handleChange} style={inputStyle("customer")} />
+                {formErrors.customer && <span className="field-error">{formErrors.customer}</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Customer Email <span className="req">*</span></label>
+                <input name="email" placeholder="customer@email.com" value={form.email} onChange={handleChange} style={inputStyle("email")} />
+                {formErrors.email && <span className="field-error">{formErrors.email}</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Contact Number <span className="req">*</span><span className="form-hint"> (10 digits)</span></label>
+                <input name="phone" placeholder="e.g. 9876543210" value={form.phone} onChange={handleChange} maxLength={10} style={inputStyle("phone")} />
+                {formErrors.phone ? <span className="field-error">{formErrors.phone}</span> : <span className="field-hint">{form.phone.replace(/\s+/g, "").length}/10 digits</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">City <span className="req">*</span></label>
+                <input name="city" placeholder="e.g. Mumbai" value={form.city} onChange={handleChange} style={inputStyle("city")} />
+                {formErrors.city && <span className="field-error">{formErrors.city}</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Country <span className="req">*</span></label>
+                <select name="country" value={form.country} onChange={handleChange} style={inputStyle("country")}>
+                  <option value="">Select Country</option>
+                  <option>India</option><option>United States</option><option>United Kingdom</option>
+                  <option>United Arab Emirates</option><option>Saudi Arabia</option><option>Canada</option>
+                  <option>Australia</option><option>Singapore</option><option>Germany</option>
+                  <option>France</option><option>Nepal</option><option>Bangladesh</option>
+                  <option>Sri Lanka</option><option>Pakistan</option><option>Other</option>
+                </select>
+                {formErrors.country && <span className="field-error">{formErrors.country}</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Pincode <span className="req">*</span><span className="form-hint"> (6 digits)</span></label>
+                <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
+                {formErrors.pincode ? <span className="field-error">{formErrors.pincode}</span> : <span className="field-hint">{form.pincode.length}/6 digits</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">
+                  Assign Support Person <span className="req">*</span>
+                  {form.category && <span className="form-hint"> (filtered by product & location)</span>}
+                </label>
+                {filterMessage && (
+                  <div style={{ fontSize: 11, fontWeight: 600, color: filterMessage.color, background: filterMessage.bg, padding: "6px 10px", borderRadius: 6, marginBottom: 6, border: `1px solid ${filterMessage.color}22` }}>
+                    {filterMessage.msg}
+                  </div>
+                )}
+                <select name="assignTo" value={form.assignTo} onChange={handleChange} style={inputStyle("assignTo")}>
+                  <option value="">{form.category ? `Choose ${form.category} specialist${form.city ? ` in ${form.city}` : ""}` : "Select product first to filter specialists"}</option>
+                  {filteredSupportPersons.map(p => (
+                    <option key={p.email} value={p.name}>
+                      {p.name} — {p.city || "—"}{p.specialization && p.specialization.length > 0 ? ` (${p.specialization.join(", ")})` : ""}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.assignTo && <span className="field-error">{formErrors.assignTo}</span>}
+              </div>
+            </div>
+
+            {/* Product Image */}
+            <div className="form-field" style={{ padding: "20px 36px 0" }}>
+              <label className="form-label">Product Image <span className="form-hint">(optional — upload photo showing serial no & MAC address)</span></label>
+              <div style={{ border: `2px dashed ${formErrors.productImage ? "#ef4444" : "#ddd5c8"}`, borderRadius: 10, padding: "16px 20px", background: "#f9f7f4", textAlign: "center" }}>
+                {!imagePreview ? (
+                  <div>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
+                    <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>Upload product photo (max 3MB)</div>
+                    <label style={{ background: "#ff5a00", color: "white", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-block" }}>
+                      Choose Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+                    </label>
+                  </div>
+                ) : (
+                  <div>
+                    <img src={imagePreview} alt="Product" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
+                    <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
+                      <label style={{ background: "#f0ebe3", color: "#555", border: "1px solid #ddd5c8", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>
+                        Change Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+                      </label>
+                      <button type="button" onClick={() => { setImagePreview(""); setForm(prev => ({ ...prev, productImage: "" })); }}
+                        style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Remove</button>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#10b981", marginTop: 8, fontWeight: 600 }}>✅ Image uploaded</div>
+                  </div>
+                )}
+              </div>
+              {formErrors.productImage && <span className="field-error">{formErrors.productImage}</span>}
+            </div>
+
+            {/* Description */}
+            <div className="form-field" style={{ padding: "20px 36px 0" }}>
+              <label className="form-label">Issue Description <span className="req">*</span><span className="form-hint"> (min 20, max 500 characters)</span></label>
+              <textarea name="description" rows={4}
+                placeholder="Describe the issue in detail — what happened, when it started, what error you see..."
+                value={form.description} onChange={handleChange}
+                style={{ ...inputStyle("description"), resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                {formErrors.description ? <span className="field-error">{formErrors.description}</span> : <span className="field-hint">{form.description.length}/500 characters</span>}
+                <span className={`char-count ${form.description.length < 20 ? "char-short" : form.description.length > 450 ? "char-warn" : "char-ok"}`}>
+                  {form.description.length < 20 ? `${20 - form.description.length} more chars needed` : `${500 - form.description.length} chars left`}
+                </span>
+              </div>
+            </div>
+
+            <button onClick={handleSubmit} disabled={submitting} className={`submit-btn ${submitting ? "submit-btn-loading" : ""}`}>
+              {submitting ? <><span className="btn-spinner" /> Submitting...</> : "🎫 Submit Ticket"}
+            </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* RMA Banner */}
-        {counts.rma > 0 && (
-          <div style={{ background: "#f5f3ff", border: "1px solid #c4b5fd", borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 20 }}>🔧</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#5b21b6" }}>
-              {counts.rma} ticket{counts.rma > 1 ? "s" : ""} sent to RMA center
-            </span>
-          </div>
-        )}
+      {/* ══ TICKETS TAB ══ */}
+      {activeTab === "tickets" && (
+        <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
 
-        {/* Filter + Date Sort Bar */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {[["all","All"],["pending","⏳ Pending"],["open","🔓 Open"],["resolved","✅ Resolved"],["rma","🔧 RMA"]].map(([key, label]) => (
-              <button key={key} onClick={() => setFilter(key)} style={{
-                padding: "8px 16px", borderRadius: 20,
-                border: filter === key ? "none" : "1px solid #d1d5db",
-                background: filter === key ? (key === "rma" ? "#7c3aed" : "#10b981") : "white",
-                color: filter === key ? "white" : "#555",
-                fontWeight: filter === key ? 700 : 400,
-                fontSize: 13, cursor: "pointer"
-              }}>
-                {label} ({counts[key] ?? 0})
-              </button>
+          {/* Top Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+            {[
+              ["Total Tickets",  counts.all,         "🎫", "#3b82f6", "#eff6ff"],
+              ["Resolved",       counts.resolved,     "✅", "#10b981", "#ecfdf5"],
+              ["Avg Resolution", `${avgHours}h`,      "⏱️", "#f59e0b", "#fffbeb"],
+              ["Resolution %",   `${resolutionPct}%`, "📊", "#8b5cf6", "#f5f3ff"],
+            ].map(([label, val, icon, col, bg]) => (
+              <div key={label} style={{ background: "white", borderRadius: 12, padding: "18px 20px", boxShadow: "0 2px 8px rgba(0,0,0,0.07)", borderTop: `4px solid ${col}` }}>
+                <div style={{ fontSize: 24 }}>{icon}</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: col, marginTop: 6 }}>{val}</div>
+                <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{label}</div>
+              </div>
             ))}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>📅 Sort:</span>
-            <select value={dateSort} onChange={e => setDateSort(e.target.value)}
-              style={{ padding: "7px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 12, cursor: "pointer", background: "white", color: "#374151" }}>
-              <option value="newest">Newest First ↓</option>
-              <option value="oldest">Oldest First ↑</option>
-            </select>
+
+          {/* 24hr Banner */}
+          {counts.resolved > 0 && (
+            <div style={{ background: within24 === counts.resolved ? "#ecfdf5" : "#fffbeb", border: `1px solid ${within24 === counts.resolved ? "#6ee7b7" : "#fcd34d"}`, borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 20 }}>{within24 === counts.resolved ? "🎯" : "⚠️"}</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>
+                24hr Compliance: {within24}/{counts.resolved} tickets resolved within 24 hours
+                {within24 < counts.resolved && " — Some tickets exceeded the 24hr limit"}
+              </span>
+            </div>
+          )}
+
+          {/* RMA Banner */}
+          {counts.rma > 0 && (
+            <div style={{ background: "#f5f3ff", border: "1px solid #c4b5fd", borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 20 }}>🔧</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#5b21b6" }}>{counts.rma} ticket{counts.rma > 1 ? "s" : ""} sent to RMA center</span>
+            </div>
+          )}
+
+          {/* Filter + Sort Bar */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {[["all","All"],["pending","⏳ Pending"],["open","🔓 Open"],["resolved","✅ Resolved"],["rma","🔧 RMA"]].map(([key, label]) => (
+                <button key={key} onClick={() => setFilter(key)} style={{ padding: "8px 16px", borderRadius: 20, border: filter === key ? "none" : "1px solid #d1d5db", background: filter === key ? (key === "rma" ? "#7c3aed" : "#10b981") : "white", color: filter === key ? "white" : "#555", fontWeight: filter === key ? 700 : 400, fontSize: 13, cursor: "pointer" }}>
+                  {label} ({counts[key] ?? 0})
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>📅 Sort:</span>
+              <select value={dateSort} onChange={e => setDateSort(e.target.value)} style={{ padding: "7px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 12, cursor: "pointer", background: "white", color: "#374151" }}>
+                <option value="newest">Newest First ↓</option>
+                <option value="oldest">Oldest First ↑</option>
+              </select>
+            </div>
           </div>
-        </div>
 
-        {filtered.length === 0 && (
-          <div style={{ textAlign: "center", padding: 60, background: "white", borderRadius: 14, color: "#aaa" }}>
-            <div style={{ fontSize: 48 }}>📭</div>
-            <p style={{ marginTop: 12 }}>No tickets in this category.</p>
-          </div>
-        )}
+          {filtered.length === 0 && (
+            <div style={{ textAlign: "center", padding: 60, background: "white", borderRadius: 14, color: "#aaa" }}>
+              <div style={{ fontSize: 48 }}>📭</div>
+              <p style={{ marginTop: 12 }}>No tickets in this category.</p>
+            </div>
+          )}
 
-        {/* TABLE */}
-        {filtered.length > 0 && (
-          <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
-              <thead>
-                <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
-                  {["Ticket No","Raised By","Product / S/N","MAC ID","Customer / KYC","Issue","Status","Image","RMA","Actions"].map((h, i) => (
-                    <th key={i} style={{
-                      padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
-                      textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
-                      borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap"
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((ticket, idx) => {
-                  const s            = (ticket.status || "pending").toLowerCase();
-                  const isReassigned = !!ticket.reassignedFrom;
-                  const rf           = reassignForm[ticket.id] || {};
-                  const rmaf         = rmaForm[ticket.id] || {};
-                  const showReassign = rf.show || false;
-                  const showRma      = rmaf.show || false;
-                  const showResolve  = resolveForm[ticket.id]?.show || false;
-                  const filteredReassignPersons = getFilteredReassignPersons(allSupportPersons, ticket, currentUser?.name);
-                  const nearbyRmaCenters        = getFilteredRMACenters(rmaCenters, ticket);
+          {/* TABLE */}
+          {filtered.length > 0 && (
+            <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
+                <thead>
+                  <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
+                    {["Ticket No","Raised By","Product / S/N","MAC ID","Customer / KYC","Issue","Status","Image","RMA","Actions"].map((h, i) => (
+                      <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((ticket, idx) => {
+                    const s            = (ticket.status || "pending").toLowerCase();
+                    const isReassigned = !!ticket.reassignedFrom;
+                    const rf           = reassignForm[ticket.id] || {};
+                    const rmaf         = rmaForm[ticket.id] || {};
+                    const showReassign = rf.show || false;
+                    const showRma      = rmaf.show || false;
+                    const showResolve  = resolveForm[ticket.id]?.show || false;
+                    const filteredReassignPersons = getFilteredReassignPersons(allSupportPersons, ticket, currentUser?.name);
+                    const nearbyRmaCenters        = getFilteredRMACenters(rmaCenters, ticket);
 
-                  return (
-                    <>
-                      <tr key={ticket.id} style={{
-                        borderBottom: "1px solid #f0ede8",
-                        background: s === "rma" ? "#faf5ff" : isReassigned ? "#fffdf0" : idx % 2 === 0 ? "#f9f9f9" : "white",
-                        borderLeft: `4px solid ${s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc")}`,
-                      }}>
+                    return (
+                      <>
+                        <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: s === "rma" ? "#faf5ff" : isReassigned ? "#fffdf0" : idx % 2 === 0 ? "#f9f9f9" : "white", borderLeft: `4px solid ${s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc")}` }}>
 
-                        {/* Ticket No */}
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{supportTicketNumberMap[ticket.id]}</div>
-                          <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
-                          {ticket.issueHistory && ticket.issueHistory.length > 0 && (
-                            <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>
-                          )}
-                        </td>
+                          {/* Ticket No */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{supportTicketNumberMap[ticket.id]}</div>
+                            <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
+                            {ticket.issueHistory && ticket.issueHistory.length > 0 && <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>}
+                          </td>
 
-                        {/* Raised By */}
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
-                          <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.date}</div>
-                        </td>
+                          {/* Raised By */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
+                            <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.date}</div>
+                          </td>
 
-                        {/* Product / S/N */}
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          <div style={{ fontWeight: 700, fontSize: 13 }}>{ticket.category}</div>
-                          <div style={{ fontSize: 11, color: "#6b7280" }}>S/N: {ticket.serialNo}</div>
-                        </td>
+                          {/* Product / S/N */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{ticket.category}</div>
+                            <div style={{ fontSize: 11, color: "#6b7280" }}>S/N: {ticket.serialNo}</div>
+                          </td>
 
-                        {/* MAC ID */}
-                        <td style={{ padding: "12px 14px", fontSize: 11, color: "#555", whiteSpace: "nowrap" }}>
-                          {ticket.mac || <span style={{ color: "#d1d5db" }}>—</span>}
-                        </td>
+                          {/* MAC ID */}
+                          <td style={{ padding: "12px 14px", fontSize: 11, color: "#555", whiteSpace: "nowrap" }}>
+                            {ticket.mac || <span style={{ color: "#d1d5db" }}>—</span>}
+                          </td>
 
-                        {/* Customer / KYC */}
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          <div style={{ fontWeight: 600, fontSize: 13 }}>{ticket.customer || "—"}</div>
-                          <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone || <span style={{ color: "#ef4444" }}>⚠ Missing</span>}</div>
-                          <div style={{ fontSize: 11, color: "#6b7280" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ") || "—"}</div>
-                        </td>
+                          {/* Customer / KYC */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                            <div style={{ fontWeight: 600, fontSize: 13 }}>{ticket.customer || "—"}</div>
+                            <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone || <span style={{ color: "#ef4444" }}>⚠ Missing</span>}</div>
+                            <div style={{ fontSize: 11, color: "#6b7280" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ") || "—"}</div>
+                          </td>
 
-                        {/* ✅ Issue — click to open popup */}
-                        <td style={{ padding: "12px 14px", maxWidth: 180 }}>
-                          <div
-                            onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                            style={{
-                              fontSize: 12, color: "#374151",
-                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160,
-                              cursor: "pointer",
-                              textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af"
-                            }}
-                            title="Click to view full issue"
-                          >
-                            {ticket.description?.length > 35
-                              ? ticket.description.slice(0, 35) + "…"
-                              : ticket.description || "—"}
-                          </div>
-                          {isReassigned && (
-                            <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginTop: 2 }}>🔄 from {ticket.reassignedFrom}</div>
-                          )}
-                          {s === "resolved" && ticket.resolutionNotes && (
-                            <div
-                              onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                              style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>
-                              ✅ Resolved — click to view
+                          {/* Issue */}
+                          <td style={{ padding: "12px 14px", maxWidth: 180 }}>
+                            <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                              style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
+                              title="Click to view full issue">
+                              {ticket.description?.length > 35 ? ticket.description.slice(0, 35) + "…" : ticket.description || "—"}
                             </div>
-                          )}
-                        </td>
-
-                        {/* ✅ Status — click RESOLVED to see what was solved */}
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          <span
-                            onClick={() => {
-                              if (s === "resolved" && ticket.resolutionNotes) {
-                                setIssuePopup({
-                                  description: ticket.description,
-                                  resolutionNotes: ticket.resolutionNotes,
-                                  resolutionTimeTaken: ticket.resolutionTimeTaken,
-                                });
-                              }
-                            }}
-                            style={{
-                              padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
-                              color: STATUS_COLOR[s], background: STATUS_BG[s],
-                              cursor: s === "resolved" && ticket.resolutionNotes ? "pointer" : "default",
-                              border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : "none",
-                              display: "inline-block"
-                            }}
-                            title={s === "resolved" && ticket.resolutionNotes ? "Click to see what was resolved" : ""}
-                          >
-                            {s.toUpperCase()}
-                          </span>
-                          {s === "resolved" && ticket.resolutionNotes && (
-                            <div
-                              onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                              style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
-                              📋 View details
-                            </div>
-                          )}
-                          {ticket.createdAt && s !== "resolved" && s !== "rma" && (() => {
-                            const remaining = new Date(ticket.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
-                            if (remaining <= 0) return <div style={{ fontSize: 10, color: "#dc2626", fontWeight: 700, marginTop: 2 }}>⏱️ OVERDUE</div>;
-                            const hrs  = Math.floor(remaining / (1000 * 60 * 60));
-                            const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-                            return <div style={{ fontSize: 10, color: remaining < 4 * 60 * 60 * 1000 ? "#dc2626" : "#059669", marginTop: 2 }}>⏱️ {hrs}h {mins}m left</div>;
-                          })()}
-                          {s === "resolved" && ticket.resolutionTimeTaken && (
-                            <div style={{ fontSize: 10, color: "#6b7280", marginTop: 3 }}>⏱️ {ticket.resolutionTimeTaken}</div>
-                          )}
-                        </td>
-
-                        {/* Image */}
-                        <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                          {ticket.productImage ? (
-                            <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
-                              style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#065f46" }}>
-                              📷 {expandedImage === ticket.id ? "Hide" : "View"}
-                            </button>
-                          ) : (
-                            <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
-                          )}
-                        </td>
-
-                        {/* RMA */}
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          {ticket.rmaStatus ? (
-                            <div>
-                              <span style={{ background: "#f5f3ff", color: "#7c3aed", padding: "2px 8px", borderRadius: 8, fontSize: 10, fontWeight: 700 }}>🔧 RMA</span>
-                              <div style={{ fontSize: 10, color: "#6d28d9", marginTop: 2 }}>{ticket.rmaCenterName}</div>
-                              <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.rmaCenterCity}</div>
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
-                          )}
-                        </td>
-
-                        {/* Actions */}
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {s === "open" && (
-                              <button
-                                onClick={() => setResolveForm(prev => ({
-                                  ...prev,
-                                  [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show }
-                                }))}
-                                style={{
-                                  background: showResolve ? "#ecfdf5" : "#10b981",
-                                  color: showResolve ? "#065f46" : "white",
-                                  border: showResolve ? "1.5px solid #6ee7b7" : "none",
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer",
-                                  fontSize: 11, fontWeight: 600, whiteSpace: "nowrap"
-                                }}>
-                                ✅ {showResolve ? "Cancel" : "Resolve"}
-                              </button>
+                            {isReassigned && <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginTop: 2 }}>🔄 from {ticket.reassignedFrom}</div>}
+                            {s === "resolved" && ticket.resolutionNotes && (
+                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
                             )}
-                            {s === "resolved" && (
-                              <button onClick={() => markWhatsAppSent(ticket.id)}
-                                style={{ background: "#25D366", color: "white", border: "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
-                                📱 WhatsApp
-                              </button>
-                            )}
-                            {(s === "open" || s === "pending") && (
-                              <button
-                                onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showRma } }))}
-                                style={{ background: showRma ? "#ede9fe" : "#f5f3ff", border: `1.5px solid ${showRma ? "#7c3aed" : "#c4b5fd"}`, color: "#5b21b6", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
-                                🔧 RMA
-                              </button>
-                            )}
-                            {s !== "resolved" && s !== "rma" && (
-                              <button
-                                onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showReassign } }))}
-                                style={{ background: showReassign ? "#fef9c3" : "#fff7ed", border: `1.5px solid ${showReassign ? "#f59e0b" : "#fed7aa"}`, color: "#92400e", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
-                                🔄
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
 
-                      {/* Image expanded row */}
-                      {expandedImage === ticket.id && ticket.productImage && (
-                        <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                          <td colSpan={10} style={{ padding: "12px 20px" }}>
-                            <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                              <img src={ticket.productImage} alt="Product"
-                                style={{ maxHeight: 200, maxWidth: 300, borderRadius: 8, border: "2px solid #86efac", cursor: "pointer" }}
-                                onClick={() => {
-                                  const win = window.open("", "_blank");
-                                  win.document.write(`<html><head><title>Product Image</title></head><body style="margin:0;background:#111;display:flex;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box;"><img src="${ticket.productImage}" style="max-width:100%;height:auto;border-radius:8px;" /></body></html>`);
-                                  win.document.close();
-                                }}
-                              />
-                              <div style={{ fontSize: 12, color: "#065f46" }}>
-                                <div style={{ fontWeight: 700, marginBottom: 4 }}>📷 Product Image</div>
-                                <div style={{ color: "#6b7280" }}>Click image to open full size</div>
+                          {/* Status */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                            <span onClick={() => { if (s === "resolved" && ticket.resolutionNotes) setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken }); }}
+                              style={{ padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], cursor: s === "resolved" && ticket.resolutionNotes ? "pointer" : "default", border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : "none", display: "inline-block" }}
+                              title={s === "resolved" && ticket.resolutionNotes ? "Click to see what was resolved" : ""}>
+                              {s.toUpperCase()}
+                            </span>
+                            {s === "resolved" && ticket.resolutionNotes && (
+                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                                style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
+                            )}
+                            {ticket.createdAt && s !== "resolved" && s !== "rma" && (() => {
+                              const remaining = new Date(ticket.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
+                              if (remaining <= 0) return <div style={{ fontSize: 10, color: "#dc2626", fontWeight: 700, marginTop: 2 }}>⏱️ OVERDUE</div>;
+                              const hrs  = Math.floor(remaining / (1000 * 60 * 60));
+                              const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                              return <div style={{ fontSize: 10, color: remaining < 4 * 60 * 60 * 1000 ? "#dc2626" : "#059669", marginTop: 2 }}>⏱️ {hrs}h {mins}m left</div>;
+                            })()}
+                          </td>
+
+                          {/* Image */}
+                          <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            {ticket.productImage ? (
+                              <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
+                                style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#065f46" }}>
+                                📷 {expandedImage === ticket.id ? "Hide" : "View"}
+                              </button>
+                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                          </td>
+
+                          {/* RMA */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                            {ticket.rmaStatus ? (
+                              <div>
+                                <span style={{ background: "#f5f3ff", color: "#7c3aed", padding: "2px 8px", borderRadius: 8, fontSize: 10, fontWeight: 700 }}>🔧 RMA</span>
+                                <div style={{ fontSize: 10, color: "#6d28d9", marginTop: 2 }}>{ticket.rmaCenterName}</div>
+                                <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.rmaCenterCity}</div>
                               </div>
+                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                          </td>
+
+                          {/* Actions */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {s === "open" && (
+                                <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
+                                  style={{ background: showResolve ? "#ecfdf5" : "#10b981", color: showResolve ? "#065f46" : "white", border: showResolve ? "1.5px solid #6ee7b7" : "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                  ✅ {showResolve ? "Cancel" : "Resolve"}
+                                </button>
+                              )}
+                              {s === "resolved" && (
+                                <button onClick={() => markWhatsAppSent(ticket.id)}
+                                  style={{ background: "#25D366", color: "white", border: "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                  📱 WhatsApp
+                                </button>
+                              )}
+                              {(s === "open" || s === "pending") && (
+                                <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showRma } }))}
+                                  style={{ background: showRma ? "#ede9fe" : "#f5f3ff", border: `1.5px solid ${showRma ? "#7c3aed" : "#c4b5fd"}`, color: "#5b21b6", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                  🔧 RMA
+                                </button>
+                              )}
+                              {s !== "resolved" && s !== "rma" && (
+                                <button onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showReassign } }))}
+                                  style={{ background: showReassign ? "#fef9c3" : "#fff7ed", border: `1.5px solid ${showReassign ? "#f59e0b" : "#fed7aa"}`, color: "#92400e", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                  🔄
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
-                      )}
 
-                      {/* Resolve Form row */}
-                      {showResolve && s === "open" && (
-                        <tr key={`resolveform-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                          <td colSpan={10} style={{ padding: "16px 20px" }}>
-                            <div style={{ background: "linear-gradient(135deg, #ecfdf5, #d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
-                              <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 4 }}>✅ Confirm Resolution</div>
-                              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 16 }}>Fill in resolution details before marking as resolved.</div>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                        {/* Image expanded row */}
+                        {expandedImage === ticket.id && ticket.productImage && (
+                          <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
+                            <td colSpan={10} style={{ padding: "12px 20px" }}>
+                              <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                <img src={ticket.productImage} alt="Product" style={{ maxHeight: 200, maxWidth: 300, borderRadius: 8, border: "2px solid #86efac", cursor: "pointer" }}
+                                  onClick={() => openImageInNewTab(ticket.productImage)} />
+                                <div style={{ fontSize: 12, color: "#065f46" }}>
+                                  <div style={{ fontWeight: 700, marginBottom: 4 }}>📷 Product Image</div>
+                                  <div style={{ color: "#6b7280" }}>Click image to open full size</div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+
+                        {/* ✅ Resolve Form — Time Taken removed */}
+                        {showResolve && s === "open" && (
+                          <tr key={`resolveform-${ticket.id}`} style={{ background: "#f0fdf4" }}>
+                            <td colSpan={10} style={{ padding: "16px 20px" }}>
+                              <div style={{ background: "linear-gradient(135deg, #ecfdf5, #d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 4 }}>✅ Confirm Resolution</div>
+                                <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 16 }}>Describe what issue was resolved before marking as done.</div>
                                 <div>
                                   <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
                                     What issue was solved? <span style={{ color: "#ef4444" }}>*</span>
                                   </div>
-                                  <textarea
-                                    rows={3}
+                                  <textarea rows={3}
                                     placeholder="e.g. Router was not connecting — reset factory settings and reconfigured PPPoE..."
                                     value={resolveForm[ticket.id]?.notes || ""}
                                     onChange={e => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], notes: e.target.value } }))}
                                     style={{ width: "100%", padding: "10px 12px", border: "2px solid #6ee7b7", borderRadius: 8, fontSize: 12, outline: "none", fontFamily: "inherit", background: "white", resize: "vertical", color: "#111", lineHeight: 1.5, boxSizing: "border-box" }}
                                   />
+                                  {ticket.createdAt && <div style={{ marginTop: 6, fontSize: 11, color: "#6b7280" }}>⏱️ Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>}
+                                  {ticket.acceptedAt && <div style={{ marginTop: 3, fontSize: 11, color: "#6b7280" }}>🔓 Accepted: <strong>{new Date(ticket.acceptedAt).toLocaleString()}</strong></div>}
                                 </div>
-                                <div>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
-                                    Time Taken to Resolve <span style={{ color: "#ef4444" }}>*</span>
+                                {resolveForm[ticket.id]?.notes && (
+                                  <div style={{ background: "white", border: "1px solid #6ee7b7", borderRadius: 8, padding: "10px 14px", marginTop: 14, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+                                    <strong>📋 Summary:</strong><br />🔧 Resolved: {resolveForm[ticket.id].notes}
                                   </div>
-                                  <select
-                                    value={resolveForm[ticket.id]?.timeTaken || ""}
-                                    onChange={e => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], timeTaken: e.target.value } }))}
-                                    style={{ width: "100%", padding: "10px 12px", border: "2px solid #6ee7b7", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
-                                    <option value="">Select time taken</option>
-                                    <option value="Less than 30 minutes">Less than 30 minutes</option>
-                                    <option value="30 minutes - 1 hour">30 minutes – 1 hour</option>
-                                    <option value="1 - 2 hours">1 – 2 hours</option>
-                                    <option value="2 - 4 hours">2 – 4 hours</option>
-                                    <option value="4 - 8 hours">4 – 8 hours</option>
-                                    <option value="8 - 12 hours">8 – 12 hours</option>
-                                    <option value="12 - 24 hours">12 – 24 hours</option>
-                                    <option value="More than 24 hours">More than 24 hours</option>
-                                  </select>
-                                  {ticket.createdAt && (
-                                    <div style={{ marginTop: 8, fontSize: 11, color: "#6b7280" }}>⏱️ Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>
-                                  )}
-                                  {ticket.acceptedAt && (
-                                    <div style={{ marginTop: 4, fontSize: 11, color: "#6b7280" }}>🔓 Accepted: <strong>{new Date(ticket.acceptedAt).toLocaleString()}</strong></div>
-                                  )}
+                                )}
+                                <div style={{ marginTop: 16, display: "flex", gap: 10, alignItems: "center" }}>
+                                  <button onClick={() => handleResolveSubmit(ticket.id)}
+                                    style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "white", border: "none", padding: "10px 28px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit", boxShadow: "0 3px 12px rgba(16,185,129,0.4)" }}>
+                                    ✅ Confirm Resolved
+                                  </button>
+                                  <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
+                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
+                                    Cancel
+                                  </button>
                                 </div>
                               </div>
-                              {resolveForm[ticket.id]?.notes && resolveForm[ticket.id]?.timeTaken && (
-                                <div style={{ background: "white", border: "1px solid #6ee7b7", borderRadius: 8, padding: "10px 14px", marginTop: 14, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-                                  <strong>📋 Summary:</strong><br />
-                                  🔧 Resolved: {resolveForm[ticket.id].notes}<br />
-                                  ⏱️ Time taken: {resolveForm[ticket.id].timeTaken}
-                                </div>
-                              )}
-                              <div style={{ marginTop: 16, display: "flex", gap: 10, alignItems: "center" }}>
-                                <button
-                                  onClick={() => handleResolveSubmit(ticket.id)}
-                                  style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "white", border: "none", padding: "10px 28px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit", boxShadow: "0 3px 12px rgba(16,185,129,0.4)" }}>
-                                  ✅ Confirm Resolved
-                                </button>
-                                <button
-                                  onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
-                                  style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
-                                  Cancel
-                                </button>
-                                <span style={{ fontSize: 11, color: "#6b7280" }}>Both fields required ✅</span>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
+                            </td>
+                          </tr>
+                        )}
 
-                      {/* RMA Form row */}
-                      {showRma && (s === "open" || s === "pending") && (
-                        <tr key={`rmaform-${ticket.id}`} style={{ background: "#faf5ff" }}>
-                          <td colSpan={10} style={{ padding: "16px 20px" }}>
-                            <div style={{ background: "linear-gradient(135deg, #f5f3ff, #ede9fe)", border: "2px solid #7c3aed", borderRadius: 12, padding: "16px 20px" }}>
-                              <div style={{ fontSize: 13, fontWeight: 800, color: "#5b21b6", marginBottom: 12 }}>🔧 Cannot Resolve — Send to RMA</div>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                                <div>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reason *</div>
-                                  <select value={rmaf.reason || ""}
-                                    onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
-                                    style={{ width: "100%", padding: "10px 12px", border: "2px solid #c4b5fd", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
-                                    <option value="">Select reason</option>
-                                    {RMA_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
-                                  </select>
-                                </div>
-                                <div>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Nearest RMA Center *</div>
-                                  {nearbyRmaCenters.length > 0 && nearbyRmaCenters[0].city?.toLowerCase() === (ticket.city || "").toLowerCase() && (
-                                    <div style={{ fontSize: 11, color: "#10b981", fontWeight: 600, marginBottom: 4 }}>✅ Showing centers near {ticket.city}</div>
-                                  )}
-                                  <select value={rmaf.centerId || ""}
-                                    onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], centerId: e.target.value } }))}
-                                    style={{ width: "100%", padding: "10px 12px", border: "2px solid #c4b5fd", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
-                                    <option value="">Select RMA center</option>
-                                    {nearbyRmaCenters.map(c => <option key={c.id} value={c.id}>{c.name} — {c.city}</option>)}
-                                  </select>
-                                </div>
-                              </div>
-                              {rmaf.centerId && (() => {
-                                const center = rmaCenters.find(c => c.id === parseInt(rmaf.centerId));
-                                if (!center) return null;
-                                return (
-                                  <div style={{ background: "white", border: "1px solid #c4b5fd", borderRadius: 8, padding: "10px 14px", marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-                                    <strong>📍 {center.name}</strong> — {center.city} | 📞 {center.phone}<br />{center.address}
+                        {/* RMA Form row */}
+                        {showRma && (s === "open" || s === "pending") && (
+                          <tr key={`rmaform-${ticket.id}`} style={{ background: "#faf5ff" }}>
+                            <td colSpan={10} style={{ padding: "16px 20px" }}>
+                              <div style={{ background: "linear-gradient(135deg, #f5f3ff, #ede9fe)", border: "2px solid #7c3aed", borderRadius: 12, padding: "16px 20px" }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: "#5b21b6", marginBottom: 12 }}>🔧 Cannot Resolve — Send to RMA</div>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                                  <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reason *</div>
+                                    <select value={rmaf.reason || ""} onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
+                                      style={{ width: "100%", padding: "10px 12px", border: "2px solid #c4b5fd", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
+                                      <option value="">Select reason</option>
+                                      {RMA_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+                                    </select>
                                   </div>
-                                );
-                              })()}
-                              <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
-                                <button onClick={() => handleRMASubmit(ticket.id)} disabled={submittingRma === ticket.id}
-                                  style={{ background: submittingRma === ticket.id ? "#94a3b8" : "linear-gradient(135deg, #7c3aed, #6d28d9)", color: "white", border: "none", padding: "10px 24px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>
-                                  {submittingRma === ticket.id ? "⏳ Processing..." : "🔧 Confirm RMA + Send WhatsApp"}
-                                </button>
-                                <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
-                                  style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-
-                      {/* Reassign Form row */}
-                      {showReassign && s !== "resolved" && s !== "rma" && (
-                        <tr key={`reassignform-${ticket.id}`} style={{ background: "#fffdf0" }}>
-                          <td colSpan={10} style={{ padding: "16px 20px" }}>
-                            <div style={{ background: "linear-gradient(135deg, #fffbeb, #fef9c3)", border: "2px solid #f59e0b", borderRadius: 12, padding: "16px 20px" }}>
-                              <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e", marginBottom: 12 }}>🔄 Reassign This Ticket</div>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                                <div>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reassign To *</div>
-                                  <select value={rf.newPerson || ""}
-                                    onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], newPerson: e.target.value } }))}
-                                    style={{ width: "100%", padding: "10px 12px", border: "2px solid #fcd34d", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
-                                    <option value="">Select specialist</option>
-                                    {filteredReassignPersons.map(p => (
-                                      <option key={p.email} value={p.name}>
-                                        {p.name} — {p.city || "—"}{p.specialization?.length > 0 ? ` (${p.specialization.join(", ")})` : ""}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Nearest RMA Center *</div>
+                                    {nearbyRmaCenters.length > 0 && nearbyRmaCenters[0].city?.toLowerCase() === (ticket.city || "").toLowerCase() && (
+                                      <div style={{ fontSize: 11, color: "#10b981", fontWeight: 600, marginBottom: 4 }}>✅ Showing centers near {ticket.city}</div>
+                                    )}
+                                    <select value={rmaf.centerId || ""} onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], centerId: e.target.value } }))}
+                                      style={{ width: "100%", padding: "10px 12px", border: "2px solid #c4b5fd", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
+                                      <option value="">Select RMA center</option>
+                                      {nearbyRmaCenters.map(c => <option key={c.id} value={c.id}>{c.name} — {c.city}</option>)}
+                                    </select>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reason *</div>
-                                  <input type="text" placeholder="e.g. Busy with other tickets..."
-                                    value={rf.reason || ""}
-                                    onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
-                                    style={{ width: "100%", padding: "10px 12px", border: "2px solid #fcd34d", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", boxSizing: "border-box", color: "#111" }}
-                                  />
+                                {rmaf.centerId && (() => {
+                                  const center = rmaCenters.find(c => c.id === parseInt(rmaf.centerId));
+                                  if (!center) return null;
+                                  return <div style={{ background: "white", border: "1px solid #c4b5fd", borderRadius: 8, padding: "10px 14px", marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.8 }}><strong>📍 {center.name}</strong> — {center.city} | 📞 {center.phone}<br />{center.address}</div>;
+                                })()}
+                                <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
+                                  <button onClick={() => handleRMASubmit(ticket.id)} disabled={submittingRma === ticket.id}
+                                    style={{ background: submittingRma === ticket.id ? "#94a3b8" : "linear-gradient(135deg, #7c3aed, #6d28d9)", color: "white", border: "none", padding: "10px 24px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>
+                                    {submittingRma === ticket.id ? "⏳ Processing..." : "🔧 Confirm RMA + Send WhatsApp"}
+                                  </button>
+                                  <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
+                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
                                 </div>
                               </div>
-                              <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
-                                <button onClick={() => handleReassign(ticket.id)} disabled={reassigning === ticket.id}
-                                  style={{ background: reassigning === ticket.id ? "#94a3b8" : "linear-gradient(135deg, #f59e0b, #d97706)", color: "white", border: "none", padding: "10px 24px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>
-                                  {reassigning === ticket.id ? "⏳ Reassigning..." : "🔄 Confirm Reassign"}
-                                </button>
-                                <button onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
-                                  style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
+                            </td>
+                          </tr>
+                        )}
 
-                      {/* Feedback row */}
-                      {s === "resolved" && (
-                        <tr key={`fb-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                          <td colSpan={10} style={{ padding: "8px 20px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                              {ticket.feedbackRating ? (
-                                <span style={{ fontSize: 12, color: "#065f46", fontWeight: 600 }}>
-                                  ⭐ Customer Rating: {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
-                                  {ticket.feedbackComment && ` — "${ticket.feedbackComment}"`}
-                                </span>
-                              ) : (
-                                <span style={{ fontSize: 12, color: "#6b7280" }}>
-                                  {ticket.feedbackSent
-                                    ? `✅ WhatsApp sent to ${ticket.customer} — waiting for admin to record feedback`
-                                    : "📱 Send WhatsApp to request customer feedback"
-                                  }
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                        {/* Reassign Form row */}
+                        {showReassign && s !== "resolved" && s !== "rma" && (
+                          <tr key={`reassignform-${ticket.id}`} style={{ background: "#fffdf0" }}>
+                            <td colSpan={10} style={{ padding: "16px 20px" }}>
+                              <div style={{ background: "linear-gradient(135deg, #fffbeb, #fef9c3)", border: "2px solid #f59e0b", borderRadius: 12, padding: "16px 20px" }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e", marginBottom: 12 }}>🔄 Reassign This Ticket</div>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                                  <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reassign To *</div>
+                                    <select value={rf.newPerson || ""} onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], newPerson: e.target.value } }))}
+                                      style={{ width: "100%", padding: "10px 12px", border: "2px solid #fcd34d", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
+                                      <option value="">Select specialist</option>
+                                      {filteredReassignPersons.map(p => (
+                                        <option key={p.email} value={p.name}>{p.name} — {p.city || "—"}{p.specialization?.length > 0 ? ` (${p.specialization.join(", ")})` : ""}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reason *</div>
+                                    <input type="text" placeholder="e.g. Busy with other tickets..."
+                                      value={rf.reason || ""} onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
+                                      style={{ width: "100%", padding: "10px 12px", border: "2px solid #fcd34d", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", boxSizing: "border-box", color: "#111" }} />
+                                  </div>
+                                </div>
+                                <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
+                                  <button onClick={() => handleReassign(ticket.id)} disabled={reassigning === ticket.id}
+                                    style={{ background: reassigning === ticket.id ? "#94a3b8" : "linear-gradient(135deg, #f59e0b, #d97706)", color: "white", border: "none", padding: "10px 24px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>
+                                    {reassigning === ticket.id ? "⏳ Reassigning..." : "🔄 Confirm Reassign"}
+                                  </button>
+                                  <button onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
+                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+
+                        {/* Feedback row */}
+                        {s === "resolved" && (
+                          <tr key={`fb-${ticket.id}`} style={{ background: "#f0fdf4" }}>
+                            <td colSpan={10} style={{ padding: "8px 20px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                                {ticket.feedbackRating ? (
+                                  <span style={{ fontSize: 12, color: "#065f46", fontWeight: 600 }}>
+                                    ⭐ Customer Rating: {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
+                                    {ticket.feedbackComment && ` — "${ticket.feedbackComment}"`}
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: 12, color: "#6b7280" }}>
+                                    {ticket.feedbackSent ? `✅ WhatsApp sent to ${ticket.customer} — waiting for admin to record feedback` : "📱 Send WhatsApp to request customer feedback"}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
