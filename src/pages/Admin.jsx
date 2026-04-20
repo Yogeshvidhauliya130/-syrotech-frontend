@@ -264,8 +264,14 @@ function Analytics() {
             ) : filtered.map((ticket, idx) => {
               const s = (ticket.status || "pending").toLowerCase();
               const isResolved = s === "resolved";
+              const isSupportRaised = ticket.source === "support"; // ✅ NEW
               return (
-                <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#faf7f4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
+                <tr key={ticket.id} style={{
+                  borderBottom: "1px solid #f0ede8",
+                  // ✅ Blue tint for support-raised tickets
+                  background: isSupportRaised ? "#eff6ff" : (idx % 2 === 0 ? "#faf7f4" : "white"),
+                  borderLeft: `4px solid ${isSupportRaised ? "#3b82f6" : (STATUS_COLOR[s] || "#ccc")}`,
+                }}>
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticketNumberMap[ticket.id]}</div>
                     <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.date || "—"}</div>
@@ -274,9 +280,15 @@ function Analytics() {
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.assignTo || "—"}</div>
                     {ticket.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700 }}>🔄 from {ticket.reassignedFrom}</div>}
                   </td>
+                  {/* ✅ Raised By — with support-raised badge */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
                     <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.raisedBy || ""}</div>
+                    {isSupportRaised && (
+                      <div style={{ marginTop: 3, fontSize: 9, fontWeight: 700, color: "#1d4ed8", background: "#dbeafe", padding: "2px 6px", borderRadius: 4, display: "inline-block", border: "1px solid #93c5fd" }}>
+                        📞 Via Support
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: "12px 14px", minWidth: 170 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{ticket.customer || "—"}</div>

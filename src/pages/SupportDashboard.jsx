@@ -112,6 +112,7 @@ export default function SupportDashboard() {
 
   // ── Tickets / support state ──
   const [tickets, setTickets]                     = useState([]);
+  const [allTickets, setAllTickets]               = useState([]); // ✅ ALL tickets for "My Raised" tab
   const [filter, setFilter]                       = useState("all");
   const [allSupportPersons, setAllSupportPersons] = useState([]);
   const [rmaCenters, setRmaCenters]               = useState([]);
@@ -144,6 +145,7 @@ export default function SupportDashboard() {
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
       .then(data => {
+        setAllTickets(data); // ✅ store ALL tickets
         const mine = data.filter(t =>
           t.assignTo && currentUser?.name &&
           t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim()
@@ -420,7 +422,6 @@ export default function SupportDashboard() {
       return;
     }
     const cleanPhone = form.phone.replace(/\s+/g, "");
-    const allTickets_ref = tickets;
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
       .then(allTickets => {
@@ -479,6 +480,7 @@ export default function SupportDashboard() {
           raisedByName: currentUser?.name  || "Unknown",
           date:         new Date().toISOString().slice(0, 10),
           createdAt:    new Date().toISOString(),
+          source:       "support", // ✅ mark as raised by support
         };
         fetch(`${BASE_URL}/tickets`, {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -489,7 +491,7 @@ export default function SupportDashboard() {
             setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
             setImagePreview(""); setFormErrors({});
             setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING");
-            setActiveTab("tickets");
+            setActiveTab("myraised"); // ✅ go to my raised tab after submit
             fetchTickets();
             setTimeout(() => setSuccessMsg(""), 4000);
           })
@@ -538,36 +540,80 @@ export default function SupportDashboard() {
       return dateSort === "newest" ? db - da : da - db;
     });
 
+  // ✅ My Raised Tickets
+  const myRaisedTickets = allTickets
+    .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
+    .slice()
+    .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+  const raisedTicketNumberMap = {};
+  [...myRaisedTickets]
+    .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
+    .forEach((t, i) => { raisedTicketNumberMap[t.id] = i + 1; });
+
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8" }}>
 
-      {/* Issue Popup Modal */}
+      {/* ✅ Issue Popup Modal — shows resolutionNotes FIRST */}
       {issuePopup && (
-        <div onClick={() => setIssuePopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#e5e7eb"}` }}>
+        <div
+          onClick={() => setIssuePopup(null)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "white", borderRadius: 14, padding: "24px 28px",
+              maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#e5e7eb"}`
+            }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#059669" }}>
                 {issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}
               </div>
-              <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+              <button onClick={() => setIssuePopup(null)}
+                style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>
+                ✕ Close
+              </button>
             </div>
             {issuePopup.resolutionNotes ? (
               <>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>🔧 What was solved:</div>
-                <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>{issuePopup.resolutionNotes}</div>
-                {issuePopup.resolutionTimeTaken && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong></div>}
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>📋 Original Issue Raised:</div>
-                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #10b981" }}>{issuePopup.description}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  🔧 What was solved:
+                </div>
+                <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>
+                  {issuePopup.resolutionNotes}
+                </div>
+                {issuePopup.resolutionTimeTaken && (
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
+                    ⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong>
+                  </div>
+                )}
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  📋 Original Issue Raised:
+                </div>
+                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #10b981" }}>
+                  {issuePopup.description}
+                </div>
               </>
             ) : (
-              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#f9fafb", padding: "14px 16px", borderRadius: 10, border: "1px solid #e5e7eb", borderLeft: "4px solid #10b981" }}>{issuePopup.description}</div>
+              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#f9fafb", padding: "14px 16px", borderRadius: 10, border: "1px solid #e5e7eb", borderLeft: "4px solid #10b981" }}>
+                {issuePopup.description}
+              </div>
             )}
           </div>
         </div>
       )}
 
       {/* ✅ Header with logo */}
-      <div style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "white", padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(16,185,129,0.3)" }}>
+      <div style={{
+        background: "linear-gradient(135deg, #10b981, #059669)", color: "white",
+        padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center",
+        boxShadow: "0 2px 12px rgba(16,185,129,0.3)"
+      }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img src="/logo.png" alt="Syrotech" style={{ width: 38, height: 38, borderRadius: 8, objectFit: "contain", background: "white", padding: 2 }} />
           <div>
@@ -575,7 +621,8 @@ export default function SupportDashboard() {
             <div style={{ fontSize: 11, opacity: 0.85 }}>🛠️ {currentUser?.name}</div>
           </div>
         </div>
-        <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "white", padding: "6px 16px", borderRadius: 6, cursor: "pointer" }}>
+        <button onClick={handleLogout}
+          style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "white", padding: "6px 16px", borderRadius: 6, cursor: "pointer" }}>
           Logout
         </button>
       </div>
@@ -583,7 +630,8 @@ export default function SupportDashboard() {
       {/* ✅ Tabs */}
       <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
         {[
-          ["tickets",  `📋 My Tickets (${tickets.length})`],
+          ["tickets",  `📋 Assigned Tickets (${tickets.length})`],
+          ["myraised", `📞 My Raised (${myRaisedTickets.length})`],
           ["raise",    "🎫 Raise Ticket"],
         ].map(([key, label]) => (
           <button key={key} onClick={() => setActiveTab(key)} style={{
@@ -754,7 +802,111 @@ export default function SupportDashboard() {
         </div>
       )}
 
-      {/* ══ TICKETS TAB ══ */}
+      {/* ══ MY RAISED TICKETS TAB ══ */}
+      {activeTab === "myraised" && (
+        <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#374151", margin: 0 }}>📞 My Raised Tickets</h2>
+              <p style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>Tickets you raised on behalf of customers via toll-free / call support</p>
+            </div>
+            <button onClick={() => setActiveTab("raise")} style={{ background: "#10b981", color: "white", border: "none", padding: "8px 18px", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
+              + Raise New Ticket
+            </button>
+          </div>
+
+          {myRaisedTickets.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 60, background: "white", borderRadius: 14, color: "#aaa" }}>
+              <div style={{ fontSize: 48 }}>📞</div>
+              <p style={{ marginTop: 12 }}>You haven't raised any tickets yet.</p>
+              <button onClick={() => setActiveTab("raise")} style={{ marginTop: 12, background: "#10b981", color: "white", border: "none", padding: "8px 18px", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
+                Raise First Ticket
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "75vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
+                  <thead>
+                    <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
+                      {["Ticket No","Date","Product","Serial No","Customer","Phone","City","Assigned To","Status","Issue","RMA"].map((h, i) => (
+                        <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myRaisedTickets.map((ticket, idx) => {
+                      const s = (ticket.status || "pending").toLowerCase();
+                      return (
+                        <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
+                          <td style={{ padding: "12px 12px", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{raisedTicketNumberMap[ticket.id]}</div>
+                            <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
+                            <div style={{ fontSize: 9, color: "#059669", fontWeight: 700, marginTop: 2, background: "#d1fae5", padding: "1px 5px", borderRadius: 4, display: "inline-block" }}>📞 Via Support</div>
+                          </td>
+                          <td style={{ padding: "12px 12px" }}>
+                            <div style={{ fontSize: 11, color: "#374151", fontWeight: 600, whiteSpace: "nowrap" }}>{ticket.date || "—"}</div>
+                            {ticket.resolvedAt && <div style={{ fontSize: 10, color: "#10b981", whiteSpace: "nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
+                          </td>
+                          <td style={{ padding: "12px 12px" }}>
+                            <div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>{ticket.category}</div>
+                          </td>
+                          <td style={{ padding: "12px 12px" }}>
+                            <div style={{ fontSize: 11, whiteSpace: "nowrap" }}>{ticket.serialNo}</div>
+                            {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af" }}>MAC: {ticket.mac}</div>}
+                          </td>
+                          <td style={{ padding: "12px 12px", fontSize: 12, whiteSpace: "nowrap" }}>{ticket.customer || "—"}</td>
+                          <td style={{ padding: "12px 12px", fontSize: 12, whiteSpace: "nowrap" }}>{ticket.phone || "—"}</td>
+                          <td style={{ padding: "12px 12px" }}>
+                            <div style={{ fontSize: 12, whiteSpace: "nowrap" }}>{ticket.city || "—"}</div>
+                            {ticket.country && <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.country}</div>}
+                          </td>
+                          <td style={{ padding: "12px 12px" }}>
+                            <div style={{ fontSize: 12, whiteSpace: "nowrap" }}>{ticket.assignTo || "—"}</div>
+                            {ticket.reassignedFrom && <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>}
+                          </td>
+                          <td style={{ padding: "12px 12px" }}>
+                            <span
+                              onClick={() => { if (s === "resolved" && ticket.resolutionNotes) setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken }); }}
+                              style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap", cursor: s === "resolved" ? "pointer" : "default", border: s === "resolved" ? "1.5px solid #6ee7b7" : "none" }}>
+                              {s.toUpperCase()}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 12px", maxWidth: 200 }}>
+                            <div
+                              onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                              style={{ fontSize: 12, color: "#374151", cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180, textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
+                              title="Click to view full issue">
+                              {ticket.description?.length > 40 ? ticket.description.slice(0, 40) + "…" : ticket.description || "—"}
+                            </div>
+                            {s === "resolved" && ticket.resolutionNotes && (
+                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
+                            )}
+                          </td>
+                          <td style={{ padding: "12px 12px", maxWidth: 80 }}>
+                            {ticket.rmaStatus ? (
+                              <div>
+                                <span style={{ background: "#f5f3ff", color: "#7c3aed", padding: "2px 6px", borderRadius: 6, fontSize: 10, fontWeight: 700 }}>🔧 RMA</span>
+                                <div style={{ fontSize: 9, color: "#6d28d9", marginTop: 2 }}>{ticket.rmaCenterName}</div>
+                              </div>
+                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
+                Total raised by you: <strong style={{ color: "#374151" }}>{myRaisedTickets.length}</strong>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ══ ASSIGNED TICKETS TAB ══ */}
       {activeTab === "tickets" && (
         <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
 
@@ -789,22 +941,32 @@ export default function SupportDashboard() {
           {counts.rma > 0 && (
             <div style={{ background: "#f5f3ff", border: "1px solid #c4b5fd", borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 20 }}>🔧</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#5b21b6" }}>{counts.rma} ticket{counts.rma > 1 ? "s" : ""} sent to RMA center</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#5b21b6" }}>
+                {counts.rma} ticket{counts.rma > 1 ? "s" : ""} sent to RMA center
+              </span>
             </div>
           )}
 
-          {/* Filter + Sort Bar */}
+          {/* Filter + Date Sort Bar */}
           <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {[["all","All"],["pending","⏳ Pending"],["open","🔓 Open"],["resolved","✅ Resolved"],["rma","🔧 RMA"]].map(([key, label]) => (
-                <button key={key} onClick={() => setFilter(key)} style={{ padding: "8px 16px", borderRadius: 20, border: filter === key ? "none" : "1px solid #d1d5db", background: filter === key ? (key === "rma" ? "#7c3aed" : "#10b981") : "white", color: filter === key ? "white" : "#555", fontWeight: filter === key ? 700 : 400, fontSize: 13, cursor: "pointer" }}>
+                <button key={key} onClick={() => setFilter(key)} style={{
+                  padding: "8px 16px", borderRadius: 20,
+                  border: filter === key ? "none" : "1px solid #d1d5db",
+                  background: filter === key ? (key === "rma" ? "#7c3aed" : "#10b981") : "white",
+                  color: filter === key ? "white" : "#555",
+                  fontWeight: filter === key ? 700 : 400,
+                  fontSize: 13, cursor: "pointer"
+                }}>
                   {label} ({counts[key] ?? 0})
                 </button>
               ))}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>📅 Sort:</span>
-              <select value={dateSort} onChange={e => setDateSort(e.target.value)} style={{ padding: "7px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 12, cursor: "pointer", background: "white", color: "#374151" }}>
+              <select value={dateSort} onChange={e => setDateSort(e.target.value)}
+                style={{ padding: "7px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 12, cursor: "pointer", background: "white", color: "#374151" }}>
                 <option value="newest">Newest First ↓</option>
                 <option value="oldest">Oldest First ↑</option>
               </select>
@@ -825,7 +987,11 @@ export default function SupportDashboard() {
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
                     {["Ticket No","Raised By","Product / S/N","MAC ID","Customer / KYC","Issue","Status","Image","RMA","Actions"].map((h, i) => (
-                      <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
+                      <th key={i} style={{
+                        padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
+                        textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
+                        borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap"
+                      }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -833,6 +999,7 @@ export default function SupportDashboard() {
                   {filtered.map((ticket, idx) => {
                     const s            = (ticket.status || "pending").toLowerCase();
                     const isReassigned = !!ticket.reassignedFrom;
+                    const isSupportRaised = ticket.source === "support"; // ✅
                     const rf           = reassignForm[ticket.id] || {};
                     const rmaf         = rmaForm[ticket.id] || {};
                     const showReassign = rf.show || false;
@@ -843,19 +1010,36 @@ export default function SupportDashboard() {
 
                     return (
                       <>
-                        <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: s === "rma" ? "#faf5ff" : isReassigned ? "#fffdf0" : idx % 2 === 0 ? "#f9f9f9" : "white", borderLeft: `4px solid ${s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc")}` }}>
+                        <tr key={ticket.id} style={{
+                          borderBottom: "1px solid #f0ede8",
+                          // ✅ Blue tint for support-raised, else original colors
+                          background: isSupportRaised ? "#eff6ff" : (s === "rma" ? "#faf5ff" : isReassigned ? "#fffdf0" : idx % 2 === 0 ? "#f9f9f9" : "white"),
+                          borderLeft: `4px solid ${isSupportRaised ? "#3b82f6" : (s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc"))}`,
+                        }}>
 
                           {/* Ticket No */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{supportTicketNumberMap[ticket.id]}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
-                            {ticket.issueHistory && ticket.issueHistory.length > 0 && <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>}
+                            {ticket.issueHistory && ticket.issueHistory.length > 0 && (
+                              <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>
+                            )}
+                            {/* ✅ Badge for support-raised tickets */}
+                            {isSupportRaised && (
+                              <div style={{ fontSize: 9, color: "#1d4ed8", fontWeight: 700, marginTop: 2, background: "#dbeafe", padding: "1px 5px", borderRadius: 4, display: "inline-block", border: "1px solid #93c5fd" }}>
+                                📞 Via Support
+                              </div>
+                            )}
                           </td>
 
                           {/* Raised By */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
                             <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.date}</div>
+                            {/* ✅ Show support-raised label */}
+                            {isSupportRaised && (
+                              <div style={{ fontSize: 10, color: "#3b82f6", fontWeight: 600, marginTop: 2 }}>📞 Support raised</div>
+                            )}
                           </td>
 
                           {/* Product / S/N */}
@@ -876,30 +1060,63 @@ export default function SupportDashboard() {
                             <div style={{ fontSize: 11, color: "#6b7280" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ") || "—"}</div>
                           </td>
 
-                          {/* Issue */}
+                          {/* ✅ Issue — click to open popup */}
                           <td style={{ padding: "12px 14px", maxWidth: 180 }}>
-                            <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                              style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
-                              title="Click to view full issue">
-                              {ticket.description?.length > 35 ? ticket.description.slice(0, 35) + "…" : ticket.description || "—"}
+                            <div
+                              onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                              style={{
+                                fontSize: 12, color: "#374151",
+                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160,
+                                cursor: "pointer",
+                                textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af"
+                              }}
+                              title="Click to view full issue"
+                            >
+                              {ticket.description?.length > 35
+                                ? ticket.description.slice(0, 35) + "…"
+                                : ticket.description || "—"}
                             </div>
-                            {isReassigned && <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginTop: 2 }}>🔄 from {ticket.reassignedFrom}</div>}
+                            {isReassigned && (
+                              <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginTop: 2 }}>🔄 from {ticket.reassignedFrom}</div>
+                            )}
                             {s === "resolved" && ticket.resolutionNotes && (
-                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
+                              <div
+                                onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>
+                                ✅ Resolved — click to view
+                              </div>
                             )}
                           </td>
 
-                          {/* Status */}
+                          {/* ✅ Status — click RESOLVED to see what was solved */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                            <span onClick={() => { if (s === "resolved" && ticket.resolutionNotes) setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken }); }}
-                              style={{ padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], cursor: s === "resolved" && ticket.resolutionNotes ? "pointer" : "default", border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : "none", display: "inline-block" }}
-                              title={s === "resolved" && ticket.resolutionNotes ? "Click to see what was resolved" : ""}>
+                            <span
+                              onClick={() => {
+                                if (s === "resolved" && ticket.resolutionNotes) {
+                                  setIssuePopup({
+                                    description: ticket.description,
+                                    resolutionNotes: ticket.resolutionNotes,
+                                    resolutionTimeTaken: ticket.resolutionTimeTaken,
+                                  });
+                                }
+                              }}
+                              style={{
+                                padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                                color: STATUS_COLOR[s], background: STATUS_BG[s],
+                                cursor: s === "resolved" && ticket.resolutionNotes ? "pointer" : "default",
+                                border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : "none",
+                                display: "inline-block"
+                              }}
+                              title={s === "resolved" && ticket.resolutionNotes ? "Click to see what was resolved" : ""}
+                            >
                               {s.toUpperCase()}
                             </span>
                             {s === "resolved" && ticket.resolutionNotes && (
-                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                                style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
+                              <div
+                                onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                                style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
+                                📋 View details
+                              </div>
                             )}
                             {ticket.createdAt && s !== "resolved" && s !== "rma" && (() => {
                               const remaining = new Date(ticket.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
@@ -908,6 +1125,9 @@ export default function SupportDashboard() {
                               const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
                               return <div style={{ fontSize: 10, color: remaining < 4 * 60 * 60 * 1000 ? "#dc2626" : "#059669", marginTop: 2 }}>⏱️ {hrs}h {mins}m left</div>;
                             })()}
+                            {s === "resolved" && ticket.resolutionTimeTaken && (
+                              <div style={{ fontSize: 10, color: "#6b7280", marginTop: 3 }}>⏱️ {ticket.resolutionTimeTaken}</div>
+                            )}
                           </td>
 
                           {/* Image */}
@@ -917,7 +1137,9 @@ export default function SupportDashboard() {
                                 style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#065f46" }}>
                                 📷 {expandedImage === ticket.id ? "Hide" : "View"}
                               </button>
-                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                            ) : (
+                              <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
+                            )}
                           </td>
 
                           {/* RMA */}
@@ -928,15 +1150,27 @@ export default function SupportDashboard() {
                                 <div style={{ fontSize: 10, color: "#6d28d9", marginTop: 2 }}>{ticket.rmaCenterName}</div>
                                 <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.rmaCenterCity}</div>
                               </div>
-                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                            ) : (
+                              <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
+                            )}
                           </td>
 
                           {/* Actions */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {s === "open" && (
-                                <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
-                                  style={{ background: showResolve ? "#ecfdf5" : "#10b981", color: showResolve ? "#065f46" : "white", border: showResolve ? "1.5px solid #6ee7b7" : "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                <button
+                                  onClick={() => setResolveForm(prev => ({
+                                    ...prev,
+                                    [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show }
+                                  }))}
+                                  style={{
+                                    background: showResolve ? "#ecfdf5" : "#10b981",
+                                    color: showResolve ? "#065f46" : "white",
+                                    border: showResolve ? "1.5px solid #6ee7b7" : "none",
+                                    padding: "5px 10px", borderRadius: 6, cursor: "pointer",
+                                    fontSize: 11, fontWeight: 600, whiteSpace: "nowrap"
+                                  }}>
                                   ✅ {showResolve ? "Cancel" : "Resolve"}
                                 </button>
                               )}
@@ -947,13 +1181,15 @@ export default function SupportDashboard() {
                                 </button>
                               )}
                               {(s === "open" || s === "pending") && (
-                                <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showRma } }))}
+                                <button
+                                  onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showRma } }))}
                                   style={{ background: showRma ? "#ede9fe" : "#f5f3ff", border: `1.5px solid ${showRma ? "#7c3aed" : "#c4b5fd"}`, color: "#5b21b6", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
                                   🔧 RMA
                                 </button>
                               )}
                               {s !== "resolved" && s !== "rma" && (
-                                <button onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showReassign } }))}
+                                <button
+                                  onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showReassign } }))}
                                   style={{ background: showReassign ? "#fef9c3" : "#fff7ed", border: `1.5px solid ${showReassign ? "#f59e0b" : "#fed7aa"}`, color: "#92400e", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
                                   🔄
                                 </button>
@@ -967,8 +1203,10 @@ export default function SupportDashboard() {
                           <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={10} style={{ padding: "12px 20px" }}>
                               <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                <img src={ticket.productImage} alt="Product" style={{ maxHeight: 200, maxWidth: 300, borderRadius: 8, border: "2px solid #86efac", cursor: "pointer" }}
-                                  onClick={() => openImageInNewTab(ticket.productImage)} />
+                                <img src={ticket.productImage} alt="Product"
+                                  style={{ maxHeight: 200, maxWidth: 300, borderRadius: 8, border: "2px solid #86efac", cursor: "pointer" }}
+                                  onClick={() => openImageInNewTab(ticket.productImage)}
+                                />
                                 <div style={{ fontSize: 12, color: "#065f46" }}>
                                   <div style={{ fontWeight: 700, marginBottom: 4 }}>📷 Product Image</div>
                                   <div style={{ color: "#6b7280" }}>Click image to open full size</div>
@@ -978,7 +1216,7 @@ export default function SupportDashboard() {
                           </tr>
                         )}
 
-                        {/* ✅ Resolve Form — Time Taken removed */}
+                        {/* Resolve Form row */}
                         {showResolve && s === "open" && (
                           <tr key={`resolveform-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={10} style={{ padding: "16px 20px" }}>
@@ -989,26 +1227,34 @@ export default function SupportDashboard() {
                                   <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
                                     What issue was solved? <span style={{ color: "#ef4444" }}>*</span>
                                   </div>
-                                  <textarea rows={3}
+                                  <textarea
+                                    rows={3}
                                     placeholder="e.g. Router was not connecting — reset factory settings and reconfigured PPPoE..."
                                     value={resolveForm[ticket.id]?.notes || ""}
                                     onChange={e => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], notes: e.target.value } }))}
                                     style={{ width: "100%", padding: "10px 12px", border: "2px solid #6ee7b7", borderRadius: 8, fontSize: 12, outline: "none", fontFamily: "inherit", background: "white", resize: "vertical", color: "#111", lineHeight: 1.5, boxSizing: "border-box" }}
                                   />
-                                  {ticket.createdAt && <div style={{ marginTop: 6, fontSize: 11, color: "#6b7280" }}>⏱️ Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>}
-                                  {ticket.acceptedAt && <div style={{ marginTop: 3, fontSize: 11, color: "#6b7280" }}>🔓 Accepted: <strong>{new Date(ticket.acceptedAt).toLocaleString()}</strong></div>}
+                                  {ticket.createdAt && (
+                                    <div style={{ marginTop: 8, fontSize: 11, color: "#6b7280" }}>⏱️ Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>
+                                  )}
+                                  {ticket.acceptedAt && (
+                                    <div style={{ marginTop: 4, fontSize: 11, color: "#6b7280" }}>🔓 Accepted: <strong>{new Date(ticket.acceptedAt).toLocaleString()}</strong></div>
+                                  )}
                                 </div>
                                 {resolveForm[ticket.id]?.notes && (
                                   <div style={{ background: "white", border: "1px solid #6ee7b7", borderRadius: 8, padding: "10px 14px", marginTop: 14, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-                                    <strong>📋 Summary:</strong><br />🔧 Resolved: {resolveForm[ticket.id].notes}
+                                    <strong>📋 Summary:</strong><br />
+                                    🔧 Resolved: {resolveForm[ticket.id].notes}
                                   </div>
                                 )}
                                 <div style={{ marginTop: 16, display: "flex", gap: 10, alignItems: "center" }}>
-                                  <button onClick={() => handleResolveSubmit(ticket.id)}
+                                  <button
+                                    onClick={() => handleResolveSubmit(ticket.id)}
                                     style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "white", border: "none", padding: "10px 28px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit", boxShadow: "0 3px 12px rgba(16,185,129,0.4)" }}>
                                     ✅ Confirm Resolved
                                   </button>
-                                  <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
+                                  <button
+                                    onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
                                     style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
                                     Cancel
                                   </button>
@@ -1027,7 +1273,8 @@ export default function SupportDashboard() {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                                   <div>
                                     <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reason *</div>
-                                    <select value={rmaf.reason || ""} onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
+                                    <select value={rmaf.reason || ""}
+                                      onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
                                       style={{ width: "100%", padding: "10px 12px", border: "2px solid #c4b5fd", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
                                       <option value="">Select reason</option>
                                       {RMA_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -1038,7 +1285,8 @@ export default function SupportDashboard() {
                                     {nearbyRmaCenters.length > 0 && nearbyRmaCenters[0].city?.toLowerCase() === (ticket.city || "").toLowerCase() && (
                                       <div style={{ fontSize: 11, color: "#10b981", fontWeight: 600, marginBottom: 4 }}>✅ Showing centers near {ticket.city}</div>
                                     )}
-                                    <select value={rmaf.centerId || ""} onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], centerId: e.target.value } }))}
+                                    <select value={rmaf.centerId || ""}
+                                      onChange={e => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], centerId: e.target.value } }))}
                                       style={{ width: "100%", padding: "10px 12px", border: "2px solid #c4b5fd", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
                                       <option value="">Select RMA center</option>
                                       {nearbyRmaCenters.map(c => <option key={c.id} value={c.id}>{c.name} — {c.city}</option>)}
@@ -1048,7 +1296,11 @@ export default function SupportDashboard() {
                                 {rmaf.centerId && (() => {
                                   const center = rmaCenters.find(c => c.id === parseInt(rmaf.centerId));
                                   if (!center) return null;
-                                  return <div style={{ background: "white", border: "1px solid #c4b5fd", borderRadius: 8, padding: "10px 14px", marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.8 }}><strong>📍 {center.name}</strong> — {center.city} | 📞 {center.phone}<br />{center.address}</div>;
+                                  return (
+                                    <div style={{ background: "white", border: "1px solid #c4b5fd", borderRadius: 8, padding: "10px 14px", marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+                                      <strong>📍 {center.name}</strong> — {center.city} | 📞 {center.phone}<br />{center.address}
+                                    </div>
+                                  );
                                 })()}
                                 <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
                                   <button onClick={() => handleRMASubmit(ticket.id)} disabled={submittingRma === ticket.id}
@@ -1056,7 +1308,9 @@ export default function SupportDashboard() {
                                     {submittingRma === ticket.id ? "⏳ Processing..." : "🔧 Confirm RMA + Send WhatsApp"}
                                   </button>
                                   <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
-                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
+                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
+                                    Cancel
+                                  </button>
                                 </div>
                               </div>
                             </td>
@@ -1072,19 +1326,24 @@ export default function SupportDashboard() {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                                   <div>
                                     <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reassign To *</div>
-                                    <select value={rf.newPerson || ""} onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], newPerson: e.target.value } }))}
+                                    <select value={rf.newPerson || ""}
+                                      onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], newPerson: e.target.value } }))}
                                       style={{ width: "100%", padding: "10px 12px", border: "2px solid #fcd34d", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer" }}>
                                       <option value="">Select specialist</option>
                                       {filteredReassignPersons.map(p => (
-                                        <option key={p.email} value={p.name}>{p.name} — {p.city || "—"}{p.specialization?.length > 0 ? ` (${p.specialization.join(", ")})` : ""}</option>
+                                        <option key={p.email} value={p.name}>
+                                          {p.name} — {p.city || "—"}{p.specialization?.length > 0 ? ` (${p.specialization.join(", ")})` : ""}
+                                        </option>
                                       ))}
                                     </select>
                                   </div>
                                   <div>
                                     <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Reason *</div>
                                     <input type="text" placeholder="e.g. Busy with other tickets..."
-                                      value={rf.reason || ""} onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
-                                      style={{ width: "100%", padding: "10px 12px", border: "2px solid #fcd34d", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", boxSizing: "border-box", color: "#111" }} />
+                                      value={rf.reason || ""}
+                                      onChange={e => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], reason: e.target.value } }))}
+                                      style={{ width: "100%", padding: "10px 12px", border: "2px solid #fcd34d", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", background: "white", boxSizing: "border-box", color: "#111" }}
+                                    />
                                   </div>
                                 </div>
                                 <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
@@ -1093,7 +1352,9 @@ export default function SupportDashboard() {
                                     {reassigning === ticket.id ? "⏳ Reassigning..." : "🔄 Confirm Reassign"}
                                   </button>
                                   <button onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
-                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
+                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
+                                    Cancel
+                                  </button>
                                 </div>
                               </div>
                             </td>
@@ -1112,7 +1373,10 @@ export default function SupportDashboard() {
                                   </span>
                                 ) : (
                                   <span style={{ fontSize: 12, color: "#6b7280" }}>
-                                    {ticket.feedbackSent ? `✅ WhatsApp sent to ${ticket.customer} — waiting for admin to record feedback` : "📱 Send WhatsApp to request customer feedback"}
+                                    {ticket.feedbackSent
+                                      ? `✅ WhatsApp sent to ${ticket.customer} — waiting for admin to record feedback`
+                                      : "📱 Send WhatsApp to request customer feedback"
+                                    }
                                   </span>
                                 )}
                               </div>
