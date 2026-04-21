@@ -262,15 +262,16 @@ function Analytics() {
             {filtered.length === 0 ? (
               <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>No tickets found.</td></tr>
             ) : filtered.map((ticket, idx) => {
-              const s = (ticket.status || "pending").toLowerCase();
-              const isResolved = s === "resolved";
-              const isSupportRaised = ticket.source === "support"; // ✅ NEW
+              const s               = (ticket.status || "pending").toLowerCase();
+              const isResolved      = s === "resolved";
+              const isSupportRaised = ticket.source === "support"; // ✅
               return (
+                // ✅ CHANGE 4: Distinct highlight in Admin Analytics for support-raised tickets
                 <tr key={ticket.id} style={{
                   borderBottom: "1px solid #f0ede8",
-                  // ✅ Blue tint for support-raised tickets
-                  background: isSupportRaised ? "#eff6ff" : (idx % 2 === 0 ? "#faf7f4" : "white"),
-                  borderLeft: `4px solid ${isSupportRaised ? "#3b82f6" : (STATUS_COLOR[s] || "#ccc")}`,
+                  background: isSupportRaised ? "#e0f2fe" : (idx % 2 === 0 ? "#faf7f4" : "white"),
+                  borderLeft: isSupportRaised ? "6px solid #2563eb" : `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
+                  outline: isSupportRaised ? "1px solid #93c5fd" : "none",
                 }}>
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticketNumberMap[ticket.id]}</div>
@@ -280,12 +281,12 @@ function Analytics() {
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.assignTo || "—"}</div>
                     {ticket.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700 }}>🔄 from {ticket.reassignedFrom}</div>}
                   </td>
-                  {/* ✅ Raised By — with support-raised badge */}
+                  {/* ✅ Raised By with distinct support badge */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
                     <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.raisedBy || ""}</div>
                     {isSupportRaised && (
-                      <div style={{ marginTop: 3, fontSize: 9, fontWeight: 700, color: "#1d4ed8", background: "#dbeafe", padding: "2px 6px", borderRadius: 4, display: "inline-block", border: "1px solid #93c5fd" }}>
+                      <div style={{ marginTop: 4, fontSize: 9, fontWeight: 700, color: "white", background: "#2563eb", padding: "2px 7px", borderRadius: 4, display: "inline-block" }}>
                         📞 Via Support
                       </div>
                     )}
@@ -317,8 +318,6 @@ function Analytics() {
                     {ticket.createdAt && <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4 }}>🕐 Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>}
                     {ticket.resolvedAt && <div style={{ fontSize: 10, color: "#10b981", marginTop: 2 }}>✅ Solved: <strong>{new Date(ticket.resolvedAt).toLocaleString()}</strong></div>}
                   </td>
-
-                  {/* ✅ Customer Rating — disabled until resolved */}
                   <td style={{ padding: "12px 14px" }}>
                     {!isResolved ? (
                       <div style={{ fontSize: 11, color: "#d1d5db", padding: "6px 0" }}>🔒 Only after resolved</div>
@@ -365,9 +364,9 @@ function Analytics_OLD() {
 }
 
 function Performance() {
-  const [tickets,     setTickets]    = useState([]);
-  const [period,      setPeriod]     = useState("all");
-  const [customDate,  setCustomDate] = useState("");
+  const [tickets,     setTickets]     = useState([]);
+  const [period,      setPeriod]      = useState("all");
+  const [customDate,  setCustomDate]  = useState("");
   const [agentFilter, setAgentFilter] = useState("");
 
   useEffect(() => {
@@ -400,8 +399,8 @@ function Performance() {
   };
 
   const filteredTickets = filterByPeriod(tickets);
-  const agents = [...new Set(filteredTickets.map(t => t.assignTo).filter(Boolean))];
-  const filteredAgents = agents.filter(a => a.toLowerCase().includes(agentFilter.toLowerCase()));
+  const agents          = [...new Set(filteredTickets.map(t => t.assignTo).filter(Boolean))];
+  const filteredAgents  = agents.filter(a => a.toLowerCase().includes(agentFilter.toLowerCase()));
 
   const periodLabel = () => {
     if (period === "daily")   return customDate ? `Day: ${customDate}` : `Today: ${new Date().toLocaleDateString()}`;
@@ -411,15 +410,15 @@ function Performance() {
   };
 
   const getAgentStats = (agent) => {
-    const agentTickets = filteredTickets.filter(t => t.assignTo === agent);
-    const resolvedList = agentTickets.filter(t => t.status === "resolved" && t.createdAt && t.resolvedAt);
-    const rmaList      = agentTickets.filter(t => t.status === "rma");
-    const within24     = resolvedList.filter(t => (new Date(t.resolvedAt) - new Date(t.createdAt)) <= 24 * 60 * 60 * 1000).length;
-    const avgScore     = resolvedList.length ? (resolvedList.reduce((s, t) => s + getCombinedScore(t), 0) / resolvedList.length).toFixed(1) : "—";
-    const avgHours     = resolvedList.length ? (resolvedList.reduce((s, t) => s + (new Date(t.resolvedAt) - new Date(t.createdAt)), 0) / resolvedList.length / (1000 * 60 * 60)).toFixed(1) : "—";
-    const overdueCount = agentTickets.filter(t => t.status !== "resolved" && t.status !== "rma" && t.createdAt && new Date(t.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now() <= 0).length;
+    const agentTickets    = filteredTickets.filter(t => t.assignTo === agent);
+    const resolvedList    = agentTickets.filter(t => t.status === "resolved" && t.createdAt && t.resolvedAt);
+    const rmaList         = agentTickets.filter(t => t.status === "rma");
+    const within24        = resolvedList.filter(t => (new Date(t.resolvedAt) - new Date(t.createdAt)) <= 24 * 60 * 60 * 1000).length;
+    const avgScore        = resolvedList.length ? (resolvedList.reduce((s, t) => s + getCombinedScore(t), 0) / resolvedList.length).toFixed(1) : "—";
+    const avgHours        = resolvedList.length ? (resolvedList.reduce((s, t) => s + (new Date(t.resolvedAt) - new Date(t.createdAt)), 0) / resolvedList.length / (1000 * 60 * 60)).toFixed(1) : "—";
+    const overdueCount    = agentTickets.filter(t => t.status !== "resolved" && t.status !== "rma" && t.createdAt && new Date(t.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now() <= 0).length;
     const feedbackTickets = resolvedList.filter(t => t.feedbackRating && parseInt(t.feedbackRating) > 0);
-    const avgFeedback = feedbackTickets.length ? (feedbackTickets.reduce((s, t) => s + parseInt(t.feedbackRating), 0) / feedbackTickets.length).toFixed(1) : "—";
+    const avgFeedback     = feedbackTickets.length ? (feedbackTickets.reduce((s, t) => s + parseInt(t.feedbackRating), 0) / feedbackTickets.length).toFixed(1) : "—";
     return {
       total: agentTickets.length,
       pending:  agentTickets.filter(t => t.status === "pending").length,
@@ -572,7 +571,6 @@ function Performance() {
 
       {agents.length === 0 && <div className="empty-state-box"><div style={{ fontSize: 48, marginBottom: 12 }}>📭</div><p>No data for the selected period.</p></div>}
 
-      {/* ✅ Filter by agent name */}
       {agents.length > 0 && (
         <div style={{ marginBottom: 14 }}>
           <input
@@ -584,7 +582,6 @@ function Performance() {
         </div>
       )}
 
-      {/* ✅ AGENT SUMMARY TABLE — above cards */}
       {filteredAgents.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -652,7 +649,6 @@ function Performance() {
         </div>
       )}
 
-      {/* ✅ COMPACT CARDS — filtered by name */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12, marginBottom: 24 }}>
         {filteredAgents.map((agent, i) => {
           const stats  = getAgentStats(agent);
@@ -708,7 +704,6 @@ function Performance() {
           );
         })}
       </div>
-
     </div>
   );
 }

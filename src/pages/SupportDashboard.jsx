@@ -112,7 +112,7 @@ export default function SupportDashboard() {
 
   // ── Tickets / support state ──
   const [tickets, setTickets]                     = useState([]);
-  const [allTickets, setAllTickets]               = useState([]); // ✅ ALL tickets for "My Raised" tab
+  const [allTickets, setAllTickets]               = useState([]);
   const [filter, setFilter]                       = useState("all");
   const [allSupportPersons, setAllSupportPersons] = useState([]);
   const [rmaCenters, setRmaCenters]               = useState([]);
@@ -130,10 +130,11 @@ export default function SupportDashboard() {
   const [activeTab, setActiveTab] = useState("tickets");
 
   // ── Raise Ticket form state ──
+  // ✅ CHANGE 1: assignTo pre-filled with currentUser's own name
   const [form, setForm] = useState({
     category: "", serialNo: "", mac: "", customer: "",
     email: "", phone: "", city: "", country: "", pincode: "",
-    description: "", assignTo: "", productImage: ""
+    description: "", assignTo: currentUser?.name || "", productImage: ""
   });
   const [formErrors, setFormErrors]   = useState({});
   const [submitting, setSubmitting]   = useState(false);
@@ -145,7 +146,7 @@ export default function SupportDashboard() {
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
       .then(data => {
-        setAllTickets(data); // ✅ store ALL tickets
+        setAllTickets(data);
         const mine = data.filter(t =>
           t.assignTo && currentUser?.name &&
           t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim()
@@ -262,7 +263,6 @@ export default function SupportDashboard() {
       .catch(err => { console.error("RMA failed:", err); setSubmittingRma(null); });
   };
 
-  // ✅ Time Taken removed — only notes required
   const handleResolveSubmit = (ticketId) => {
     const rf = resolveForm[ticketId] || {};
     if (!rf.notes?.trim()) { alert("Please describe what issue was solved."); return; }
@@ -304,65 +304,6 @@ export default function SupportDashboard() {
     navigate("/", { replace: true });
   };
 
-  // ── Raise Ticket logic (same as Dashboard) ──
-  const getFilteredSupportPersons = () => {
-    const product = form.category;
-    const city    = (form.city    || "").toLowerCase().trim();
-    const country = (form.country || "").toLowerCase().trim();
-    if (!product) return allSupportPersons.filter(u => u.role === "support" && u.approved);
-    const pool = allSupportPersons.filter(u => u.role === "support" && u.approved);
-    const level1 = pool.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
-        city && p.city && p.city.toLowerCase().trim() === city;
-    });
-    if (level1.length > 0) return level1;
-    const level2 = pool.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
-        country && p.country && p.country.toLowerCase().trim() === country;
-    });
-    if (level2.length > 0) return level2;
-    const level3 = pool.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase());
-    });
-    if (level3.length > 0) return level3;
-    return pool;
-  };
-
-  const getFilterMessage = () => {
-    const product = form.category;
-    const city    = (form.city    || "").toLowerCase().trim();
-    const country = (form.country || "").toLowerCase().trim();
-    if (!product) return null;
-    const pool = allSupportPersons.filter(u => u.role === "support" && u.approved);
-    const level1 = pool.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
-        city && p.city && p.city.toLowerCase().trim() === city;
-    });
-    if (level1.length > 0 && city)
-      return { msg: `✅ Showing ${product} specialists in ${form.city}`, color: "#10b981", bg: "#ecfdf5" };
-    const level2 = pool.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) &&
-        country && p.country && p.country.toLowerCase().trim() === country;
-    });
-    if (level2.length > 0 && country)
-      return { msg: `⚠️ No specialist in ${form.city || "your city"} — showing ${product} specialists in ${form.country}`, color: "#f59e0b", bg: "#fffbeb" };
-    const level3 = pool.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase());
-    });
-    if (level3.length > 0)
-      return { msg: `ℹ️ No location match — showing all ${product} specialists`, color: "#3b82f6", bg: "#eff6ff" };
-    return { msg: `⚠️ No specialist found for ${product} — showing all support persons`, color: "#ef4444", bg: "#fef2f2" };
-  };
-
-  const filteredSupportPersons = getFilteredSupportPersons();
-  const filterMessage          = getFilterMessage();
-
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -383,18 +324,21 @@ export default function SupportDashboard() {
     const { name, value } = e.target;
     if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
     if (name === "pincode"  && value !== "" && !/^\d*$/.test(value))          return;
+    // ✅ assignTo is locked — do NOT update it from user interaction in raise form
     if (name === "category" || name === "city" || name === "country") {
-      setForm(prev => ({ ...prev, [name]: value, assignTo: "" }));
+      setForm(prev => ({ ...prev, [name]: value })); // do NOT reset assignTo
     } else {
       setForm({ ...form, [name]: value });
     }
     setFormErrors(prev => ({ ...prev, [name]: "" }));
   };
 
+  // ✅ CHANGE 2: MAC Address is now required in validate
   const validate = () => {
     const e = {};
     if (!form.category)        e.category    = "Please select a product.";
     if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
+    if (!form.mac.trim())      e.mac         = "MAC address is required."; // ✅ NEW
     if (!form.customer.trim()) e.customer    = "Customer name is required.";
     else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
     else if (form.customer.trim().length < 2) e.customer = "Enter a valid full name.";
@@ -406,7 +350,6 @@ export default function SupportDashboard() {
     if (!form.country)         e.country     = "Please select a country.";
     if (!form.pincode.trim())  e.pincode     = "Pincode is required.";
     else if (!/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode.";
-    if (!form.assignTo)        e.assignTo    = "Please assign a support person.";
     if (!form.description.trim()) e.description = "Description is required.";
     else if (form.description.trim().length < 20) e.description = "Description must be at least 20 characters.";
     else if (form.description.trim().length > 500) e.description = "Description cannot exceed 500 characters.";
@@ -424,8 +367,8 @@ export default function SupportDashboard() {
     const cleanPhone = form.phone.replace(/\s+/g, "");
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
-      .then(allTickets => {
-        const sameCustomerTicket = allTickets.find(t =>
+      .then(allTicketsData => {
+        const sameCustomerTicket = allTicketsData.find(t =>
           t.phone === cleanPhone &&
           t.category === form.category &&
           t.serialNo.trim().toLowerCase() === form.serialNo.trim().toLowerCase()
@@ -460,7 +403,8 @@ export default function SupportDashboard() {
           })
             .then(r => r.json())
             .then(() => {
-              setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+              // ✅ reset assignTo to currentUser?.name after submit
+              setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: currentUser?.name || "", productImage: "" });
               setImagePreview(""); setFormErrors({});
               setSuccessMsg("✅ Same customer found! Issue updated in existing Ticket. Status reset to PENDING.");
               setActiveTab("tickets");
@@ -480,7 +424,7 @@ export default function SupportDashboard() {
           raisedByName: currentUser?.name  || "Unknown",
           date:         new Date().toISOString().slice(0, 10),
           createdAt:    new Date().toISOString(),
-          source:       "support", // ✅ mark as raised by support
+          source:       "support",
         };
         fetch(`${BASE_URL}/tickets`, {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -488,10 +432,11 @@ export default function SupportDashboard() {
         })
           .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
           .then(() => {
-            setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+            // ✅ reset assignTo to currentUser?.name after submit
+            setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: currentUser?.name || "", productImage: "" });
             setImagePreview(""); setFormErrors({});
             setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING");
-            setActiveTab("myraised"); // ✅ go to my raised tab after submit
+            setActiveTab("myraised");
             fetchTickets();
             setTimeout(() => setSuccessMsg(""), 4000);
           })
@@ -540,7 +485,6 @@ export default function SupportDashboard() {
       return dateSort === "newest" ? db - da : da - db;
     });
 
-  // ✅ My Raised Tickets
   const myRaisedTickets = allTickets
     .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
     .slice()
@@ -554,7 +498,6 @@ export default function SupportDashboard() {
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8" }}>
 
-      {/* ✅ Issue Popup Modal — shows resolutionNotes FIRST */}
       {issuePopup && (
         <div
           onClick={() => setIssuePopup(null)}
@@ -581,20 +524,14 @@ export default function SupportDashboard() {
             </div>
             {issuePopup.resolutionNotes ? (
               <>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                  🔧 What was solved:
-                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>🔧 What was solved:</div>
                 <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, background: "#ecfdf5", padding: "14px 16px", borderRadius: 10, border: "1px solid #6ee7b7", borderLeft: "4px solid #10b981", marginBottom: 14 }}>
                   {issuePopup.resolutionNotes}
                 </div>
                 {issuePopup.resolutionTimeTaken && (
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
-                    ⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong>
-                  </div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong></div>
                 )}
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                  📋 Original Issue Raised:
-                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>📋 Original Issue Raised:</div>
                 <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #10b981" }}>
                   {issuePopup.description}
                 </div>
@@ -608,7 +545,7 @@ export default function SupportDashboard() {
         </div>
       )}
 
-      {/* ✅ Header with logo */}
+      {/* Header */}
       <div style={{
         background: "linear-gradient(135deg, #10b981, #059669)", color: "white",
         padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -627,7 +564,7 @@ export default function SupportDashboard() {
         </button>
       </div>
 
-      {/* ✅ Tabs */}
+      {/* Tabs */}
       <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
         {[
           ["tickets",  `📋 Assigned Tickets (${tickets.length})`],
@@ -643,7 +580,6 @@ export default function SupportDashboard() {
         ))}
       </div>
 
-      {/* ✅ Success message */}
       {successMsg && (
         <div style={{ margin: "16px 28px 0", background: "#ecfdf5", border: "1.5px solid #6ee7b7", borderRadius: 10, padding: "12px 20px", fontSize: 14, fontWeight: 600, color: "#065f46" }}>
           {successMsg}
@@ -680,9 +616,11 @@ export default function SupportDashboard() {
                 {formErrors.serialNo && <span className="field-error">{formErrors.serialNo}</span>}
               </div>
 
+              {/* ✅ CHANGE 2: MAC Address now compulsory */}
               <div className="form-field">
-                <label className="form-label">MAC Address</label>
+                <label className="form-label">MAC Address <span className="req">*</span></label>
                 <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF" value={form.mac} onChange={handleChange} style={inputStyle("mac")} />
+                {formErrors.mac && <span className="field-error">{formErrors.mac}</span>}
               </div>
 
               <div className="form-field">
@@ -728,25 +666,19 @@ export default function SupportDashboard() {
                 {formErrors.pincode ? <span className="field-error">{formErrors.pincode}</span> : <span className="field-hint">{form.pincode.length}/6 digits</span>}
               </div>
 
+              {/* ✅ CHANGE 1: Assign To — locked to current user's own name only */}
               <div className="form-field">
-                <label className="form-label">
-                  Assign Support Person <span className="req">*</span>
-                  {form.category && <span className="form-hint"> (filtered by product & location)</span>}
-                </label>
-                {filterMessage && (
-                  <div style={{ fontSize: 11, fontWeight: 600, color: filterMessage.color, background: filterMessage.bg, padding: "6px 10px", borderRadius: 6, marginBottom: 6, border: `1px solid ${filterMessage.color}22` }}>
-                    {filterMessage.msg}
-                  </div>
-                )}
-                <select name="assignTo" value={form.assignTo} onChange={handleChange} style={inputStyle("assignTo")}>
-                  <option value="">{form.category ? `Choose ${form.category} specialist${form.city ? ` in ${form.city}` : ""}` : "Select product first to filter specialists"}</option>
-                  {filteredSupportPersons.map(p => (
-                    <option key={p.email} value={p.name}>
-                      {p.name} — {p.city || "—"}{p.specialization && p.specialization.length > 0 ? ` (${p.specialization.join(", ")})` : ""}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.assignTo && <span className="field-error">{formErrors.assignTo}</span>}
+                <label className="form-label">Assign To <span className="req">*</span></label>
+                <div style={{
+                  ...inputStyle("assignTo"),
+                  background: "#e8f5e9", color: "#059669", fontWeight: 700,
+                  display: "flex", alignItems: "center", gap: 8,
+                  cursor: "not-allowed", userSelect: "none",
+                }}>
+                  <span>🛠️</span>
+                  <span>{currentUser?.name || "—"}</span>
+                </div>
+                <span className="field-hint">🔒 Automatically assigned to you</span>
               </div>
             </div>
 
@@ -848,9 +780,7 @@ export default function SupportDashboard() {
                             <div style={{ fontSize: 11, color: "#374151", fontWeight: 600, whiteSpace: "nowrap" }}>{ticket.date || "—"}</div>
                             {ticket.resolvedAt && <div style={{ fontSize: 10, color: "#10b981", whiteSpace: "nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
                           </td>
-                          <td style={{ padding: "12px 12px" }}>
-                            <div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>{ticket.category}</div>
-                          </td>
+                          <td style={{ padding: "12px 12px" }}><div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>{ticket.category}</div></td>
                           <td style={{ padding: "12px 12px" }}>
                             <div style={{ fontSize: 11, whiteSpace: "nowrap" }}>{ticket.serialNo}</div>
                             {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af" }}>MAC: {ticket.mac}</div>}
@@ -910,7 +840,6 @@ export default function SupportDashboard() {
       {activeTab === "tickets" && (
         <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
 
-          {/* Top Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
             {[
               ["Total Tickets",  counts.all,         "🎫", "#3b82f6", "#eff6ff"],
@@ -926,7 +855,6 @@ export default function SupportDashboard() {
             ))}
           </div>
 
-          {/* 24hr Banner */}
           {counts.resolved > 0 && (
             <div style={{ background: within24 === counts.resolved ? "#ecfdf5" : "#fffbeb", border: `1px solid ${within24 === counts.resolved ? "#6ee7b7" : "#fcd34d"}`, borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 20 }}>{within24 === counts.resolved ? "🎯" : "⚠️"}</span>
@@ -937,7 +865,6 @@ export default function SupportDashboard() {
             </div>
           )}
 
-          {/* RMA Banner */}
           {counts.rma > 0 && (
             <div style={{ background: "#f5f3ff", border: "1px solid #c4b5fd", borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 20 }}>🔧</span>
@@ -947,7 +874,6 @@ export default function SupportDashboard() {
             </div>
           )}
 
-          {/* Filter + Date Sort Bar */}
           <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {[["all","All"],["pending","⏳ Pending"],["open","🔓 Open"],["resolved","✅ Resolved"],["rma","🔧 RMA"]].map(([key, label]) => (
@@ -980,7 +906,6 @@ export default function SupportDashboard() {
             </div>
           )}
 
-          {/* TABLE */}
           {filtered.length > 0 && (
             <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
@@ -999,7 +924,7 @@ export default function SupportDashboard() {
                   {filtered.map((ticket, idx) => {
                     const s            = (ticket.status || "pending").toLowerCase();
                     const isReassigned = !!ticket.reassignedFrom;
-                    const isSupportRaised = ticket.source === "support"; // ✅
+                    const isSupportRaised = ticket.source === "support";
                     const rf           = reassignForm[ticket.id] || {};
                     const rmaf         = rmaForm[ticket.id] || {};
                     const showReassign = rf.show || false;
@@ -1010,94 +935,74 @@ export default function SupportDashboard() {
 
                     return (
                       <>
+                        {/* ✅ CHANGE 3: Distinct highlight for support-raised — amber/golden stripe */}
                         <tr key={ticket.id} style={{
                           borderBottom: "1px solid #f0ede8",
-                          // ✅ Blue tint for support-raised, else original colors
-                          background: isSupportRaised ? "#eff6ff" : (s === "rma" ? "#faf5ff" : isReassigned ? "#fffdf0" : idx % 2 === 0 ? "#f9f9f9" : "white"),
-                          borderLeft: `4px solid ${isSupportRaised ? "#3b82f6" : (s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc"))}`,
+                          background: isSupportRaised
+                            ? "#fef9c3"
+                            : (s === "rma" ? "#faf5ff" : isReassigned ? "#fffdf0" : idx % 2 === 0 ? "#f9f9f9" : "white"),
+                          borderLeft: `6px solid ${isSupportRaised
+                            ? "#d97706"
+                            : (s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc"))}`,
                         }}>
 
-                          {/* Ticket No */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{supportTicketNumberMap[ticket.id]}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                             {ticket.issueHistory && ticket.issueHistory.length > 0 && (
                               <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>
                             )}
-                            {/* ✅ Badge for support-raised tickets */}
                             {isSupportRaised && (
-                              <div style={{ fontSize: 9, color: "#1d4ed8", fontWeight: 700, marginTop: 2, background: "#dbeafe", padding: "1px 5px", borderRadius: 4, display: "inline-block", border: "1px solid #93c5fd" }}>
+                              <div style={{ fontSize: 9, color: "#92400e", fontWeight: 800, marginTop: 3, background: "#fde68a", padding: "2px 6px", borderRadius: 4, display: "inline-block", border: "1px solid #d97706" }}>
                                 📞 Via Support
                               </div>
                             )}
                           </td>
 
-                          {/* Raised By */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
                             <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.date}</div>
-                            {/* ✅ Show support-raised label */}
                             {isSupportRaised && (
-                              <div style={{ fontSize: 10, color: "#3b82f6", fontWeight: 600, marginTop: 2 }}>📞 Support raised</div>
+                              <div style={{ fontSize: 10, color: "#92400e", fontWeight: 700, marginTop: 2 }}>📞 Support raised</div>
                             )}
                           </td>
 
-                          {/* Product / S/N */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ fontWeight: 700, fontSize: 13 }}>{ticket.category}</div>
                             <div style={{ fontSize: 11, color: "#6b7280" }}>S/N: {ticket.serialNo}</div>
                           </td>
 
-                          {/* MAC ID */}
                           <td style={{ padding: "12px 14px", fontSize: 11, color: "#555", whiteSpace: "nowrap" }}>
                             {ticket.mac || <span style={{ color: "#d1d5db" }}>—</span>}
                           </td>
 
-                          {/* Customer / KYC */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ fontWeight: 600, fontSize: 13 }}>{ticket.customer || "—"}</div>
                             <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone || <span style={{ color: "#ef4444" }}>⚠ Missing</span>}</div>
                             <div style={{ fontSize: 11, color: "#6b7280" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ") || "—"}</div>
                           </td>
 
-                          {/* ✅ Issue — click to open popup */}
                           <td style={{ padding: "12px 14px", maxWidth: 180 }}>
                             <div
                               onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                              style={{
-                                fontSize: 12, color: "#374151",
-                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160,
-                                cursor: "pointer",
-                                textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af"
-                              }}
-                              title="Click to view full issue"
-                            >
-                              {ticket.description?.length > 35
-                                ? ticket.description.slice(0, 35) + "…"
-                                : ticket.description || "—"}
+                              style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
+                              title="Click to view full issue">
+                              {ticket.description?.length > 35 ? ticket.description.slice(0, 35) + "…" : ticket.description || "—"}
                             </div>
                             {isReassigned && (
                               <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginTop: 2 }}>🔄 from {ticket.reassignedFrom}</div>
                             )}
                             {s === "resolved" && ticket.resolutionNotes && (
-                              <div
-                                onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>
-                                ✅ Resolved — click to view
-                              </div>
+                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
                             )}
                           </td>
 
-                          {/* ✅ Status — click RESOLVED to see what was solved */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <span
                               onClick={() => {
                                 if (s === "resolved" && ticket.resolutionNotes) {
-                                  setIssuePopup({
-                                    description: ticket.description,
-                                    resolutionNotes: ticket.resolutionNotes,
-                                    resolutionTimeTaken: ticket.resolutionTimeTaken,
-                                  });
+                                  setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken });
                                 }
                               }}
                               style={{
@@ -1106,17 +1011,12 @@ export default function SupportDashboard() {
                                 cursor: s === "resolved" && ticket.resolutionNotes ? "pointer" : "default",
                                 border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : "none",
                                 display: "inline-block"
-                              }}
-                              title={s === "resolved" && ticket.resolutionNotes ? "Click to see what was resolved" : ""}
-                            >
+                              }}>
                               {s.toUpperCase()}
                             </span>
                             {s === "resolved" && ticket.resolutionNotes && (
-                              <div
-                                onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                                style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
-                                📋 View details
-                              </div>
+                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                                style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
                             )}
                             {ticket.createdAt && s !== "resolved" && s !== "rma" && (() => {
                               const remaining = new Date(ticket.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
@@ -1125,12 +1025,8 @@ export default function SupportDashboard() {
                               const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
                               return <div style={{ fontSize: 10, color: remaining < 4 * 60 * 60 * 1000 ? "#dc2626" : "#059669", marginTop: 2 }}>⏱️ {hrs}h {mins}m left</div>;
                             })()}
-                            {s === "resolved" && ticket.resolutionTimeTaken && (
-                              <div style={{ fontSize: 10, color: "#6b7280", marginTop: 3 }}>⏱️ {ticket.resolutionTimeTaken}</div>
-                            )}
                           </td>
 
-                          {/* Image */}
                           <td style={{ padding: "12px 14px", textAlign: "center" }}>
                             {ticket.productImage ? (
                               <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
@@ -1142,7 +1038,6 @@ export default function SupportDashboard() {
                             )}
                           </td>
 
-                          {/* RMA */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             {ticket.rmaStatus ? (
                               <div>
@@ -1150,27 +1045,15 @@ export default function SupportDashboard() {
                                 <div style={{ fontSize: 10, color: "#6d28d9", marginTop: 2 }}>{ticket.rmaCenterName}</div>
                                 <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.rmaCenterCity}</div>
                               </div>
-                            ) : (
-                              <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
-                            )}
+                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                           </td>
 
-                          {/* Actions */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {s === "open" && (
                                 <button
-                                  onClick={() => setResolveForm(prev => ({
-                                    ...prev,
-                                    [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show }
-                                  }))}
-                                  style={{
-                                    background: showResolve ? "#ecfdf5" : "#10b981",
-                                    color: showResolve ? "#065f46" : "white",
-                                    border: showResolve ? "1.5px solid #6ee7b7" : "none",
-                                    padding: "5px 10px", borderRadius: 6, cursor: "pointer",
-                                    fontSize: 11, fontWeight: 600, whiteSpace: "nowrap"
-                                  }}>
+                                  onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
+                                  style={{ background: showResolve ? "#ecfdf5" : "#10b981", color: showResolve ? "#065f46" : "white", border: showResolve ? "1.5px solid #6ee7b7" : "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
                                   ✅ {showResolve ? "Cancel" : "Resolve"}
                                 </button>
                               )}
@@ -1198,7 +1081,6 @@ export default function SupportDashboard() {
                           </td>
                         </tr>
 
-                        {/* Image expanded row */}
                         {expandedImage === ticket.id && ticket.productImage && (
                           <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={10} style={{ padding: "12px 20px" }}>
@@ -1216,7 +1098,6 @@ export default function SupportDashboard() {
                           </tr>
                         )}
 
-                        {/* Resolve Form row */}
                         {showResolve && s === "open" && (
                           <tr key={`resolveform-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={10} style={{ padding: "16px 20px" }}>
@@ -1234,27 +1115,20 @@ export default function SupportDashboard() {
                                     onChange={e => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], notes: e.target.value } }))}
                                     style={{ width: "100%", padding: "10px 12px", border: "2px solid #6ee7b7", borderRadius: 8, fontSize: 12, outline: "none", fontFamily: "inherit", background: "white", resize: "vertical", color: "#111", lineHeight: 1.5, boxSizing: "border-box" }}
                                   />
-                                  {ticket.createdAt && (
-                                    <div style={{ marginTop: 8, fontSize: 11, color: "#6b7280" }}>⏱️ Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>
-                                  )}
-                                  {ticket.acceptedAt && (
-                                    <div style={{ marginTop: 4, fontSize: 11, color: "#6b7280" }}>🔓 Accepted: <strong>{new Date(ticket.acceptedAt).toLocaleString()}</strong></div>
-                                  )}
+                                  {ticket.createdAt && <div style={{ marginTop: 8, fontSize: 11, color: "#6b7280" }}>⏱️ Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>}
+                                  {ticket.acceptedAt && <div style={{ marginTop: 4, fontSize: 11, color: "#6b7280" }}>🔓 Accepted: <strong>{new Date(ticket.acceptedAt).toLocaleString()}</strong></div>}
                                 </div>
                                 {resolveForm[ticket.id]?.notes && (
                                   <div style={{ background: "white", border: "1px solid #6ee7b7", borderRadius: 8, padding: "10px 14px", marginTop: 14, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-                                    <strong>📋 Summary:</strong><br />
-                                    🔧 Resolved: {resolveForm[ticket.id].notes}
+                                    <strong>📋 Summary:</strong><br />🔧 Resolved: {resolveForm[ticket.id].notes}
                                   </div>
                                 )}
                                 <div style={{ marginTop: 16, display: "flex", gap: 10, alignItems: "center" }}>
-                                  <button
-                                    onClick={() => handleResolveSubmit(ticket.id)}
+                                  <button onClick={() => handleResolveSubmit(ticket.id)}
                                     style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "white", border: "none", padding: "10px 28px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit", boxShadow: "0 3px 12px rgba(16,185,129,0.4)" }}>
                                     ✅ Confirm Resolved
                                   </button>
-                                  <button
-                                    onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
+                                  <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
                                     style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
                                     Cancel
                                   </button>
@@ -1264,7 +1138,6 @@ export default function SupportDashboard() {
                           </tr>
                         )}
 
-                        {/* RMA Form row */}
                         {showRma && (s === "open" || s === "pending") && (
                           <tr key={`rmaform-${ticket.id}`} style={{ background: "#faf5ff" }}>
                             <td colSpan={10} style={{ padding: "16px 20px" }}>
@@ -1308,16 +1181,13 @@ export default function SupportDashboard() {
                                     {submittingRma === ticket.id ? "⏳ Processing..." : "🔧 Confirm RMA + Send WhatsApp"}
                                   </button>
                                   <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
-                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
-                                    Cancel
-                                  </button>
+                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
                                 </div>
                               </div>
                             </td>
                           </tr>
                         )}
 
-                        {/* Reassign Form row */}
                         {showReassign && s !== "resolved" && s !== "rma" && (
                           <tr key={`reassignform-${ticket.id}`} style={{ background: "#fffdf0" }}>
                             <td colSpan={10} style={{ padding: "16px 20px" }}>
@@ -1352,16 +1222,13 @@ export default function SupportDashboard() {
                                     {reassigning === ticket.id ? "⏳ Reassigning..." : "🔄 Confirm Reassign"}
                                   </button>
                                   <button onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
-                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
-                                    Cancel
-                                  </button>
+                                    style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
                                 </div>
                               </div>
                             </td>
                           </tr>
                         )}
 
-                        {/* Feedback row */}
                         {s === "resolved" && (
                           <tr key={`fb-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={10} style={{ padding: "8px 20px" }}>
