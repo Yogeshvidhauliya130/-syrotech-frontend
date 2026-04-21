@@ -320,10 +320,11 @@ export default function SupportDashboard() {
     reader.readAsDataURL(file);
   };
 
- const handleChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
     if (name === "pincode"  && value !== "" && !/^\d*$/.test(value))          return;
+    // ✅ functional update — no stale closure, assignTo never reset
     setForm(prev => ({ ...prev, [name]: value }));
     setFormErrors(prev => ({ ...prev, [name]: "" }));
   };
@@ -352,7 +353,7 @@ export default function SupportDashboard() {
   };
 
   const handleSubmit = () => {
-    if (submitting) return;
+    if (submitting) return; // ✅ prevent double submit
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setFormErrors(validationErrors);
@@ -360,6 +361,7 @@ export default function SupportDashboard() {
       if (firstErr) firstErr.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    setSubmitting(true); // ✅ disable button immediately before any fetch
     const cleanPhone = form.phone.replace(/\s+/g, "");
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
@@ -370,7 +372,6 @@ export default function SupportDashboard() {
           t.serialNo.trim().toLowerCase() === form.serialNo.trim().toLowerCase()
         );
         if (sameCustomerTicket) {
-          setSubmitting(true);
           const issueEntry = {
             description:  form.description,
             raisedBy:     currentUser?.email,
@@ -411,7 +412,6 @@ export default function SupportDashboard() {
             .finally(() => setSubmitting(false));
           return;
         }
-        setSubmitting(true);
         const newTicket = {
           ...form,
           phone:        cleanPhone,
@@ -439,7 +439,10 @@ export default function SupportDashboard() {
           .catch(() => setFormErrors({ submit: "❌ Failed to submit ticket." }))
           .finally(() => setSubmitting(false));
       })
-      .catch(() => setFormErrors({ submit: "❌ Failed to check existing tickets." }));
+      .catch(() => {
+        setFormErrors({ submit: "❌ Failed to check existing tickets." });
+        setSubmitting(false); // ✅ re-enable if outer fetch fails
+      });
   };
 
   const borderColor = (field) => formErrors[field] ? "#ef4444" : "#ddd5c8";
