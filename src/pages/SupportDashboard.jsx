@@ -320,16 +320,11 @@ export default function SupportDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleChange = (e) => {
+ const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
     if (name === "pincode"  && value !== "" && !/^\d*$/.test(value))          return;
-    // ✅ assignTo is locked — do NOT update it from user interaction in raise form
-    if (name === "category" || name === "city" || name === "country") {
-      setForm(prev => ({ ...prev, [name]: value })); // do NOT reset assignTo
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+    setForm(prev => ({ ...prev, [name]: value }));
     setFormErrors(prev => ({ ...prev, [name]: "" }));
   };
 
@@ -357,6 +352,7 @@ export default function SupportDashboard() {
   };
 
   const handleSubmit = () => {
+    if (submitting) return;
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setFormErrors(validationErrors);
