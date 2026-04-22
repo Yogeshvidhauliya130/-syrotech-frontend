@@ -149,6 +149,8 @@ function Analytics() {
   const [issuePopup, setIssuePopup]     = useState(null);
   const [feedbackData, setFeedbackData] = useState({});
   const [savingId, setSavingId]         = useState(null);
+  const [rmaPopup, setRmaPopup]         = useState(null);           // ✅ NEW: RMA detail popup
+  const [supportPersons, setSupportPersons] = useState([]);         // ✅ NEW: for Assigned To details
 
   const saveFeedback = (ticketId, ticket) => {
     const fb = feedbackData[ticketId] || {};
@@ -174,6 +176,14 @@ function Analytics() {
     load();
     const id = setInterval(load, 5000);
     return () => clearInterval(id);
+  }, []);
+
+  // ✅ NEW: Fetch support persons for Assigned To column details
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/users`)
+      .then(r => r.json())
+      .then(users => setSupportPersons(users.filter(u => u.role === "support" && u.approved)))
+      .catch(console.error);
   }, []);
 
   const ticketNumberMap = {};
@@ -225,6 +235,30 @@ function Analytics() {
         </div>
       )}
 
+      {/* ✅ NEW: RMA Detail Popup */}
+      {rmaPopup && (
+        <div onClick={() => setRmaPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #c4b5fd" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#5b21b6" }}>🔧 RMA Details</div>
+              <button onClick={() => setRmaPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#f5f3ff", borderRadius: 10, padding: "14px 16px", marginBottom: 14, border: "1px solid #c4b5fd" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", marginBottom: 6 }}>Reason for RMA:</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#374151" }}>{rmaPopup.rmaReason || "—"}</div>
+            </div>
+            <div style={{ background: "#faf7f4", borderRadius: 10, padding: "14px 16px", border: "1px solid #e0d8d0" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 10 }}>RMA Center Details:</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 4 }}>📍 {rmaPopup.rmaCenterName || "—"}</div>
+              {rmaPopup.rmaCenterCity && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🏙️ {rmaPopup.rmaCenterCity}</div>}
+              {rmaPopup.rmaCenterAddress && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🗺️ {rmaPopup.rmaCenterAddress}</div>}
+              {rmaPopup.rmaCenterPhone && <div style={{ fontSize: 12, color: "#6b7280" }}>📞 {rmaPopup.rmaCenterPhone}</div>}
+            </div>
+            {rmaPopup.rmaSentAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
+          </div>
+        </div>
+      )}
+
       <div className="tab-header">
         <div>
           <h2 className="tab-title">Analytics</h2>
@@ -266,6 +300,11 @@ function Analytics() {
               const s               = (ticket.status || "pending").toLowerCase();
               const isResolved      = s === "resolved";
               const isSupportRaised = ticket.source === "support"; // ✅
+              // ✅ NEW: look up assigned support person details
+              const assignedPerson  = supportPersons.find(p =>
+                p.name && ticket.assignTo &&
+                p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim()
+              );
               return (
                 // ✅ CHANGE 4: Distinct highlight in Admin Analytics for support-raised tickets
                 <tr key={ticket.id} style={{
@@ -278,10 +317,19 @@ function Analytics() {
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticketNumberMap[ticket.id]}</div>
                     <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.date || "—"}</div>
                   </td>
+
+                  {/* ✅ NEW: Assigned To — name + phone + city from supportPersons */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.assignTo || "—"}</div>
+                    {assignedPerson?.phone && (
+                      <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>📞 {assignedPerson.phone}</div>
+                    )}
+                    {assignedPerson?.city && (
+                      <div style={{ fontSize: 11, color: "#9ca3af" }}>📍 {assignedPerson.city}</div>
+                    )}
                     {ticket.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700 }}>🔄 from {ticket.reassignedFrom}</div>}
                   </td>
+
                   {/* ✅ Raised By with distinct support badge */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
@@ -314,11 +362,31 @@ function Analytics() {
                         style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
                     )}
                   </td>
+
+                  {/* ✅ NEW: Status — click RMA to show rmaPopup */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                    <span style={{ padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block" }}>{s.toUpperCase()}</span>
+                    <span
+                      onClick={() => {
+                        if (s === "rma") {
+                          setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
+                        }
+                      }}
+                      style={{
+                        padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                        color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block",
+                        cursor: s === "rma" ? "pointer" : "default",
+                        border: s === "rma" ? "1.5px solid #c4b5fd" : "none",
+                      }}>
+                      {s.toUpperCase()}
+                    </span>
+                    {s === "rma" && (
+                      <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt })}
+                        style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
+                    )}
                     {ticket.createdAt && <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4 }}>🕐 Raised: <strong>{new Date(ticket.createdAt).toLocaleString()}</strong></div>}
                     {ticket.resolvedAt && <div style={{ fontSize: 10, color: "#10b981", marginTop: 2 }}>✅ Solved: <strong>{new Date(ticket.resolvedAt).toLocaleString()}</strong></div>}
                   </td>
+
                   <td style={{ padding: "12px 14px" }}>
                     {!isResolved ? (
                       <div style={{ fontSize: 11, color: "#d1d5db", padding: "6px 0" }}>🔒 Only after resolved</div>
