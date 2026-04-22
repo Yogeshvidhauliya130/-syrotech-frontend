@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [dateSort, setDateSort]           = useState("newest");
   const [productFilter, setProductFilter] = useState("all");
   const [statusFilter, setStatusFilter]   = useState("all");
+  const [searchQuery, setSearchQuery]     = useState(""); // ✅ CHANGE 1: search state
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -279,6 +280,20 @@ export default function Dashboard() {
   const displayTickets = myTickets
     .filter(t => productFilter === "all" || t.category === productFilter)
     .filter(t => statusFilter === "all" || (t.status || "pending").toLowerCase() === statusFilter)
+    // ✅ CHANGE 1: search filter
+    .filter(t => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        (t.customer  || "").toLowerCase().includes(q) ||
+        (t.date      || "").toLowerCase().includes(q) ||
+        (t.serialNo  || "").toLowerCase().includes(q) ||
+        (t.phone     || "").toLowerCase().includes(q) ||
+        (t.city      || "").toLowerCase().includes(q) ||
+        (t.assignTo  || "").toLowerCase().includes(q) ||
+        (t.category  || "").toLowerCase().includes(q)
+      );
+    })
     .slice()
     .sort((a, b) => {
       const da = new Date(a.createdAt || a.date).getTime();
@@ -335,8 +350,6 @@ export default function Dashboard() {
                 ✕ Close
               </button>
             </div>
-
-            {/* ✅ Show resolution notes FIRST and prominently if available */}
             {issuePopup.resolutionNotes ? (
               <>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
@@ -632,6 +645,29 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
+                {/* ✅ CHANGE 1: Search box above filter bar */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <input
+                      placeholder="🔍 Search by name, date, serial no, phone, city, product..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      style={{
+                        flex: 1, padding: "10px 16px", borderRadius: 10,
+                        border: "1.5px solid #d1d5db", fontSize: 13,
+                        background: "white", color: "#374151", outline: "none",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")}
+                        style={{ background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontWeight: 600 }}>
+                        ✕ Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* FILTER BAR */}
                 <div style={{
                   background: "white", borderRadius: 12,
@@ -716,38 +752,39 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* ✅ TABLE — simple bottom scrollbar always visible */}
+                {/* TABLE — 10 columns now (Phone & City removed, merged into Customer & Assigned To) */}
                 <div style={{
                   borderRadius: 12,
                   border: "1.5px solid #e0d8d0",
                   boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
                   overflowX: "scroll",
-overflowY: "auto",
-maxHeight: "72vh",
+                  overflowY: "auto",
+                  maxHeight: "72vh",
                 }}>
                   <table style={{
                     width: "100%",
                     borderCollapse: "collapse",
                     background: "white",
-                    minWidth: 1200,
+                    minWidth: 1000,
                   }}>
                     <colgroup>
-                      <col style={{ width: 85 }} />
+                      <col style={{ width: 85  }} />
                       <col style={{ width: 100 }} />
                       <col style={{ width: 110 }} />
-                      <col style={{ width: 120 }} />
-                      <col style={{ width: 110 }} />
-                      <col style={{ width: 120 }} />
-                      <col style={{ width: 100 }} />
-                      <col style={{ width: 110 }} />
+                      <col style={{ width: 130 }} />
+                      {/* ✅ CHANGE 2: Customer col wider (merged phone+city) */}
+                      <col style={{ width: 160 }} />
+                      {/* ✅ CHANGE 3: Assigned To col wider (merged phone+city) */}
+                      <col style={{ width: 160 }} />
                       <col style={{ width: 105 }} />
-                      <col style={{ width: 75 }} />
+                      <col style={{ width: 75  }} />
                       <col style={{ width: 220 }} />
-                      <col style={{ width: 95 }} />
+                      <col style={{ width: 95  }} />
                     </colgroup>
                     <thead>
                       <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)" }}>
-                        {["Ticket No","Date","Product","Serial No","Customer","Phone","City","Assigned To","Status","Image","Issue","RMA"].map((h, i) => (
+                        {/* ✅ 10 columns — Phone and City removed */}
+                        {["Ticket No","Date","Product","Serial No","Customer","Assigned To","Status","Image","Issue","RMA"].map((h, i) => (
                           <th key={i} style={{
                             padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white",
                             textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left",
@@ -760,13 +797,19 @@ maxHeight: "72vh",
                     <tbody>
                       {displayTickets.length === 0 ? (
                         <tr>
-                          <td colSpan={12} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
+                          <td colSpan={10} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
                             No tickets found for selected filters.
                           </td>
                         </tr>
                       ) : (
                         displayTickets.reduce((acc, ticket, idx) => {
                           const s = (ticket.status || "pending").toLowerCase();
+
+                          // ✅ CHANGE 3: look up support person details from supportPersons list
+                          const assignedPerson = supportPersons.find(p =>
+                            p.name && ticket.assignTo &&
+                            p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim()
+                          );
 
                           acc.push(
                             <tr key={ticket.id} style={{
@@ -775,12 +818,11 @@ maxHeight: "72vh",
                               borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
                             }}>
 
-                              {/* ✅ Ticket No — persistent Syro1, Syro2... | row count below */}
+                              {/* Ticket No */}
                               <td style={{ padding: "12px 10px", whiteSpace: "nowrap" }}>
                                 <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>
                                   Syro{ticketNumberMap[ticket.id]}
                                 </div>
-                                {/* ✅ Row count instead of hash */}
                                 <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                               </td>
 
@@ -803,39 +845,45 @@ maxHeight: "72vh",
                                 {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap" }}>MAC: {ticket.mac}</div>}
                               </td>
 
-                              {/* Customer */}
-                              <td style={{ padding: "12px 10px", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {ticket.customer || "—"}
-                              </td>
-
-                              {/* Phone */}
-                              <td style={{ padding: "12px 10px", fontSize: 12, whiteSpace: "nowrap" }}>
-                                {ticket.phone || "—"}
-                              </td>
-
-                              {/* City */}
+                              {/* ✅ CHANGE 2: Customer — name + phone + city/country combined */}
                               <td style={{ padding: "12px 10px" }}>
-                                <div style={{ fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.city || "—"}</div>
-                                {ticket.country && <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.country}</div>}
+                                <div style={{ fontSize: 12, fontWeight: 700, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {ticket.customer || "—"}
+                                </div>
+                                {ticket.phone && (
+                                  <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2, whiteSpace: "nowrap" }}>📞 {ticket.phone}</div>
+                                )}
+                                {(ticket.city || ticket.country) && (
+                                  <div style={{ fontSize: 10, color: "#9ca3af", whiteSpace: "nowrap" }}>
+                                    📍 {[ticket.city, ticket.country].filter(Boolean).join(", ")}
+                                  </div>
+                                )}
                               </td>
 
-                              {/* Assigned To */}
+                              {/* ✅ CHANGE 3: Assigned To — name + phone + city combined */}
                               <td style={{ padding: "12px 10px" }}>
-                                <div style={{ fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.assignTo || "—"}</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {ticket.assignTo || "—"}
+                                </div>
+                                {assignedPerson?.phone && (
+                                  <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2, whiteSpace: "nowrap" }}>📞 {assignedPerson.phone}</div>
+                                )}
+                                {assignedPerson?.city && (
+                                  <div style={{ fontSize: 10, color: "#9ca3af", whiteSpace: "nowrap" }}>📍 {assignedPerson.city}</div>
+                                )}
                                 {ticket.reassignedFrom && (
                                   <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>
                                 )}
                               </td>
 
-                              {/* ✅ Status — click RESOLVED to see what support person solved */}
+                              {/* Status */}
                               <td style={{ padding: "12px 10px" }}>
                                 <span
-                                 onClick={() => {
-  if (s === "resolved") {
-    console.log("resolutionNotes =", ticket.resolutionNotes);
-    setIssuePopup({
-      description: ticket.description,
-      resolutionNotes: ticket.resolutionNotes,
+                                  onClick={() => {
+                                    if (s === "resolved") {
+                                      setIssuePopup({
+                                        description: ticket.description,
+                                        resolutionNotes: ticket.resolutionNotes,
                                         resolutionTimeTaken: ticket.resolutionTimeTaken,
                                         resolvedBy: ticket.resolvedBy,
                                         resolvedAt: ticket.resolvedAt,
@@ -887,7 +935,7 @@ maxHeight: "72vh",
                                 )}
                               </td>
 
-                              {/* Issue — click to open popup */}
+                              {/* Issue */}
                               <td style={{ padding: "12px 10px" }}>
                                 <div
                                   onClick={() => setIssuePopup({
@@ -943,7 +991,7 @@ maxHeight: "72vh",
                           if (expandedImage === ticket.id && ticket.productImage) {
                             acc.push(
                               <tr key={`img-${ticket.id}`}>
-                                <td colSpan={12} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
+                                <td colSpan={10} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
                                   <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
                                     <img
                                       src={ticket.productImage}
@@ -967,7 +1015,7 @@ maxHeight: "72vh",
                           if (ticket.feedbackRating) {
                             acc.push(
                               <tr key={`fb-${ticket.id}`} style={{ background: "#eff6ff" }}>
-                                <td colSpan={12} style={{ padding: "8px 20px" }}>
+                                <td colSpan={10} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#1e40af", fontWeight: 600 }}>
                                     ⭐ Your Feedback: {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
                                     {ticket.feedbackComment && ` — "${ticket.feedbackComment}"`}
@@ -980,7 +1028,7 @@ maxHeight: "72vh",
                           if (ticket.rmaStatus) {
                             acc.push(
                               <tr key={`rma-${ticket.id}`} style={{ background: "#f5f3ff" }}>
-                                <td colSpan={12} style={{ padding: "8px 20px" }}>
+                                <td colSpan={10} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#5b21b6", fontWeight: 600 }}>
                                     🔧 RMA Center: {ticket.rmaCenterName} | {ticket.rmaCenterAddress} | 📞 {ticket.rmaCenterPhone}
                                   </span>

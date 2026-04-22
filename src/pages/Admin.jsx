@@ -117,7 +117,7 @@ export default function Admin() {
     <div className="admin-layout">
       <aside className="admin-sidebar">
         <div className="sidebar-brand">
-          {/* <div className="sidebar-logo">S</div> */}
+          
            <img src="/logo.png" alt="Syrotech" style={{ width: 38, height: 38, borderRadius: 8, objectFit: "contain" }} />
           <div>
             <div className="sidebar-brand-name">Syrotech</div>
