@@ -473,10 +473,7 @@ export default function SupportDashboard() {
     / resolved.length / (1000 * 60 * 60)
   ).toFixed(1);
 
-  const supportTicketNumberMap = {};
-  [...tickets]
-    .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
-    .forEach((t, i) => { supportTicketNumberMap[t.id] = i + 1; });
+
 
   // ✅ NEW: search applied to filtered
   const filtered = (filter === "all" ? tickets : tickets.filter(t => t.status === filter))
@@ -506,10 +503,7 @@ export default function SupportDashboard() {
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
-  const raisedTicketNumberMap = {};
-  [...myRaisedTickets]
-    .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
-    .forEach((t, i) => { raisedTicketNumberMap[t.id] = i + 1; });
+
 
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8" }}>
@@ -816,7 +810,7 @@ export default function SupportDashboard() {
                       return (
                         <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
                           <td style={{ padding: "12px 12px", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{raisedTicketNumberMap[ticket.id]}</div>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{ticket.ticketNumber || "—"}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                             <div style={{ fontSize: 9, color: "#059669", fontWeight: 700, marginTop: 2, background: "#d1fae5", padding: "1px 5px", borderRadius: 4, display: "inline-block" }}>📞 Via Support</div>
                           </td>
@@ -1023,7 +1017,7 @@ export default function SupportDashboard() {
                         }}>
 
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{supportTicketNumberMap[ticket.id]}</div>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{ticket.ticketNumber || "—"}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                             {ticket.issueHistory && ticket.issueHistory.length > 0 && (
                               <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>

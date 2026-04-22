@@ -186,10 +186,7 @@ function Analytics() {
       .catch(console.error);
   }, []);
 
-  const ticketNumberMap = {};
-  [...tickets]
-    .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
-    .forEach((t, i) => { ticketNumberMap[t.id] = i + 1; });
+
 
   const counts = {
     all:      tickets.length,
@@ -314,7 +311,7 @@ function Analytics() {
                   outline: isSupportRaised ? "1px solid #93c5fd" : "none",
                 }}>
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticketNumberMap[ticket.id]}</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticket.ticketNumber || "—"}</div>
                     <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.date || "—"}</div>
                   </td>
 

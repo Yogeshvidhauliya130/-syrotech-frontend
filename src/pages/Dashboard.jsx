@@ -272,11 +272,7 @@ export default function Dashboard() {
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
-  // ✅ Persistent ticket number map — oldest ticket = Syro1, next = Syro2, etc.
-  const ticketNumberMap = {};
-  [...myTickets]
-    .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
-    .forEach((t, i) => { ticketNumberMap[t.id] = i + 1; });
+
 
   const displayTickets = myTickets
     .filter(t => productFilter === "all" || t.category === productFilter)
@@ -845,8 +841,8 @@ export default function Dashboard() {
                               {/* Ticket No */}
                               <td style={{ padding: "12px 10px", whiteSpace: "nowrap" }}>
                                 <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>
-                                  Syro{ticketNumberMap[ticket.id]}
-                                </div>
+  Syro{ticket.ticketNumber || "—"}
+</div>
                                 <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                               </td>
 
