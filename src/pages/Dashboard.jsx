@@ -39,6 +39,7 @@ export default function Dashboard() {
   const [imagePreview, setImagePreview]     = useState("");
   const [expandedImage, setExpandedImage]   = useState(null);
   const [issuePopup, setIssuePopup]         = useState(null);
+  const [rmaPopup, setRmaPopup]             = useState(null); // ✅ RMA detail popup
 
   const [dateSort, setDateSort]           = useState("newest");
   const [productFilter, setProductFilter] = useState("all");
@@ -380,6 +381,30 @@ export default function Dashboard() {
                 {issuePopup.description}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ✅ RMA Detail Popup */}
+      {rmaPopup && (
+        <div onClick={() => setRmaPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #c4b5fd" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#5b21b6" }}>🔧 RMA Details</div>
+              <button onClick={() => setRmaPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#f5f3ff", borderRadius: 10, padding: "14px 16px", marginBottom: 14, border: "1px solid #c4b5fd" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", marginBottom: 6 }}>Reason for RMA:</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#374151" }}>{rmaPopup.rmaReason || "—"}</div>
+            </div>
+            <div style={{ background: "#faf7f4", borderRadius: 10, padding: "14px 16px", border: "1px solid #e0d8d0" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 10 }}>RMA Center Details:</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 4 }}>📍 {rmaPopup.rmaCenterName || "—"}</div>
+              {rmaPopup.rmaCenterCity && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🏙️ {rmaPopup.rmaCenterCity}</div>}
+              {rmaPopup.rmaCenterAddress && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🗺️ {rmaPopup.rmaCenterAddress}</div>}
+              {rmaPopup.rmaCenterPhone && <div style={{ fontSize: 12, color: "#6b7280" }}>📞 {rmaPopup.rmaCenterPhone}</div>}
+            </div>
+            {rmaPopup.rmaSentAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
           </div>
         </div>
       )}
@@ -779,12 +804,11 @@ export default function Dashboard() {
                       <col style={{ width: 105 }} />
                       <col style={{ width: 75  }} />
                       <col style={{ width: 220 }} />
-                      <col style={{ width: 95  }} />
                     </colgroup>
                     <thead>
                       <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)" }}>
                         {/* ✅ 10 columns — Phone and City removed */}
-                        {["Ticket No","Date","Product","Serial No","Customer","Assigned To","Status","Image","Issue","RMA"].map((h, i) => (
+                        {["Ticket No","Date","Product","Serial No","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
                           <th key={i} style={{
                             padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white",
                             textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left",
@@ -797,7 +821,7 @@ export default function Dashboard() {
                     <tbody>
                       {displayTickets.length === 0 ? (
                         <tr>
-                          <td colSpan={10} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
+                          <td colSpan={9} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
                             No tickets found for selected filters.
                           </td>
                         </tr>
@@ -881,38 +905,29 @@ export default function Dashboard() {
                                 <span
                                   onClick={() => {
                                     if (s === "resolved") {
-                                      setIssuePopup({
-                                        description: ticket.description,
-                                        resolutionNotes: ticket.resolutionNotes,
-                                        resolutionTimeTaken: ticket.resolutionTimeTaken,
-                                        resolvedBy: ticket.resolvedBy,
-                                        resolvedAt: ticket.resolvedAt,
-                                      });
+                                      setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt });
+                                    } else if (s === "rma") {
+                                      setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
                                     }
                                   }}
                                   style={{
                                     padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700,
                                     color: STATUS_COLOR[s], background: STATUS_BG[s],
                                     display: "inline-block", whiteSpace: "nowrap",
-                                    cursor: s === "resolved" ? "pointer" : "default",
+                                    cursor: s === "resolved" || s === "rma" ? "pointer" : "default",
                                     border: s === "resolved" ? "1.5px solid #6ee7b7" : "none",
                                   }}
-                                  title={s === "resolved" ? "Click to see resolution details" : ""}
+                                  title={s === "resolved" ? "Click to see resolution details" : s === "rma" ? "Click to see RMA details" : ""}
                                 >
                                   {STATUS_ICON[s]} {s.toUpperCase()}
                                 </span>
                                 {s === "resolved" && ticket.resolutionNotes && (
-                                  <div
-                                    onClick={() => setIssuePopup({
-                                      description: ticket.description,
-                                      resolutionNotes: ticket.resolutionNotes,
-                                      resolutionTimeTaken: ticket.resolutionTimeTaken,
-                                      resolvedBy: ticket.resolvedBy,
-                                      resolvedAt: ticket.resolvedAt,
-                                    })}
-                                    style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>
-                                    📋 View details
-                                  </div>
+                                  <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
+                                    style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
+                                )}
+                                {s === "rma" && (
+                                  <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt })}
+                                    style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
                                 )}
                               </td>
 
@@ -974,24 +989,13 @@ export default function Dashboard() {
                                 )}
                               </td>
 
-                              {/* RMA */}
-                              <td style={{ padding: "12px 10px", maxWidth: 80, overflow: "hidden" }}>
-                                {ticket.rmaStatus ? (
-                                  <div title={ticket.rmaCenterName}>
-                                    <span style={{ background: "#f5f3ff", color: "#7c3aed", padding: "2px 6px", borderRadius: 6, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>🔧 RMA</span>
-                                    <div style={{ fontSize: 9, color: "#6d28d9", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 75 }}>{ticket.rmaCenterName}</div>
-                                  </div>
-                                ) : (
-                                  <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
-                                )}
-                              </td>
                             </tr>
                           );
 
                           if (expandedImage === ticket.id && ticket.productImage) {
                             acc.push(
                               <tr key={`img-${ticket.id}`}>
-                                <td colSpan={10} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
+                                <td colSpan={9} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
                                   <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
                                     <img
                                       src={ticket.productImage}
@@ -1015,7 +1019,7 @@ export default function Dashboard() {
                           if (ticket.feedbackRating) {
                             acc.push(
                               <tr key={`fb-${ticket.id}`} style={{ background: "#eff6ff" }}>
-                                <td colSpan={10} style={{ padding: "8px 20px" }}>
+                                <td colSpan={9} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#1e40af", fontWeight: 600 }}>
                                     ⭐ Your Feedback: {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
                                     {ticket.feedbackComment && ` — "${ticket.feedbackComment}"`}
@@ -1028,7 +1032,7 @@ export default function Dashboard() {
                           if (ticket.rmaStatus) {
                             acc.push(
                               <tr key={`rma-${ticket.id}`} style={{ background: "#f5f3ff" }}>
-                                <td colSpan={10} style={{ padding: "8px 20px" }}>
+                                <td colSpan={9} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#5b21b6", fontWeight: 600 }}>
                                     🔧 RMA Center: {ticket.rmaCenterName} | {ticket.rmaCenterAddress} | 📞 {ticket.rmaCenterPhone}
                                   </span>

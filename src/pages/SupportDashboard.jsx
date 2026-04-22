@@ -125,6 +125,8 @@ export default function SupportDashboard() {
   const [dateSort, setDateSort]                   = useState("newest");
   const [resolveForm, setResolveForm]             = useState({});
   const [issuePopup, setIssuePopup]               = useState(null);
+  const [rmaPopup, setRmaPopup]                   = useState(null);       // ✅ NEW: RMA detail popup
+  const [assignedSearch, setAssignedSearch]       = useState("");          // ✅ NEW: search filter
 
   // ── Tab ──
   const [activeTab, setActiveTab] = useState("tickets");
@@ -476,7 +478,22 @@ export default function SupportDashboard() {
     .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date))
     .forEach((t, i) => { supportTicketNumberMap[t.id] = i + 1; });
 
+  // ✅ NEW: search applied to filtered
   const filtered = (filter === "all" ? tickets : tickets.filter(t => t.status === filter))
+    .filter(t => {
+      if (!assignedSearch.trim()) return true;
+      const q = assignedSearch.toLowerCase();
+      return (
+        (t.customer     || "").toLowerCase().includes(q) ||
+        (t.serialNo     || "").toLowerCase().includes(q) ||
+        (t.mac          || "").toLowerCase().includes(q) ||
+        (t.phone        || "").toLowerCase().includes(q) ||
+        (t.city         || "").toLowerCase().includes(q) ||
+        (t.category     || "").toLowerCase().includes(q) ||
+        (t.date         || "").toLowerCase().includes(q) ||
+        (t.raisedByName || "").toLowerCase().includes(q)
+      );
+    })
     .slice()
     .sort((a, b) => {
       const da = new Date(a.createdAt || a.date).getTime();
@@ -540,6 +557,34 @@ export default function SupportDashboard() {
                 {issuePopup.description}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ✅ NEW: RMA Detail Popup */}
+      {rmaPopup && (
+        <div
+          onClick={() => setRmaPopup(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #c4b5fd" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#5b21b6" }}>🔧 RMA Details</div>
+              <button onClick={() => setRmaPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#f5f3ff", borderRadius: 10, padding: "14px 16px", marginBottom: 14, border: "1px solid #c4b5fd" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", marginBottom: 6 }}>Reason for RMA:</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#374151" }}>{rmaPopup.rmaReason || "—"}</div>
+            </div>
+            <div style={{ background: "#faf7f4", borderRadius: 10, padding: "14px 16px", border: "1px solid #e0d8d0" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 10 }}>RMA Center Details:</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 4 }}>📍 {rmaPopup.rmaCenterName || "—"}</div>
+              {rmaPopup.rmaCenterCity && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🏙️ {rmaPopup.rmaCenterCity}</div>}
+              {rmaPopup.rmaCenterAddress && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🗺️ {rmaPopup.rmaCenterAddress}</div>}
+              {rmaPopup.rmaCenterPhone && <div style={{ fontSize: 12, color: "#6b7280" }}>📞 {rmaPopup.rmaCenterPhone}</div>}
+            </div>
+            {rmaPopup.rmaSentAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
           </div>
         </div>
       )}
@@ -796,10 +841,17 @@ export default function SupportDashboard() {
                           </td>
                           <td style={{ padding: "12px 12px" }}>
                             <span
-                              onClick={() => { if (s === "resolved" && ticket.resolutionNotes) setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken }); }}
-                              style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap", cursor: s === "resolved" ? "pointer" : "default", border: s === "resolved" ? "1.5px solid #6ee7b7" : "none" }}>
+                              onClick={() => {
+                                if (s === "resolved" && ticket.resolutionNotes) setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken });
+                                else if (s === "rma") setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
+                              }}
+                              style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap", cursor: (s === "resolved" || s === "rma") ? "pointer" : "default", border: s === "resolved" ? "1.5px solid #6ee7b7" : s === "rma" ? "1.5px solid #c4b5fd" : "none" }}>
                               {s.toUpperCase()}
                             </span>
+                            {s === "rma" && (
+                              <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt })}
+                                style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
+                            )}
                           </td>
                           <td style={{ padding: "12px 12px", maxWidth: 200 }}>
                             <div
@@ -868,12 +920,12 @@ export default function SupportDashboard() {
             <div style={{ background: "#f5f3ff", border: "1px solid #c4b5fd", borderRadius: 10, padding: "12px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 20 }}>🔧</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#5b21b6" }}>
-                {counts.rma} ticket{counts.rma > 1 ? "s" : ""} sent to RMA center
+                {counts.rma} ticket{counts.rma > 1 ? "s" : ""} sent to RMA center — click RMA status badge to see details
               </span>
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {[["all","All"],["pending","⏳ Pending"],["open","🔓 Open"],["resolved","✅ Resolved"],["rma","🔧 RMA"]].map(([key, label]) => (
                 <button key={key} onClick={() => setFilter(key)} style={{
@@ -898,6 +950,29 @@ export default function SupportDashboard() {
             </div>
           </div>
 
+          {/* ✅ NEW: Search box above the table */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                placeholder="🔍 Search by customer, serial no, MAC, phone, city, product..."
+                value={assignedSearch}
+                onChange={e => setAssignedSearch(e.target.value)}
+                style={{
+                  flex: 1, padding: "10px 16px", borderRadius: 10,
+                  border: "1.5px solid #d1d5db", fontSize: 13,
+                  background: "white", color: "#374151", outline: "none",
+                  fontFamily: "inherit",
+                }}
+              />
+              {assignedSearch && (
+                <button onClick={() => setAssignedSearch("")}
+                  style={{ background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontWeight: 600 }}>
+                  ✕ Clear
+                </button>
+              )}
+            </div>
+          </div>
+
           {filtered.length === 0 && (
             <div style={{ textAlign: "center", padding: 60, background: "white", borderRadius: 14, color: "#aaa" }}>
               <div style={{ fontSize: 48 }}>📭</div>
@@ -905,12 +980,14 @@ export default function SupportDashboard() {
             </div>
           )}
 
+          {/* TABLE */}
           {filtered.length > 0 && (
             <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
-                    {["Ticket No","Raised By","Product / S/N","MAC ID","Customer / KYC","Issue","Status","Image","RMA","Actions"].map((h, i) => (
+                    {/* ✅ Product/S/N+MAC merged, RMA col removed = 8 cols */}
+                    {["Ticket No","Raised By","Product / S/N + MAC","Customer / KYC","Issue","Status","Image","Actions"].map((h, i) => (
                       <th key={i} style={{
                         padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
                         textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
@@ -966,13 +1043,11 @@ export default function SupportDashboard() {
                             )}
                           </td>
 
+                          {/* ✅ Product / S/N + MAC merged into one column */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <div style={{ fontWeight: 700, fontSize: 13 }}>{ticket.category}</div>
                             <div style={{ fontSize: 11, color: "#6b7280" }}>S/N: {ticket.serialNo}</div>
-                          </td>
-
-                          <td style={{ padding: "12px 14px", fontSize: 11, color: "#555", whiteSpace: "nowrap" }}>
-                            {ticket.mac || <span style={{ color: "#d1d5db" }}>—</span>}
+                            {ticket.mac && <div style={{ fontSize: 10, color: "#9ca3af" }}>MAC: {ticket.mac}</div>}
                           </td>
 
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
@@ -997,18 +1072,21 @@ export default function SupportDashboard() {
                             )}
                           </td>
 
+                          {/* ✅ Status — click RMA to show popup */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                             <span
                               onClick={() => {
                                 if (s === "resolved" && ticket.resolutionNotes) {
                                   setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken });
+                                } else if (s === "rma") {
+                                  setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
                                 }
                               }}
                               style={{
                                 padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
                                 color: STATUS_COLOR[s], background: STATUS_BG[s],
-                                cursor: s === "resolved" && ticket.resolutionNotes ? "pointer" : "default",
-                                border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : "none",
+                                cursor: (s === "resolved" && ticket.resolutionNotes) || s === "rma" ? "pointer" : "default",
+                                border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : s === "rma" ? "1.5px solid #c4b5fd" : "none",
                                 display: "inline-block"
                               }}>
                               {s.toUpperCase()}
@@ -1016,6 +1094,10 @@ export default function SupportDashboard() {
                             {s === "resolved" && ticket.resolutionNotes && (
                               <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
                                 style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
+                            )}
+                            {s === "rma" && (
+                              <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt })}
+                                style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
                             )}
                             {ticket.createdAt && s !== "resolved" && s !== "rma" && (() => {
                               const remaining = new Date(ticket.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
@@ -1035,16 +1117,6 @@ export default function SupportDashboard() {
                             ) : (
                               <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
                             )}
-                          </td>
-
-                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                            {ticket.rmaStatus ? (
-                              <div>
-                                <span style={{ background: "#f5f3ff", color: "#7c3aed", padding: "2px 8px", borderRadius: 8, fontSize: 10, fontWeight: 700 }}>🔧 RMA</span>
-                                <div style={{ fontSize: 10, color: "#6d28d9", marginTop: 2 }}>{ticket.rmaCenterName}</div>
-                                <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.rmaCenterCity}</div>
-                              </div>
-                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                           </td>
 
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
@@ -1082,7 +1154,7 @@ export default function SupportDashboard() {
 
                         {expandedImage === ticket.id && ticket.productImage && (
                           <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                            <td colSpan={10} style={{ padding: "12px 20px" }}>
+                            <td colSpan={8} style={{ padding: "12px 20px" }}>
                               <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
                                 <img src={ticket.productImage} alt="Product"
                                   style={{ maxHeight: 200, maxWidth: 300, borderRadius: 8, border: "2px solid #86efac", cursor: "pointer" }}
@@ -1099,7 +1171,7 @@ export default function SupportDashboard() {
 
                         {showResolve && s === "open" && (
                           <tr key={`resolveform-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                            <td colSpan={10} style={{ padding: "16px 20px" }}>
+                            <td colSpan={8} style={{ padding: "16px 20px" }}>
                               <div style={{ background: "linear-gradient(135deg, #ecfdf5, #d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 4 }}>✅ Confirm Resolution</div>
                                 <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 16 }}>Describe what issue was resolved before marking as done.</div>
@@ -1139,7 +1211,7 @@ export default function SupportDashboard() {
 
                         {showRma && (s === "open" || s === "pending") && (
                           <tr key={`rmaform-${ticket.id}`} style={{ background: "#faf5ff" }}>
-                            <td colSpan={10} style={{ padding: "16px 20px" }}>
+                            <td colSpan={8} style={{ padding: "16px 20px" }}>
                               <div style={{ background: "linear-gradient(135deg, #f5f3ff, #ede9fe)", border: "2px solid #7c3aed", borderRadius: 12, padding: "16px 20px" }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#5b21b6", marginBottom: 12 }}>🔧 Cannot Resolve — Send to RMA</div>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -1189,7 +1261,7 @@ export default function SupportDashboard() {
 
                         {showReassign && s !== "resolved" && s !== "rma" && (
                           <tr key={`reassignform-${ticket.id}`} style={{ background: "#fffdf0" }}>
-                            <td colSpan={10} style={{ padding: "16px 20px" }}>
+                            <td colSpan={8} style={{ padding: "16px 20px" }}>
                               <div style={{ background: "linear-gradient(135deg, #fffbeb, #fef9c3)", border: "2px solid #f59e0b", borderRadius: 12, padding: "16px 20px" }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e", marginBottom: 12 }}>🔄 Reassign This Ticket</div>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -1230,7 +1302,7 @@ export default function SupportDashboard() {
 
                         {s === "resolved" && (
                           <tr key={`fb-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                            <td colSpan={10} style={{ padding: "8px 20px" }}>
+                            <td colSpan={8} style={{ padding: "8px 20px" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                                 {ticket.feedbackRating ? (
                                   <span style={{ fontSize: 12, color: "#065f46", fontWeight: 600 }}>
