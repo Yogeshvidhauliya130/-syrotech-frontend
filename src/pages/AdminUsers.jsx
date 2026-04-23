@@ -35,19 +35,18 @@ export default function AdminUsers() {
     fetchUsers();
   };
 
-  const pending        = users.filter(u => !u.approved && u.role === "user");
-  const approvedUsers  = users.filter(u =>  u.approved && u.role === "user");
+  // ✅ CHANGE 1: pending now includes customers too
+  const pending        = users.filter(u => !u.approved && (u.role === "user" || u.role === "customer"));
+  // ✅ CHANGE 2: approvedUsers now includes customers too
+  const approvedUsers  = users.filter(u =>  u.approved && (u.role === "user" || u.role === "customer"));
   const supportPersons = users.filter(u => u.role === "support");
 
-  const RoleBadge = ({ role }) => (
-    <span style={{
-      padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
-      background: role === "support" ? "#ecfdf5" : "#eff6ff",
-      color:      role === "support" ? "#059669"  : "#1d4ed8"
-    }}>
-      {role === "support" ? "🛠️ Support" : "👤 User"}
-    </span>
-  );
+  // ✅ CHANGE 3: RoleBadge now handles customer role
+  const RoleBadge = ({ role }) => {
+    if (role === "support")  return <span style={{ padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, background: "#ecfdf5", color: "#059669" }}>🛠️ Support</span>;
+    if (role === "customer") return <span style={{ padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, background: "#f5f3ff", color: "#7c3aed" }}>👥 Customer</span>;
+    return <span style={{ padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, background: "#eff6ff", color: "#1d4ed8" }}>👤 Sales Person</span>;
+  };
 
   return (
     <div className="tab-content">
@@ -73,6 +72,12 @@ export default function AdminUsers() {
                 <div className="user-info">
                   <div className="user-name">{u.name || "—"} <RoleBadge role={u.role} /></div>
                   <div className="user-email">{u.email}</div>
+                  {u.role === "customer" && u.companyName && (
+                    <div style={{ fontSize: 11, color: "#7c3aed", marginTop: 2 }}>🏢 {u.companyName}</div>
+                  )}
+                  {u.role === "customer" && u.phone && (
+                    <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>📞 {u.phone}</div>
+                  )}
                 </div>
                 <div className="user-actions">
                   <button className="btn-approve" onClick={() => approveUser(u.email)}>Approve</button>
@@ -95,6 +100,12 @@ export default function AdminUsers() {
             <div className="user-info">
               <div className="user-name">{u.name || "—"} <RoleBadge role={u.role} /></div>
               <div className="user-email">{u.email}</div>
+              {u.role === "customer" && u.companyName && (
+                <div style={{ fontSize: 11, color: "#7c3aed", marginTop: 2 }}>🏢 {u.companyName}</div>
+              )}
+              {u.role === "customer" && u.phone && (
+                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>📞 {u.phone}</div>
+              )}
             </div>
             <div className="user-actions">
               <button className="btn-reject" onClick={() => removeUser(u.email)}>Remove</button>
@@ -103,7 +114,7 @@ export default function AdminUsers() {
         ))}
       </div>
 
-      {/* ✅ UPDATED: Support Persons — now shows specialization, city, country */}
+      {/* ✅ Support Persons — shows specialization, city, country */}
       <h3 className="section-label" style={{ marginTop: 28 }}>🛠️ Support Persons</h3>
       <div className="user-list">
         {supportPersons.map(u => (
@@ -114,7 +125,6 @@ export default function AdminUsers() {
             <div className="user-info">
               <div className="user-name">
                 {u.name || "—"} <RoleBadge role="support" />
-                {/* ✅ Show specialization badges */}
                 {Array.isArray(u.specialization) && u.specialization.length > 0 && (
                   <span style={{ marginLeft: 6, display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
                     {u.specialization.map(s => (
@@ -132,7 +142,6 @@ export default function AdminUsers() {
               </div>
               <div className="user-email">
                 {u.email}
-                {/* ✅ Show city, country, phone */}
                 {(u.city || u.country) && (
                   <span style={{ marginLeft: 10, color: "#6b7280", fontSize: 11 }}>
                     📍 {[u.city, u.country].filter(Boolean).join(", ")}

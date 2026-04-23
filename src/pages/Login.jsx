@@ -6,12 +6,12 @@ const BASE_URL = "https://syrotech-backend.onrender.com";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [page, setPage]               = useState("role");
+  const [page, setPage]                 = useState("login");
   const [selectedRole, setSelectedRole] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError]             = useState("");
-  const [success, setSuccess]         = useState("");
-  const [loading, setLoading]         = useState(false);
+  const [error, setError]               = useState("");
+  const [success, setSuccess]           = useState("");
+  const [loading, setLoading]           = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", password: "", phone: "", companyName: "",
   });
@@ -21,15 +21,9 @@ export default function Login() {
     setError(""); setSuccess("");
   };
 
-  const goToLogin = (role) => {
-    setSelectedRole(role);
-    setPage("login");
-    setError(""); setSuccess("");
-    setForm({ name: "", email: "", password: "", phone: "", companyName: "" });
-  };
-
   const handleLogin = async () => {
     if (!form.email || !form.password) { setError("Please fill in all fields."); return; }
+    if (!selectedRole) { setError("Please select your role."); return; }
     setLoading(true);
     try {
       const res  = await fetch(`${BASE_URL}/api/login`, {
@@ -52,7 +46,6 @@ export default function Login() {
   };
 
   const handleSignup = async () => {
-    // Validation
     if (!form.name?.trim())  { setError("Enter your full name."); return; }
     if (selectedRole === "customer" && !form.companyName?.trim()) { setError("Enter your company name."); return; }
     if (selectedRole === "customer" && !/^\d{10}$/.test((form.phone || "").replace(/\s/g,""))) { setError("Enter a valid 10-digit phone number."); return; }
@@ -66,7 +59,7 @@ export default function Login() {
           name:        form.name,
           email:       form.email,
           password:    form.password,
-          phone:       form.phone    || "",
+          phone:       form.phone       || "",
           companyName: form.companyName || "",
           role:        selectedRole === "customer" ? "customer" : "user",
         }),
@@ -77,6 +70,7 @@ export default function Login() {
       setSuccess("Account created! Wait for admin approval.");
       setTimeout(() => {
         setPage("login");
+        setSelectedRole("");
         setForm({ name: "", email: "", password: "", phone: "", companyName: "" });
       }, 2000);
     } catch {
@@ -86,19 +80,16 @@ export default function Login() {
   };
 
   const ROLES = [
-    { key: "admin",    label: "Admin",          icon: "🔐", color: "#ff5a00", desc: "Full system access" },
-    { key: "user",     label: "Sales Person",   icon: "💼", color: "#2563eb", desc: "Raise & track tickets" },
-    { key: "support",  label: "Support Person", icon: "🛠️", color: "#10b981", desc: "Resolve customer issues" },
-    { key: "customer", label: "Customer",       icon: "👥", color: "#7c3aed", desc: "Track your complaints" },
+    { key: "admin",    label: "Admin",          icon: "🔐" },
+    { key: "user",     label: "Sales Person",   icon: "💼" },
+    { key: "support",  label: "Support Person", icon: "🛠️" },
+    { key: "customer", label: "Customer",       icon: "👥" },
   ];
-
-  const roleInfo = ROLES.find(r => r.key === selectedRole);
 
   return (
     <div className="login-container">
       <div className="login-card">
 
-        {/* Logo */}
         <div className="login-logo-area">
           <img src="/logo.png" alt="Syrotech" className="login-logo" />
           <div className="login-brand-text">
@@ -112,40 +103,11 @@ export default function Login() {
         {error   && <div className="alert alert-error">  <span className="alert-icon">!</span>{error}</div>}
         {success && <div className="alert alert-success"><span className="alert-icon">✓</span>{success}</div>}
 
-        {/* ── ROLE SELECTION ── */}
-        {page === "role" && (
-          <div className="form-section">
-            <h2 className="form-title">Welcome Back</h2>
-            <p className="form-subtitle">Select your role to continue</p>
-
-            <div className="role-grid">
-              {ROLES.map(r => (
-                <button key={r.key} className="role-card" onClick={() => goToLogin(r.key)}
-                  style={{ "--role-color": r.color }}>
-                  <div className="role-icon">{r.icon}</div>
-                  <div className="role-label">{r.label}</div>
-                  <div className="role-desc">{r.desc}</div>
-                </button>
-              ))}
-            </div>
-
-            <p className="switch-text" style={{ marginTop: 20 }}>
-              New here?{" "}
-              <span className="link" onClick={() => { setSelectedRole("user"); setPage("signup"); }}>
-                Create account
-              </span>
-            </p>
-          </div>
-        )}
-
-        {/* ── LOGIN FORM ── */}
+        {/* LOGIN FORM */}
         {page === "login" && (
           <div className="form-section">
-            <div className="form-role-badge" style={{ background: roleInfo?.color + "18", color: roleInfo?.color, border: `1px solid ${roleInfo?.color}33` }}>
-              {roleInfo?.icon} {roleInfo?.label}
-            </div>
-            <h2 className="form-title">Sign In</h2>
-            <p className="form-subtitle">Enter your credentials to continue</p>
+            <h2 className="form-title">Welcome Back</h2>
+            <p className="form-subtitle">Sign in to your account</p>
 
             <div className="field-group">
               <label className="field-label">Email / Username</label>
@@ -165,32 +127,34 @@ export default function Login() {
               </div>
             </div>
 
+            <div className="field-group">
+              <label className="field-label">Select Role</label>
+              <select value={selectedRole}
+                onChange={e => { setSelectedRole(e.target.value); setError(""); }}
+                className="field-input">
+                <option value="">-- Select your role --</option>
+                {ROLES.map(r => (
+                  <option key={r.key} value={r.key}>{r.icon} {r.label}</option>
+                ))}
+              </select>
+            </div>
+
             <button className={`btn-primary ${loading ? "btn-loading" : ""}`}
-              style={{ background: roleInfo?.color }}
               onClick={handleLogin} disabled={loading}>
               {loading ? <span className="spinner" /> : "Sign In →"}
             </button>
 
-            <p className="switch-text">
-              <span className="link" onClick={() => setPage("role")}>← Back to role selection</span>
+            <p className="switch-text" style={{ marginTop: 20 }}>
+              New here?{" "}
+              <span className="link" onClick={() => {
+                setSelectedRole("user"); setPage("signup"); setError("");
+                setForm({ name: "", email: "", password: "", phone: "", companyName: "" });
+              }}>Create account</span>
             </p>
-
-            {(selectedRole === "user" || selectedRole === "customer") && (
-              <p className="switch-text">
-                Don't have an account?{" "}
-                <span className="link" onClick={() => setPage("signup")}>Create one</span>
-              </p>
-            )}
-
-            {selectedRole === "support" && (
-              <p className="switch-text" style={{ color: "#888", fontSize: 12 }}>
-                💡 Support credentials are provided by the admin.
-              </p>
-            )}
           </div>
         )}
 
-        {/* ── SIGNUP FORM ── */}
+        {/* SIGNUP FORM */}
         {page === "signup" && (
           <div className="form-section">
             <div className="signup-tabs">
@@ -211,7 +175,6 @@ export default function Login() {
             </h2>
             <p className="form-subtitle">Fill in your details to register</p>
 
-            {/* Customer-only: Company Name */}
             {selectedRole === "customer" && (
               <div className="field-group">
                 <label className="field-label">Company Name <span style={{ color: "#ff5a00" }}>*</span></label>
@@ -232,7 +195,6 @@ export default function Login() {
                 value={form.email} onChange={handleChange} className="field-input" />
             </div>
 
-            {/* Customer-only: Phone */}
             {selectedRole === "customer" && (
               <div className="field-group">
                 <label className="field-label">Phone Number <span style={{ color: "#ff5a00" }}>*</span></label>
@@ -267,10 +229,7 @@ export default function Login() {
 
             <p className="switch-text">
               Already have an account?{" "}
-              <span className="link" onClick={() => { setPage("login"); }}>Sign in</span>
-            </p>
-            <p className="switch-text">
-              <span className="link" onClick={() => setPage("role")}>← Back to role selection</span>
+              <span className="link" onClick={() => { setPage("login"); setError(""); }}>Sign in</span>
             </p>
           </div>
         )}
