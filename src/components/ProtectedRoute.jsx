@@ -28,12 +28,12 @@ export default function ProtectedRoute({ children, role }) {
     return <Navigate to="/" replace />;
   }
 
-  // ❌ Role mismatch — user trying to access admin/support page
   if (role && currentUser.role !== role) {
     // Redirect to their correct page, not login
     if (currentUser.role === "admin")        return <Navigate to="/admin"     replace />;
     if (currentUser.role === "support")      return <Navigate to="/support"   replace />;
     if (currentUser.role === "user")         return <Navigate to="/dashboard" replace />;
+    if (currentUser.role === "customer")     return <Navigate to="/customer"  replace />;
     return <Navigate to="/" replace />;
   }
 
