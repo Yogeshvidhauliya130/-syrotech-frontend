@@ -1,9 +1,9 @@
-// This is already perfect — no changes needed
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import SupportDashboard from "./pages/SupportDashboard";
+import CustomerDashboard from "./pages/CustomerDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -19,6 +19,9 @@ function App() {
         } />
         <Route path="/support" element={
           <ProtectedRoute role="support"><SupportDashboard /></ProtectedRoute>
+        } />
+        <Route path="/customer" element={
+          <ProtectedRoute role="customer"><CustomerDashboard /></ProtectedRoute>
         } />
       </Routes>
     </BrowserRouter>
