@@ -8,7 +8,7 @@ export default function AdminUsers() {
   const [approvedTab, setApprovedTab] = useState("user");
   const [showAddForm, setShowAddForm] = useState(false);
   const [addRole, setAddRole]         = useState("user");
-  const [addForm, setAddForm]         = useState({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: "" });
+  const [addForm, setAddForm]         = useState({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: [] });
   const [addError, setAddError]       = useState("");
   const [addSuccess, setAddSuccess]   = useState("");
   const [adding, setAdding]           = useState(false);
@@ -45,6 +45,7 @@ export default function AdminUsers() {
     if (!addForm.password.trim()) { setAddError("Password is required."); return; }
     if (addRole === "customer" && !addForm.companyName.trim()) { setAddError("Company name is required."); return; }
     if (addRole === "customer" && !/^\d{10}$/.test((addForm.phone || "").replace(/\s/g,""))) { setAddError("Enter valid 10-digit phone."); return; }
+    if (addRole === "support" && (!addForm.specialization || addForm.specialization.length === 0)) { setAddError("Please select at least one specialization."); return; }
     if (addRole === "support" && !/^\d{10}$/.test((addForm.phone || "").replace(/\s/g,""))) { setAddError("Enter valid 10-digit phone for support person."); return; }
     setAdding(true); setAddError("");
     try {
@@ -55,9 +56,7 @@ export default function AdminUsers() {
           phone: addForm.phone || "", companyName: addForm.companyName || "",
           role: addRole,
           city: addForm.city || "", country: addForm.country || "",
-          specialization: addForm.specialization
-            ? addForm.specialization.split(",").map(s => s.trim()).filter(Boolean)
-            : [],
+          specialization: Array.isArray(addForm.specialization) ? addForm.specialization : [],
         }),
       });
       const data = await res.json();
@@ -65,7 +64,7 @@ export default function AdminUsers() {
       await fetch(`${BASE_URL}/api/users/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: addForm.email }) });
       const roleLabel = addRole === "customer" ? "Customer" : addRole === "support" ? "Support Person" : "Sales Person";
       setAddSuccess(`✅ ${roleLabel} added and approved successfully!`);
-      setAddForm({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: "" });
+      setAddForm({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: [] });
       fetchUsers();
       setTimeout(() => { setAddSuccess(""); setShowAddForm(false); }, 3000);
     } catch { setAddError("Cannot connect to server."); }
@@ -161,7 +160,7 @@ export default function AdminUsers() {
           {/* Role tabs */}
           <div style={{ display: "flex", gap: 4, background: "#f0f0f2", borderRadius: 10, padding: 3, marginBottom: 20, width: "fit-content", flexWrap: "wrap" }}>
             {[["user","💼 Sales Person","#2563eb"],["customer","👥 Customer","#7c3aed"],["support","🛠️ Support Person","#059669"]].map(([r,l,c]) => (
-              <button key={r} onClick={() => { setAddRole(r); setAddError(""); setAddForm({ name:"", email:"", password:"", phone:"", companyName:"", city:"", country:"", specialization:"" }); }}
+              <button key={r} onClick={() => { setAddRole(r); setAddError(""); setAddForm({ name:"", email:"", password:"", phone:"", companyName:"", city:"", country:"", specialization:[] }); }}
                 style={{ padding: "8px 16px", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600, background: addRole === r ? "white" : "transparent", color: addRole === r ? c : "#6b7280", boxShadow: addRole === r ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s" }}>
                 {l}
               </button>
@@ -211,8 +210,30 @@ export default function AdminUsers() {
                   <input value={addForm.country} onChange={e => setAddForm(p => ({...p, country: e.target.value}))} placeholder="e.g. India" style={inputStyle} />
                 </div>
                 <div style={{ gridColumn: "1/-1" }}>
-                  <label style={labelStyle}>Specialization <span style={{ fontSize: 10, color: "#9ca3af", textTransform: "none", fontWeight: 400 }}>(comma separated — e.g. Router, ONU, Switch)</span></label>
-                  <input value={addForm.specialization} onChange={e => setAddForm(p => ({...p, specialization: e.target.value}))} placeholder="Router, ONU, Switch" style={inputStyle} />
+                  <label style={labelStyle}>Specialization <span style={{ color: "#ef4444" }}>*</span></label>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "10px 14px", background: "white", border: "1.5px solid #d1d5db", borderRadius: 9, maxHeight: 120, overflowY: "auto" }}>
+                    {["Router", "ONU", "Switch"].map(product => {
+                      const checked = Array.isArray(addForm.specialization) && addForm.specialization.includes(product);
+                      return (
+                        <label key={product} onClick={() => {
+                          setAddForm(p => {
+                            const curr = Array.isArray(p.specialization) ? p.specialization : [];
+                            return { ...p, specialization: checked ? curr.filter(x => x !== product) : [...curr, product] };
+                          });
+                        }} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "7px 14px", borderRadius: 8, border: `1.5px solid ${checked ? "#059669" : "#e5e7eb"}`, background: checked ? "#ecfdf5" : "#fafafa", transition: "all 0.15s", userSelect: "none" }}>
+                          <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${checked ? "#059669" : "#d1d5db"}`, background: checked ? "#059669" : "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                            {checked && <span style={{ color: "white", fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: checked ? "#065f46" : "#374151" }}>{product}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {Array.isArray(addForm.specialization) && addForm.specialization.length > 0 && (
+                    <div style={{ marginTop: 6, fontSize: 11, color: "#059669", fontWeight: 600 }}>
+                      ✅ Selected: {addForm.specialization.join(", ")}
+                    </div>
+                  )}
                 </div>
               </>
             )}
