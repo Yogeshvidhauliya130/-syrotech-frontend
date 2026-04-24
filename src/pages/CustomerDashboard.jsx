@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { PRODUCT_MODELS, PRODUCTS } from "../data/productModels";
 
 const BASE_URL = "https://syrotech-backend.onrender.com";
 
@@ -32,7 +33,7 @@ export default function CustomerDashboard() {
 
   const currentUserForForm = JSON.parse(localStorage.getItem("currentUser")) || {};
   const [form, setForm] = useState({
-    category: "", serialNo: "", mac: "",
+    category: "", model: "", serialNo: "", mac: "",
     customer: currentUserForForm.name  || "",
     email:    currentUserForForm.email || "",
     phone:    currentUserForForm.phone || "",
@@ -70,7 +71,9 @@ export default function CustomerDashboard() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "pincode" && value !== "" && !/^\d*$/.test(value)) return;
-    if (name === "category" || name === "city" || name === "country") {
+    if (name === "category") {
+      setForm(prev => ({ ...prev, [name]: value, model: "", assignTo: "" }));
+    } else if (name === "city" || name === "country") {
       setForm(prev => ({ ...prev, [name]: value, assignTo: "" }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
@@ -128,6 +131,7 @@ export default function CustomerDashboard() {
   const validate = () => {
     const e = {};
     if (!form.category)        e.category    = "Please select a product.";
+    if (!form.model)           e.model       = "Please select a model.";
     if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
     if (!form.customer.trim()) e.customer    = "Customer name is required.";
     else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
@@ -172,7 +176,7 @@ export default function CustomerDashboard() {
       if (form.productImage) updates.productImage = form.productImage;
       fetch(`${BASE_URL}/tickets/${sameTicket.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
         .then(r => r.json())
-        .then(() => { setForm({ category:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Same device found! Your issue has been updated. Status reset to PENDING."); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 6000); })
+        .then(() => { setForm({ category:"", model:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Same device found! Your issue has been updated. Status reset to PENDING."); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 6000); })
         .catch(() => setErrors({ submit: "❌ Failed to update ticket." }))
         .finally(() => setSubmitting(false));
       return;
@@ -183,8 +187,7 @@ export default function CustomerDashboard() {
       customer:     form.customer || currentUser?.name  || "",
       email:        form.email    || currentUser?.email || "",
       phone:        form.phone    || currentUser?.phone || "",
-      status:       "open",
-acceptedAt:   new Date().toISOString(),
+      status:       "pending",
       raisedBy:     currentUser?.email || "unknown",
       raisedByName: currentUser?.name  || "Unknown",
       date:         new Date().toISOString().slice(0, 10),
@@ -193,7 +196,7 @@ acceptedAt:   new Date().toISOString(),
     };
     fetch(`${BASE_URL}/tickets`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTicket) })
       .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
-      .then(() => { setForm({ category:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING"); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 4000); })
+      .then(() => { setForm({ category:"", model:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING"); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 4000); })
       .catch(() => setErrors({ submit: "❌ Failed to submit ticket." }))
       .finally(() => setSubmitting(false));
   };
@@ -327,9 +330,19 @@ acceptedAt:   new Date().toISOString(),
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Product <span style={{ color:"#7c3aed" }}>*</span></label>
                 <select name="category" value={form.category} onChange={handleChange} style={iStyle("category")}>
                   <option value="">Select Product</option>
-                  <option>Router</option><option>ONU</option><option>Switch</option>
+                  {PRODUCTS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
                 {errors.category && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.category}</span>}
+              </div>
+
+              {/* Model */}
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Model <span style={{ color:"#7c3aed" }}>*</span></label>
+                <select name="model" value={form.model} onChange={handleChange} style={iStyle("model")} disabled={!form.category}>
+                  <option value="">{form.category ? `Select ${form.category} model` : "Select product first"}</option>
+                  {(PRODUCT_MODELS[form.category] || []).map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                {errors.model && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.model}</span>}
               </div>
 
               {/* Serial No */}
@@ -491,7 +504,7 @@ acceptedAt:   new Date().toISOString(),
                 {/* Status filter */}
                 <div style={{ background:"white", borderRadius:12, border:"1.5px solid #e9d5ff", padding:"12px 16px", marginBottom:14, display:"flex", gap:8, flexWrap:"wrap", alignItems:"center", justifyContent:"space-between" }}>
                   <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                   {[["all","All","#374151","#f3f4f6"],["open","🔓 Open","#e04e00","#fff4ee"],["resolved","✅ Resolved","#1a7a46","#edfaf3"],["rma","🔧 RMA","#7c3aed","#f5f3ff"]].map(([key,label,col,bg]) => (
+                    {[["all","All","#374151","#f3f4f6"],["pending","⏳ Pending","#b45309","#fffbeb"],["open","🔓 Open","#e04e00","#fff4ee"],["resolved","✅ Resolved","#1a7a46","#edfaf3"],["rma","🔧 RMA","#7c3aed","#f5f3ff"]].map(([key,label,col,bg]) => (
                       <button key={key} onClick={() => setStatusFilter(key)} style={{ padding:"5px 12px", borderRadius:16, border:statusFilter===key?`2px solid ${col}`:"1px solid #d1d5db", background:statusFilter===key?bg:"white", color:statusFilter===key?col:"#555", fontWeight:statusFilter===key?700:400, fontSize:12, cursor:"pointer" }}>
                         {label} <span style={{ marginLeft:4, background:statusFilter===key?col:"#e5e7eb", color:statusFilter===key?"white":"#555", borderRadius:10, padding:"1px 6px", fontSize:10, fontWeight:700 }}>{statusCounts[key]??0}</span>
                       </button>
