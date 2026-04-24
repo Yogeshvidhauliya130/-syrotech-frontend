@@ -491,7 +491,7 @@ acceptedAt:   new Date().toISOString(),
                 {/* Status filter */}
                 <div style={{ background:"white", borderRadius:12, border:"1.5px solid #e9d5ff", padding:"12px 16px", marginBottom:14, display:"flex", gap:8, flexWrap:"wrap", alignItems:"center", justifyContent:"space-between" }}>
                   <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                    {[["all","All","#374151","#f3f4f6"],["pending","⏳ Pending","#b45309","#fffbeb"],["open","🔓 Open","#e04e00","#fff4ee"],["resolved","✅ Resolved","#1a7a46","#edfaf3"],["rma","🔧 RMA","#7c3aed","#f5f3ff"]].map(([key,label,col,bg]) => (
+                   {[["all","All","#374151","#f3f4f6"],["open","🔓 Open","#e04e00","#fff4ee"],["resolved","✅ Resolved","#1a7a46","#edfaf3"],["rma","🔧 RMA","#7c3aed","#f5f3ff"]].map(([key,label,col,bg]) => (
                       <button key={key} onClick={() => setStatusFilter(key)} style={{ padding:"5px 12px", borderRadius:16, border:statusFilter===key?`2px solid ${col}`:"1px solid #d1d5db", background:statusFilter===key?bg:"white", color:statusFilter===key?col:"#555", fontWeight:statusFilter===key?700:400, fontSize:12, cursor:"pointer" }}>
                         {label} <span style={{ marginLeft:4, background:statusFilter===key?col:"#e5e7eb", color:statusFilter===key?"white":"#555", borderRadius:10, padding:"1px 6px", fontSize:10, fontWeight:700 }}>{statusCounts[key]??0}</span>
                       </button>
