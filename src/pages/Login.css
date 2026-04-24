@@ -238,5 +238,6 @@ select.field-input {
 /* ── Footer ── */
 .footer {
   text-align: center; margin-top: 18px;
-  font-size: 10.5px; color: #c0b8af; letter-spacing: 0.02em;
+  font-size: 11px; color: black; letter-spacing: 0.02em;
+  font-weight: 500;
 }
