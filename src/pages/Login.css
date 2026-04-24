@@ -4,13 +4,15 @@
 :root {
   --orange: #ff5a00;
   --orange-dark: #e04e00;
+  --orange-light: #fff4ee;
   --orange-glow: rgba(255,90,0,0.15);
   --text: #111827;
   --text-muted: #6b7280;
-  --border: #d1d5db;
+  --border: #c8cdd5;
   --bg: #f4f0eb;
+  --card: #ffffff;
   --success-bg: #ecfdf5; --success-text: #065f46;
-  --error-bg:   #fef2f2; --error-text:   #b91c1c;
+  --error-bg: #fef2f2;   --error-text:   #b91c1c;
 }
 
 body { font-family: 'Outfit', sans-serif; }
@@ -22,43 +24,48 @@ body { font-family: 'Outfit', sans-serif; }
   padding: 20px;
   background: #f4f0eb;
   background-image:
-    radial-gradient(ellipse 70% 50% at 15% 15%, rgba(255,90,0,0.09) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 85% 85%, rgba(255,90,0,0.06) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 60% at 10% 10%, rgba(255,90,0,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 90%, rgba(255,90,0,0.05) 0%, transparent 60%);
 }
 
-/* ── Card ── */
+/* ── Card — compact ── */
 .login-card {
-  width: 100%; max-width: 390px;
+  width: 100%; max-width: 400px;
   background: white;
   border-radius: 20px;
   padding: 28px 28px 22px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.07), 0 4px 6px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.10);
-  animation: slideUp 0.38s cubic-bezier(0.16,1,0.3,1) both;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.07),
+    0 4px 6px rgba(0,0,0,0.04),
+    0 16px 40px rgba(0,0,0,0.10);
+  animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both;
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── Logo bar — centered, bigger ── */
+/* ── Logo area — centered, big ── */
 .login-logo-area {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
-  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .login-logo {
-  width: 64px; height: 64px; border-radius: 16px;
+  width: 68px; height: 68px; border-radius: 18px;
   object-fit: contain; flex-shrink: 0;
-  box-shadow: 0 6px 20px rgba(255,90,0,0.28), 0 0 0 4px rgba(255,90,0,0.08);
+  box-shadow: 0 6px 20px rgba(255,90,0,0.28), 0 0 0 4px rgba(255,90,0,0.09);
 }
 
 .login-brand-text { text-align: center; }
 
 .login-brand-name {
   font-family: 'Playfair Display', serif;
-  font-size: 20px; font-weight: 700;
+  font-size: 22px; font-weight: 700;
   color: var(--text); letter-spacing: -0.3px; line-height: 1.2;
 }
 
@@ -67,7 +74,7 @@ body { font-family: 'Outfit', sans-serif; }
 /* ── Divider ── */
 .login-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, #e5e7eb 40%, #e5e7eb 60%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, #e0dbd4 30%, #e0dbd4 70%, transparent 100%);
   margin-bottom: 18px;
 }
 
@@ -114,18 +121,19 @@ body { font-family: 'Outfit', sans-serif; }
   letter-spacing: 0.05em; text-transform: uppercase;
 }
 
+/* ── Inputs — clear visible border ── */
 .field-input {
   width: 100%; padding: 9px 12px; border-radius: 9px;
   border: 1.5px solid var(--border);
-  background: #f9fafb;
+  background: #f7f8fa;
   font-family: 'Outfit', sans-serif; font-size: 13.5px; color: var(--text);
   outline: none; transition: all 0.18s ease;
   -webkit-appearance: none;
 }
-.field-input::placeholder { color: #9ca3af; }
+.field-input::placeholder { color: #a0a8b4; }
 .field-input:hover:not(:focus) {
-  border-color: #b0b7c3;
-  background: #f3f4f6;
+  border-color: #a0a8b4;
+  background: #f0f2f5;
 }
 .field-input:focus {
   border-color: var(--orange);
@@ -133,7 +141,7 @@ body { font-family: 'Outfit', sans-serif; }
   box-shadow: 0 0 0 3px var(--orange-glow);
 }
 
-/* select */
+/* ── Select ── */
 select.field-input {
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -142,7 +150,7 @@ select.field-input {
   padding-right: 36px;
 }
 
-/* password */
+/* ── Password ── */
 .password-box { position: relative; }
 .password-box .field-input { padding-right: 42px; }
 .eye-btn {
@@ -190,8 +198,8 @@ select.field-input {
 /* ── Signup tabs ── */
 .signup-tabs {
   display: flex; gap: 4px;
-  background: #f3f4f6; border-radius: 10px; padding: 3px;
-  margin-bottom: 14px;
+  background: #f0f0f2; border-radius: 10px; padding: 3px;
+  margin-bottom: 12px;
 }
 .signup-tab {
   flex: 1; padding: 8px 6px; border: none; border-radius: 8px;
@@ -202,22 +210,24 @@ select.field-input {
 }
 .signup-tab.active {
   background: white; color: #111827;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.05);
 }
-.signup-tab:hover:not(.active) { background: rgba(255,255,255,0.6); color: #374151; }
+.signup-tab:hover:not(.active) { background: rgba(255,255,255,0.7); color: #374151; }
 
 /* ── Info box ── */
 .info-box {
-  background: #eff6ff; border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   border-left: 3px solid #3b82f6;
   border-radius: 8px; padding: 8px 12px;
   font-size: 11.5px; color: #1e40af;
   margin-bottom: 10px; line-height: 1.5; font-weight: 500;
 }
 
-/* ── Links ── */
+/* ── Switch text / links ── */
 .switch-text {
-  text-align: center; font-size: 12.5px; color: #6b7280; margin-top: 12px;
+  text-align: center; font-size: 12.5px;
+  color: var(--text-muted); margin-top: 12px;
 }
 .link {
   color: var(--orange); cursor: pointer; font-weight: 600;
@@ -228,5 +238,5 @@ select.field-input {
 /* ── Footer ── */
 .footer {
   text-align: center; margin-top: 18px;
-  font-size: 10.5px; color: #c4bdb5; letter-spacing: 0.02em;
+  font-size: 10.5px; color: #c0b8af; letter-spacing: 0.02em;
 }
