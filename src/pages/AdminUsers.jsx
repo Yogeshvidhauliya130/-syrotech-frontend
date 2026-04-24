@@ -8,7 +8,7 @@ export default function AdminUsers() {
   const [approvedTab, setApprovedTab] = useState("user");
   const [showAddForm, setShowAddForm] = useState(false);
   const [addRole, setAddRole]         = useState("user");
-  const [addForm, setAddForm]         = useState({ name: "", email: "", password: "", phone: "", companyName: "" });
+  const [addForm, setAddForm]         = useState({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: "" });
   const [addError, setAddError]       = useState("");
   const [addSuccess, setAddSuccess]   = useState("");
   const [adding, setAdding]           = useState(false);
@@ -45,17 +45,27 @@ export default function AdminUsers() {
     if (!addForm.password.trim()) { setAddError("Password is required."); return; }
     if (addRole === "customer" && !addForm.companyName.trim()) { setAddError("Company name is required."); return; }
     if (addRole === "customer" && !/^\d{10}$/.test((addForm.phone || "").replace(/\s/g,""))) { setAddError("Enter valid 10-digit phone."); return; }
+    if (addRole === "support" && !/^\d{10}$/.test((addForm.phone || "").replace(/\s/g,""))) { setAddError("Enter valid 10-digit phone for support person."); return; }
     setAdding(true); setAddError("");
     try {
       const res  = await fetch(`${BASE_URL}/api/signup`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: addForm.name, email: addForm.email, password: addForm.password, phone: addForm.phone || "", companyName: addForm.companyName || "", role: addRole }),
+        body: JSON.stringify({
+          name: addForm.name, email: addForm.email, password: addForm.password,
+          phone: addForm.phone || "", companyName: addForm.companyName || "",
+          role: addRole,
+          city: addForm.city || "", country: addForm.country || "",
+          specialization: addForm.specialization
+            ? addForm.specialization.split(",").map(s => s.trim()).filter(Boolean)
+            : [],
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setAddError(data.error || "Failed to add user."); setAdding(false); return; }
       await fetch(`${BASE_URL}/api/users/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: addForm.email }) });
-      setAddSuccess(`✅ ${addRole === "customer" ? "Customer" : "Sales Person"} added and approved successfully!`);
-      setAddForm({ name: "", email: "", password: "", phone: "", companyName: "" });
+      const roleLabel = addRole === "customer" ? "Customer" : addRole === "support" ? "Support Person" : "Sales Person";
+      setAddSuccess(`✅ ${roleLabel} added and approved successfully!`);
+      setAddForm({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: "" });
       fetchUsers();
       setTimeout(() => { setAddSuccess(""); setShowAddForm(false); }, 3000);
     } catch { setAddError("Cannot connect to server."); }
@@ -149,22 +159,24 @@ export default function AdminUsers() {
           {addSuccess && <div style={{ background: "#ecfdf5", border: "1px solid #6ee7b7", borderLeft: "3px solid #10b981", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#065f46", marginBottom: 14 }}>{addSuccess}</div>}
 
           {/* Role tabs */}
-          <div style={{ display: "flex", gap: 4, background: "#f0f0f2", borderRadius: 10, padding: 3, marginBottom: 20, width: "fit-content" }}>
-            {[["user","💼 Sales Person","#2563eb"],["customer","👥 Customer","#7c3aed"]].map(([r,l,c]) => (
-              <button key={r} onClick={() => { setAddRole(r); setAddError(""); }}
-                style={{ padding: "8px 18px", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600, background: addRole === r ? "white" : "transparent", color: addRole === r ? c : "#6b7280", boxShadow: addRole === r ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s" }}>
+          <div style={{ display: "flex", gap: 4, background: "#f0f0f2", borderRadius: 10, padding: 3, marginBottom: 20, width: "fit-content", flexWrap: "wrap" }}>
+            {[["user","💼 Sales Person","#2563eb"],["customer","👥 Customer","#7c3aed"],["support","🛠️ Support Person","#059669"]].map(([r,l,c]) => (
+              <button key={r} onClick={() => { setAddRole(r); setAddError(""); setAddForm({ name:"", email:"", password:"", phone:"", companyName:"", city:"", country:"", specialization:"" }); }}
+                style={{ padding: "8px 16px", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600, background: addRole === r ? "white" : "transparent", color: addRole === r ? c : "#6b7280", boxShadow: addRole === r ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s" }}>
                 {l}
               </button>
             ))}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {/* Customer only: Company Name */}
             {addRole === "customer" && (
               <div style={{ gridColumn: "1/-1" }}>
                 <label style={labelStyle}>Company Name <span style={{ color: "#ef4444" }}>*</span></label>
                 <input value={addForm.companyName} onChange={e => setAddForm(p => ({...p, companyName: e.target.value}))} placeholder="e.g. ABC Pvt. Ltd." style={inputStyle} />
               </div>
             )}
+
             <div>
               <label style={labelStyle}>Full Name <span style={{ color: "#ef4444" }}>*</span></label>
               <input value={addForm.name} onChange={e => setAddForm(p => ({...p, name: e.target.value}))} placeholder="Full name" style={inputStyle} />
@@ -173,21 +185,44 @@ export default function AdminUsers() {
               <label style={labelStyle}>Email Address <span style={{ color: "#ef4444" }}>*</span></label>
               <input type="email" value={addForm.email} onChange={e => setAddForm(p => ({...p, email: e.target.value}))} placeholder="email@example.com" style={inputStyle} />
             </div>
-            {addRole === "customer" && (
+
+            {/* Customer + Support: Phone */}
+            {(addRole === "customer" || addRole === "support") && (
               <div>
                 <label style={labelStyle}>Phone Number <span style={{ color: "#ef4444" }}>*</span></label>
                 <input value={addForm.phone} onChange={e => setAddForm(p => ({...p, phone: e.target.value}))} placeholder="10-digit phone" maxLength={10} style={inputStyle} />
               </div>
             )}
+
             <div>
               <label style={labelStyle}>Password <span style={{ color: "#ef4444" }}>*</span></label>
               <input type="password" value={addForm.password} onChange={e => setAddForm(p => ({...p, password: e.target.value}))} placeholder="Min 4 characters" style={inputStyle} />
             </div>
+
+            {/* Support only: City, Country, Specialization */}
+            {addRole === "support" && (
+              <>
+                <div>
+                  <label style={labelStyle}>City</label>
+                  <input value={addForm.city} onChange={e => setAddForm(p => ({...p, city: e.target.value}))} placeholder="e.g. Mumbai" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Country</label>
+                  <input value={addForm.country} onChange={e => setAddForm(p => ({...p, country: e.target.value}))} placeholder="e.g. India" style={inputStyle} />
+                </div>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <label style={labelStyle}>Specialization <span style={{ fontSize: 10, color: "#9ca3af", textTransform: "none", fontWeight: 400 }}>(comma separated — e.g. Router, ONU, Switch)</span></label>
+                  <input value={addForm.specialization} onChange={e => setAddForm(p => ({...p, specialization: e.target.value}))} placeholder="Router, ONU, Switch" style={inputStyle} />
+                </div>
+              </>
+            )}
           </div>
 
           <button onClick={handleAddUser} disabled={adding}
-            style={{ marginTop: 18, padding: "11px 26px", borderRadius: 10, border: "none", background: addRole === "customer" ? "linear-gradient(135deg,#7c3aed,#6d28d9)" : "linear-gradient(135deg,#2563eb,#1d4ed8)", color: "white", fontWeight: 700, fontSize: 14, cursor: adding ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: adding ? 0.7 : 1, boxShadow: "0 3px 12px rgba(0,0,0,0.18)" }}>
-            {adding ? "⏳ Adding..." : `➕ Add & Approve ${addRole === "customer" ? "Customer" : "Sales Person"}`}
+            style={{ marginTop: 18, padding: "11px 26px", borderRadius: 10, border: "none",
+              background: addRole === "customer" ? "linear-gradient(135deg,#7c3aed,#6d28d9)" : addRole === "support" ? "linear-gradient(135deg,#059669,#10b981)" : "linear-gradient(135deg,#2563eb,#1d4ed8)",
+              color: "white", fontWeight: 700, fontSize: 14, cursor: adding ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: adding ? 0.7 : 1, boxShadow: "0 3px 12px rgba(0,0,0,0.18)" }}>
+            {adding ? "⏳ Adding..." : `➕ Add ${addRole === "customer" ? "Customer" : addRole === "support" ? "Support Person" : "Sales Person"}`}
           </button>
         </div>
       )}
