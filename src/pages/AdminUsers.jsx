@@ -83,6 +83,7 @@ export default function AdminUsers() {
       return { ...p, specialization: curr.includes(product) ? curr.filter(x => x !== product) : [...curr, product] };
     });
   };
+  const pending        = users.filter(u => !u.approved && (u.role === "user" || u.role === "customer"));
   const approvedUsers  = users.filter(u =>  u.approved && (u.role === "user" || u.role === "customer"));
   const supportPersons = users.filter(u => u.role === "support")
     .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
