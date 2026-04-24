@@ -30,8 +30,12 @@ export default function CustomerDashboard() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateSort, setDateSort]         = useState("newest");
 
+  const currentUserForForm = JSON.parse(localStorage.getItem("currentUser")) || {};
   const [form, setForm] = useState({
     category: "", serialNo: "", mac: "",
+    customer: currentUserForForm.name  || "",
+    email:    currentUserForForm.email || "",
+    phone:    currentUserForForm.phone || "",
     city: "", country: "", pincode: "",
     description: "", assignTo: "", productImage: "",
   });
@@ -125,6 +129,12 @@ export default function CustomerDashboard() {
     const e = {};
     if (!form.category)        e.category    = "Please select a product.";
     if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
+    if (!form.customer.trim()) e.customer    = "Customer name is required.";
+    else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
+    if (!form.email.trim())    e.email       = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email.";
+    if (!form.phone.trim())    e.phone       = "Phone number is required.";
+    else if (!/^\d{10}$/.test(form.phone.replace(/\s+/g,""))) e.phone = "Enter a valid 10-digit phone.";
     if (!form.city.trim())     e.city        = "City is required.";
     if (!form.country)         e.country     = "Please select a country.";
     if (!form.pincode.trim())  e.pincode     = "Pincode is required.";
@@ -162,7 +172,7 @@ export default function CustomerDashboard() {
       if (form.productImage) updates.productImage = form.productImage;
       fetch(`${BASE_URL}/tickets/${sameTicket.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
         .then(r => r.json())
-        .then(() => { setForm({ category:"", serialNo:"", mac:"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Same device found! Your issue has been updated. Status reset to PENDING."); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 6000); })
+        .then(() => { setForm({ category:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Same device found! Your issue has been updated. Status reset to PENDING."); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 6000); })
         .catch(() => setErrors({ submit: "❌ Failed to update ticket." }))
         .finally(() => setSubmitting(false));
       return;
@@ -170,9 +180,9 @@ export default function CustomerDashboard() {
 
     const newTicket = {
       ...form,
-      customer:     currentUser?.name  || "",
-      email:        currentUser?.email || "",
-      phone:        currentUser?.phone || "",
+      customer:     form.customer || currentUser?.name  || "",
+      email:        form.email    || currentUser?.email || "",
+      phone:        form.phone    || currentUser?.phone || "",
       status:       "pending",
       raisedBy:     currentUser?.email || "unknown",
       raisedByName: currentUser?.name  || "Unknown",
@@ -182,7 +192,7 @@ export default function CustomerDashboard() {
     };
     fetch(`${BASE_URL}/tickets`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTicket) })
       .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
-      .then(() => { setForm({ category:"", serialNo:"", mac:"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING"); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 4000); })
+      .then(() => { setForm({ category:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING"); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 4000); })
       .catch(() => setErrors({ submit: "❌ Failed to submit ticket." }))
       .finally(() => setSubmitting(false));
   };
@@ -332,6 +342,30 @@ export default function CustomerDashboard() {
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>MAC Address</label>
                 <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF" value={form.mac} onChange={handleChange} style={iStyle("mac")} />
+              </div>
+
+              {/* Customer Name */}
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Customer Name <span style={{ color:"#7c3aed" }}>*</span></label>
+                <input name="customer" placeholder="Your full name" value={form.customer} onChange={handleChange} style={iStyle("customer")} />
+                {errors.customer && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.customer}</span>}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Email Address <span style={{ color:"#7c3aed" }}>*</span></label>
+                <input name="email" type="email" placeholder="your@email.com" value={form.email} onChange={handleChange} style={iStyle("email")} />
+                {errors.email && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.email}</span>}
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Contact Number <span style={{ color:"#7c3aed" }}>*</span></label>
+                <input name="phone" placeholder="10-digit mobile number" value={form.phone} onChange={handleChange} maxLength={10} style={iStyle("phone")} />
+                {errors.phone
+                  ? <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.phone}</span>
+                  : <span style={{ fontSize:10, color:"#9ca3af", marginTop:3, display:"block" }}>{(form.phone||"").replace(/\s+/g,"").length}/10 digits</span>
+                }
               </div>
 
               {/* City */}
