@@ -12,6 +12,8 @@ export default function AdminUsers() {
   const [addError, setAddError]       = useState("");
   const [addSuccess, setAddSuccess]   = useState("");
   const [adding, setAdding]           = useState(false);
+  const [showSpecDrop, setShowSpecDrop] = useState(false);
+  const [specSearch, setSpecSearch]     = useState("");
 
   const fetchUsers = () => {
     fetch(`${BASE_URL}/api/users`)
@@ -46,6 +48,8 @@ export default function AdminUsers() {
     if (addRole === "customer" && !addForm.companyName.trim()) { setAddError("Company name is required."); return; }
     if (addRole === "customer" && !/^\d{10}$/.test((addForm.phone || "").replace(/\s/g,""))) { setAddError("Enter valid 10-digit phone."); return; }
     if (addRole === "support" && (!addForm.specialization || addForm.specialization.length === 0)) { setAddError("Please select at least one specialization."); return; }
+    if (addRole === "support" && !addForm.city.trim())    { setAddError("City is required for support person."); return; }
+    if (addRole === "support" && !addForm.country.trim()) { setAddError("Country is required for support person."); return; }
     if (addRole === "support" && !/^\d{10}$/.test((addForm.phone || "").replace(/\s/g,""))) { setAddError("Enter valid 10-digit phone for support person."); return; }
     setAdding(true); setAddError("");
     try {
@@ -71,7 +75,14 @@ export default function AdminUsers() {
     setAdding(false);
   };
 
-  const pending        = users.filter(u => !u.approved && (u.role === "user" || u.role === "customer"));
+  const PRODUCTS = ["Router", "ONU", "Switch", "Fiber ONT", "GPON", "EPON", "Media Converter", "PoE Switch", "Managed Switch", "Unmanaged Switch", "WiFi Router", "Access Point", "Repeater", "Modem", "NVR", "DVR", "IP Camera", "Firewall", "Load Balancer", "VPN Router"];
+
+  const toggleSpec = (product) => {
+    setAddForm(p => {
+      const curr = Array.isArray(p.specialization) ? p.specialization : [];
+      return { ...p, specialization: curr.includes(product) ? curr.filter(x => x !== product) : [...curr, product] };
+    });
+  };
   const approvedUsers  = users.filter(u =>  u.approved && (u.role === "user" || u.role === "customer"));
   const supportPersons = users.filter(u => u.role === "support")
     .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
@@ -160,7 +171,7 @@ export default function AdminUsers() {
           {/* Role tabs */}
           <div style={{ display: "flex", gap: 4, background: "#f0f0f2", borderRadius: 10, padding: 3, marginBottom: 20, width: "fit-content", flexWrap: "wrap" }}>
             {[["user","💼 Sales Person","#2563eb"],["customer","👥 Customer","#7c3aed"],["support","🛠️ Support Person","#059669"]].map(([r,l,c]) => (
-              <button key={r} onClick={() => { setAddRole(r); setAddError(""); setAddForm({ name:"", email:"", password:"", phone:"", companyName:"", city:"", country:"", specialization:[] }); }}
+              <button key={r} onClick={() => { setAddRole(r); setAddError(""); setShowSpecDrop(false); setSpecSearch(""); setAddForm({ name:"", email:"", password:"", phone:"", companyName:"", city:"", country:"", specialization:[] }); }}
                 style={{ padding: "8px 16px", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600, background: addRole === r ? "white" : "transparent", color: addRole === r ? c : "#6b7280", boxShadow: addRole === r ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s" }}>
                 {l}
               </button>
@@ -211,27 +222,58 @@ export default function AdminUsers() {
                 </div>
                 <div style={{ gridColumn: "1/-1" }}>
                   <label style={labelStyle}>Specialization <span style={{ color: "#ef4444" }}>*</span></label>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "10px 14px", background: "white", border: "1.5px solid #d1d5db", borderRadius: 9, maxHeight: 120, overflowY: "auto" }}>
-                    {["Router", "ONU", "Switch"].map(product => {
-                      const checked = Array.isArray(addForm.specialization) && addForm.specialization.includes(product);
-                      return (
-                        <label key={product} onClick={() => {
-                          setAddForm(p => {
-                            const curr = Array.isArray(p.specialization) ? p.specialization : [];
-                            return { ...p, specialization: checked ? curr.filter(x => x !== product) : [...curr, product] };
-                          });
-                        }} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "7px 14px", borderRadius: 8, border: `1.5px solid ${checked ? "#059669" : "#e5e7eb"}`, background: checked ? "#ecfdf5" : "#fafafa", transition: "all 0.15s", userSelect: "none" }}>
-                          <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${checked ? "#059669" : "#d1d5db"}`, background: checked ? "#059669" : "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
-                            {checked && <span style={{ color: "white", fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-                          </div>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: checked ? "#065f46" : "#374151" }}>{product}</span>
-                        </label>
-                      );
-                    })}
+                  {/* Custom dropdown trigger */}
+                  <div style={{ position: "relative" }}>
+                    <button type="button" onClick={() => { setShowSpecDrop(p => !p); setSpecSearch(""); }}
+                      style={{ width: "100%", padding: "10px 13px", borderRadius: 9, border: "1.5px solid #d1d5db", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "white", color: addForm.specialization.length > 0 ? "#111827" : "#9ca3af", textAlign: "left", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>{addForm.specialization.length > 0 ? `${addForm.specialization.length} selected: ${addForm.specialization.join(", ")}` : "-- Select products --"}</span>
+                      <span style={{ fontSize: 10, color: "#6b7280" }}>{showSpecDrop ? "▲" : "▼"}</span>
+                    </button>
+                    {showSpecDrop && (
+                      <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "white", border: "1.5px solid #d1d5db", borderRadius: 9, zIndex: 100, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                        {/* Search filter */}
+                        <div style={{ padding: "8px 10px", borderBottom: "1px solid #f0f0f0" }}>
+                          <input autoFocus placeholder="🔍 Search product..." value={specSearch} onChange={e => setSpecSearch(e.target.value)}
+                            style={{ width: "100%", padding: "7px 10px", borderRadius: 7, border: "1.5px solid #e5e7eb", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "#f9fafb", color: "#111" }} />
+                        </div>
+                        {/* Options with scrollbar */}
+                        <div style={{ maxHeight: 200, overflowY: "auto", padding: "6px 0" }}>
+                          {PRODUCTS.filter(p => p.toLowerCase().includes(specSearch.toLowerCase())).map(product => {
+                            const checked = addForm.specialization.includes(product);
+                            return (
+                              <div key={product} onClick={() => toggleSpec(product)}
+                                style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", cursor: "pointer", background: checked ? "#ecfdf5" : "white", transition: "background 0.12s" }}
+                                onMouseEnter={e => { if (!checked) e.currentTarget.style.background = "#f9fafb"; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = checked ? "#ecfdf5" : "white"; }}>
+                                <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${checked ? "#059669" : "#d1d5db"}`, background: checked ? "#059669" : "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                  {checked && <span style={{ color: "white", fontSize: 9, fontWeight: 900 }}>✓</span>}
+                                </div>
+                                <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? "#065f46" : "#374151" }}>{product}</span>
+                              </div>
+                            );
+                          })}
+                          {PRODUCTS.filter(p => p.toLowerCase().includes(specSearch.toLowerCase())).length === 0 && (
+                            <div style={{ padding: "12px 14px", fontSize: 13, color: "#9ca3af", textAlign: "center" }}>No products found</div>
+                          )}
+                        </div>
+                        {/* Footer */}
+                        <div style={{ padding: "8px 12px", borderTop: "1px solid #f0f0f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 11, color: "#6b7280" }}>{addForm.specialization.length} selected</span>
+                          <button onClick={() => setShowSpecDrop(false)}
+                            style={{ padding: "5px 14px", borderRadius: 7, border: "none", background: "#059669", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                            ✓ Done
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {Array.isArray(addForm.specialization) && addForm.specialization.length > 0 && (
-                    <div style={{ marginTop: 6, fontSize: 11, color: "#059669", fontWeight: 600 }}>
-                      ✅ Selected: {addForm.specialization.join(", ")}
+                  {addForm.specialization.length > 0 && (
+                    <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {addForm.specialization.map(s => (
+                        <span key={s} style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #6ee7b7", padding: "2px 10px", borderRadius: 10, fontSize: 11, fontWeight: 700 }}>
+                          {s} <span onClick={() => toggleSpec(s)} style={{ cursor: "pointer", marginLeft: 4, color: "#dc2626" }}>✕</span>
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
