@@ -147,19 +147,7 @@ export const PRODUCTS = Object.keys(PRODUCT_MODELS);
 // CUSTOMER DASHBOARD — products visible to customers
 // Add/remove products here for CustomerDashboard.jsx
 // ══════════════════════════════════════════════════════
-export const CUSTOMER_PRODUCT_MODELS = {
-  "Router":           PRODUCT_MODELS["Router"],
-  "ONT":              PRODUCT_MODELS["ONT"],
-  "Switch":           PRODUCT_MODELS["Switch"],
-   "AP":                    PRODUCT_MODELS["AP"],
-  // ✅ ADD MORE for customer — copy line below and uncomment:
-  // "AP":               PRODUCT_MODELS["AP"],
-  // "OLT":              PRODUCT_MODELS["OLT"],
-  // "Media Converter":  PRODUCT_MODELS["Media Converter"],
-  // "SFP":              PRODUCT_MODELS["SFP"],
-  // "GCC Series":       PRODUCT_MODELS["GCC Series"],
-  // "DWDM":             PRODUCT_MODELS["DWDM"],
-};
+export const CUSTOMER_PRODUCT_MODELS = PRODUCT_MODELS;
 export const CUSTOMER_PRODUCTS = Object.keys(CUSTOMER_PRODUCT_MODELS);
 
 

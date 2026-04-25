@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
+import { SALES_PRODUCT_MODELS, SALES_PRODUCTS } from "../data/productModels";
 
 const BASE_URL = "https://syrotech-backend.onrender.com";
 const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
@@ -134,7 +135,7 @@ export default function SupportDashboard() {
   // ── Raise Ticket form state ──
   // ✅ CHANGE 1: assignTo pre-filled with currentUser's own name
   const [form, setForm] = useState({
-    category: "", serialNo: "", mac: "", customer: "",
+    category: "", model: "", serialNo: "", mac: "", customer: "",
     email: "", phone: "", city: "", country: "", pincode: "",
     description: "", assignTo: currentUser?.name || "", productImage: ""
   });
@@ -327,7 +328,12 @@ export default function SupportDashboard() {
     if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
     if (name === "pincode"  && value !== "" && !/^\d*$/.test(value))          return;
     // ✅ functional update — no stale closure, assignTo never reset
-    setForm(prev => ({ ...prev, [name]: value }));
+   // ✅ functional update — no stale closure, assignTo never reset
+if (name === "category") {
+  setForm(prev => ({ ...prev, [name]: value, model: "" }));
+} else {
+  setForm(prev => ({ ...prev, [name]: value }));
+}
     setFormErrors(prev => ({ ...prev, [name]: "" }));
   };
 
@@ -335,7 +341,8 @@ export default function SupportDashboard() {
   const validate = () => {
     const e = {};
     if (!form.category)        e.category    = "Please select a product.";
-    if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
+if (!form.model)           e.model       = "Please select a model.";
+if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
     if (!form.mac.trim())      e.mac         = "MAC address is required."; // ✅ NEW
     if (!form.customer.trim()) e.customer    = "Customer name is required.";
     else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
@@ -642,12 +649,20 @@ export default function SupportDashboard() {
               <div className="form-field">
                 <label className="form-label">Product <span className="req">*</span></label>
                 <select name="category" value={form.category} onChange={handleChange} style={inputStyle("category")}>
-                  <option value="">Select Product</option>
-                  <option>Router</option><option>ONU</option><option>Switch</option>
+                <option value="">Select Product</option>
+{SALES_PRODUCTS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
                 {formErrors.category && <span className="field-error">{formErrors.category}</span>}
               </div>
 
+<div className="form-field">
+                <label className="form-label">Model <span className="req">*</span></label>
+                <select name="model" value={form.model} onChange={handleChange} style={{ ...inputStyle("model"), color: !form.category ? "#888" : "#111" }} disabled={!form.category}>
+                  <option value="">{form.category ? `Select ${form.category} model` : "Select product first"}</option>
+                  {(SALES_PRODUCT_MODELS[form.category] || []).map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                {formErrors.model && <span className="field-error">{formErrors.model}</span>}
+              </div>
               <div className="form-field">
                 <label className="form-label">Serial Number <span className="req">*</span></label>
                 <input name="serialNo" placeholder="e.g. SYR-20240001" value={form.serialNo} onChange={handleChange} style={inputStyle("serialNo")} />
