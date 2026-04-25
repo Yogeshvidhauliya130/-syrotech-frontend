@@ -14,6 +14,13 @@ const openImageInNewTab = (imgSrc) => {
   win.document.close();
 };
 
+// ✅ Shared td style with dark right border line
+const tdStyle = (extra = {}) => ({
+  padding: "12px 12px",
+  borderRight: "1px solid #c4b5fd",
+  ...extra,
+});
+
 export default function CustomerDashboard() {
   const navigate    = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -90,7 +97,6 @@ export default function CustomerDashboard() {
     reader.readAsDataURL(file);
   };
 
-  // Smart filter support persons by product + location
   const getFilteredSupportPersons = () => {
     const product = form.category;
     const city    = (form.city    || "").toLowerCase().trim();
@@ -159,7 +165,6 @@ export default function CustomerDashboard() {
       return;
     }
 
-    // Check same customer + product + serial
     const sameTicket = tickets.find(t =>
       t.phone === (currentUser?.phone || "") &&
       t.category === form.category &&
@@ -325,8 +330,6 @@ export default function CustomerDashboard() {
             {errors.submit && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderLeft:"3px solid #ef4444", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#b91c1c", marginBottom:16 }}>{errors.submit}</div>}
 
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:14 }}>
-
-              {/* Product */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Product <span style={{ color:"#7c3aed" }}>*</span></label>
                 <select name="category" value={form.category} onChange={handleChange} style={iStyle("category")}>
@@ -335,8 +338,6 @@ export default function CustomerDashboard() {
                 </select>
                 {errors.category && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.category}</span>}
               </div>
-
-              {/* Model */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Model <span style={{ color:"#7c3aed" }}>*</span></label>
                 <select name="model" value={form.model} onChange={handleChange} style={iStyle("model")} disabled={!form.category}>
@@ -345,35 +346,25 @@ export default function CustomerDashboard() {
                 </select>
                 {errors.model && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.model}</span>}
               </div>
-
-              {/* Serial No */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Serial Number <span style={{ color:"#7c3aed" }}>*</span></label>
                 <input name="serialNo" placeholder="e.g. SYR-20240001" value={form.serialNo} onChange={handleChange} style={iStyle("serialNo")} />
                 {errors.serialNo && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.serialNo}</span>}
               </div>
-
-              {/* MAC */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>MAC Address</label>
                 <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF" value={form.mac} onChange={handleChange} style={iStyle("mac")} />
               </div>
-
-              {/* Customer Name */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Customer Name <span style={{ color:"#7c3aed" }}>*</span></label>
                 <input name="customer" placeholder="Your full name" value={form.customer} onChange={handleChange} style={iStyle("customer")} />
                 {errors.customer && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.customer}</span>}
               </div>
-
-              {/* Email */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Email Address <span style={{ color:"#7c3aed" }}>*</span></label>
                 <input name="email" type="email" placeholder="your@email.com" value={form.email} onChange={handleChange} style={iStyle("email")} />
                 {errors.email && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.email}</span>}
               </div>
-
-              {/* Phone */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Contact Number <span style={{ color:"#7c3aed" }}>*</span></label>
                 <input name="phone" placeholder="10-digit mobile number" value={form.phone} onChange={handleChange} maxLength={10} style={iStyle("phone")} />
@@ -382,15 +373,11 @@ export default function CustomerDashboard() {
                   : <span style={{ fontSize:10, color:"#9ca3af", marginTop:3, display:"block" }}>{(form.phone||"").replace(/\s+/g,"").length}/10 digits</span>
                 }
               </div>
-
-              {/* City */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>City <span style={{ color:"#7c3aed" }}>*</span></label>
                 <input name="city" placeholder="e.g. Mumbai" value={form.city} onChange={handleChange} style={iStyle("city")} />
                 {errors.city && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.city}</span>}
               </div>
-
-              {/* Country */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Country <span style={{ color:"#7c3aed" }}>*</span></label>
                 <select name="country" value={form.country} onChange={handleChange} style={iStyle("country")}>
@@ -403,15 +390,11 @@ export default function CustomerDashboard() {
                 </select>
                 {errors.country && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.country}</span>}
               </div>
-
-              {/* Pincode */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Pincode <span style={{ color:"#7c3aed" }}>*</span></label>
                 <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={iStyle("pincode")} />
                 {errors.pincode && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.pincode}</span>}
               </div>
-
-              {/* Assign Support Person */}
               <div style={{ gridColumn:"1/-1" }}>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>
                   Assign Support Person <span style={{ color:"#7c3aed" }}>*</span>
@@ -517,9 +500,9 @@ export default function CustomerDashboard() {
                   </select>
                 </div>
 
-                {/* ✅ CHANGE 1: Removed "Assigned To", Added "Model" after "Product" */}
+                {/* ✅ Table: wider (minWidth:950) + dark column lines (borderCollapse:separate) + sticky header */}
                 <div style={{ borderRadius:12, border:"1.5px solid #e9d5ff", boxShadow:"0 2px 12px rgba(0,0,0,0.06)", overflowX:"auto", overflowY:"auto", maxHeight:"65vh" }}>
-                  <table style={{ width:"100%", borderCollapse:"collapse", background:"white", minWidth:750 }}>
+                  <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:950 }}>
                     <thead>
                       <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)", position:"sticky", top:0, zIndex:2 }}>
                         {["Ticket No","Date","Product","Model","Serial No","Status","Image","Issue"].map((h,i) => (
@@ -533,28 +516,28 @@ export default function CustomerDashboard() {
                       ) : displayTickets.reduce((acc, ticket, idx) => {
                         const s = (ticket.status||"pending").toLowerCase();
                         acc.push(
-                          <tr key={ticket.id} style={{ borderBottom:"1px solid #f0ede8", background:idx%2===0?"#faf8ff":"white", borderLeft:`4px solid ${STATUS_COLOR[s]||"#ccc"}` }}>
-                            <td style={{ padding:"12px 12px", whiteSpace:"nowrap" }}>
+                          <tr key={ticket.id} style={{ borderBottom:"1px solid #e9d5ff", background:idx%2===0?"#faf8ff":"white", borderLeft:`4px solid ${STATUS_COLOR[s]||"#ccc"}` }}>
+
+                            {/* ✅ All td have borderRight:"1px solid #c4b5fd" for dark column lines */}
+                            <td style={tdStyle({ whiteSpace:"nowrap" })}>
                               <div style={{ fontSize:12, fontWeight:800, color:"#7c3aed" }}>Syro{ticket.ticketNumber||"—"}</div>
                               <div style={{ fontSize:9, color:"#9ca3af" }}>Row {idx+1}</div>
                             </td>
-                            <td style={{ padding:"12px 12px" }}>
+                            <td style={tdStyle()}>
                               <div style={{ fontSize:11, color:"#374151", fontWeight:600, whiteSpace:"nowrap" }}>{ticket.date||"—"}</div>
                               {ticket.resolvedAt && <div style={{ fontSize:10, color:"#10b981", whiteSpace:"nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
                             </td>
-                            {/* ✅ Product column */}
-                            <td style={{ padding:"12px 12px" }}>
+                            <td style={tdStyle()}>
                               <div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap" }}>{ticket.category||"—"}</div>
                             </td>
-                            {/* ✅ CHANGE 2: New Model column */}
-                            <td style={{ padding:"12px 12px" }}>
+                            <td style={tdStyle()}>
                               <div style={{ fontSize:12, color:"#374151", whiteSpace:"nowrap" }}>{ticket.model||"—"}</div>
                             </td>
-                            <td style={{ padding:"12px 12px" }}>
+                            <td style={tdStyle()}>
                               <div style={{ fontSize:11, whiteSpace:"nowrap" }}>{ticket.serialNo}</div>
                               {ticket.mac && <div style={{ fontSize:9, color:"#9ca3af" }}>MAC: {ticket.mac}</div>}
                             </td>
-                            <td style={{ padding:"12px 12px" }}>
+                            <td style={tdStyle()}>
                               <span onClick={() => {
                                 if (s==="resolved" && ticket.resolutionNotes) setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt });
                                 else if (s==="rma") setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt });
@@ -564,7 +547,7 @@ export default function CustomerDashboard() {
                               {s==="resolved" && ticket.resolutionNotes && <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })} style={{ fontSize:9, color:"#059669", marginTop:3, cursor:"pointer", fontWeight:600 }}>📋 View details</div>}
                               {s==="rma" && <div onClick={() => setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt })} style={{ fontSize:9, color:"#7c3aed", marginTop:3, cursor:"pointer", fontWeight:600 }}>🔧 View RMA</div>}
                             </td>
-                            <td style={{ padding:"12px 8px", textAlign:"center" }}>
+                            <td style={tdStyle({ textAlign:"center" })}>
                               {ticket.productImage ? (
                                 <button onClick={() => setExpandedImage(prev => prev===ticket.id?null:ticket.id)} style={{ background:expandedImage===ticket.id?"#dcfce7":"#f0fdf4", border:"1.5px solid #86efac", borderRadius:6, padding:"4px 8px", cursor:"pointer", fontSize:10, fontWeight:700, color:"#065f46" }}>📷 {expandedImage===ticket.id?"Hide":"View"}</button>
                               ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
