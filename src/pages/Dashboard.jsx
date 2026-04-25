@@ -320,6 +320,12 @@ export default function Dashboard() {
     fontFamily: "DM Sans, sans-serif", color: "#111",
   });
 
+  // ✅ Shared td style with dark right border line
+  const tdStyle = (extra = {}) => ({
+    borderRight: "1px solid #e0d8d0",
+    ...extra,
+  });
+
   return (
     <div className="dashboard-wrapper">
 
@@ -789,7 +795,8 @@ export default function Dashboard() {
                 }}>
                   <table style={{
                     width: "100%",
-                    borderCollapse: "collapse",
+                    borderCollapse: "separate",
+                    borderSpacing: 0,
                     background: "white",
                     minWidth: 1000,
                   }}>
@@ -805,7 +812,7 @@ export default function Dashboard() {
                       <col style={{ width: 220 }} />
                     </colgroup>
                     <thead>
-                      <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)" }}>
+                      <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
                         {["Ticket No","Date","Product","Serial No","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
                           <th key={i} style={{
                             padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white",
@@ -837,25 +844,26 @@ export default function Dashboard() {
                               background: idx % 2 === 0 ? "#faf7f4" : "white",
                               borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
                             }}>
-                              <td style={{ padding: "12px 10px", whiteSpace: "nowrap" }}>
-                               <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>{ticket.ticketNumber || "—"}</div>
+                              {/* ✅ All td now have borderRight for dark column lines */}
+                              <td style={tdStyle({ padding: "12px 10px", whiteSpace: "nowrap" })}>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>{ticket.ticketNumber || "—"}</div>
                                 <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                               </td>
-                              <td style={{ padding: "12px 10px" }}>
+                              <td style={tdStyle({ padding: "12px 10px" })}>
                                 <div style={{ fontSize: 11, color: "#374151", fontWeight: 600, whiteSpace: "nowrap" }}>{ticket.date || "—"}</div>
                                 {ticket.resolvedAt && (
                                   <div style={{ fontSize: 10, color: "#10b981", whiteSpace: "nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>
                                 )}
                               </td>
-                              <td style={{ padding: "12px 10px" }}>
+                              <td style={tdStyle({ padding: "12px 10px" })}>
                                 <div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.category}</div>
                                 {ticket.model && <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{ticket.model}</div>}
                               </td>
-                              <td style={{ padding: "12px 10px" }}>
+                              <td style={tdStyle({ padding: "12px 10px" })}>
                                 <div style={{ fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.serialNo}</div>
                                 {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap" }}>MAC: {ticket.mac}</div>}
                               </td>
-                              <td style={{ padding: "12px 10px" }}>
+                              <td style={tdStyle({ padding: "12px 10px" })}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                   {ticket.customer || "—"}
                                 </div>
@@ -868,7 +876,7 @@ export default function Dashboard() {
                                   </div>
                                 )}
                               </td>
-                              <td style={{ padding: "12px 10px" }}>
+                              <td style={tdStyle({ padding: "12px 10px" })}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                   {ticket.assignTo || "—"}
                                 </div>
@@ -882,7 +890,7 @@ export default function Dashboard() {
                                   <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>
                                 )}
                               </td>
-                              <td style={{ padding: "12px 10px" }}>
+                              <td style={tdStyle({ padding: "12px 10px" })}>
                                 <span
                                   onClick={() => {
                                     if (s === "resolved") {
@@ -910,7 +918,7 @@ export default function Dashboard() {
                                     style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
                                 )}
                               </td>
-                              <td style={{ padding: "12px 6px", textAlign: "center" }}>
+                              <td style={tdStyle({ padding: "12px 6px", textAlign: "center" })}>
                                 {ticket.productImage ? (
                                   <button
                                     onClick={() => setExpandedImage(prev => prev === ticket.id ? null : ticket.id)}
