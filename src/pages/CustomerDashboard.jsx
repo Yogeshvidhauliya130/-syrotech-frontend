@@ -517,12 +517,12 @@ export default function CustomerDashboard() {
                   </select>
                 </div>
 
-                {/* Table */}
+                {/* ✅ CHANGE 1: Removed "Assigned To", Added "Model" after "Product" */}
                 <div style={{ borderRadius:12, border:"1.5px solid #e9d5ff", boxShadow:"0 2px 12px rgba(0,0,0,0.06)", overflowX:"auto", overflowY:"auto", maxHeight:"65vh" }}>
-                  <table style={{ width:"100%", borderCollapse:"collapse", background:"white", minWidth:800 }}>
+                  <table style={{ width:"100%", borderCollapse:"collapse", background:"white", minWidth:750 }}>
                     <thead>
                       <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)" }}>
-                        {["Ticket No","Date","Product","Serial No","Assigned To","Status","Image","Issue"].map((h,i) => (
+                        {["Ticket No","Date","Product","Model","Serial No","Status","Image","Issue"].map((h,i) => (
                           <th key={i} style={{ padding:"12px 12px", fontSize:10, fontWeight:800, color:"white", textTransform:"uppercase", letterSpacing:"0.05em", textAlign:"left", borderRight:"1px solid rgba(255,255,255,0.2)", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
                       </tr>
@@ -532,7 +532,6 @@ export default function CustomerDashboard() {
                         <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#9ca3af", fontSize:14 }}>No tickets found.</td></tr>
                       ) : displayTickets.reduce((acc, ticket, idx) => {
                         const s = (ticket.status||"pending").toLowerCase();
-                        const assignedPerson = supportPersons.find(p => p.name && ticket.assignTo && p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim());
                         acc.push(
                           <tr key={ticket.id} style={{ borderBottom:"1px solid #f0ede8", background:idx%2===0?"#faf8ff":"white", borderLeft:`4px solid ${STATUS_COLOR[s]||"#ccc"}` }}>
                             <td style={{ padding:"12px 12px", whiteSpace:"nowrap" }}>
@@ -543,15 +542,17 @@ export default function CustomerDashboard() {
                               <div style={{ fontSize:11, color:"#374151", fontWeight:600, whiteSpace:"nowrap" }}>{ticket.date||"—"}</div>
                               {ticket.resolvedAt && <div style={{ fontSize:10, color:"#10b981", whiteSpace:"nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
                             </td>
-                            <td style={{ padding:"12px 12px" }}><div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap" }}>{ticket.category}</div></td>
+                            {/* ✅ Product column */}
+                            <td style={{ padding:"12px 12px" }}>
+                              <div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap" }}>{ticket.category||"—"}</div>
+                            </td>
+                            {/* ✅ CHANGE 2: New Model column */}
+                            <td style={{ padding:"12px 12px" }}>
+                              <div style={{ fontSize:12, color:"#374151", whiteSpace:"nowrap" }}>{ticket.model||"—"}</div>
+                            </td>
                             <td style={{ padding:"12px 12px" }}>
                               <div style={{ fontSize:11, whiteSpace:"nowrap" }}>{ticket.serialNo}</div>
                               {ticket.mac && <div style={{ fontSize:9, color:"#9ca3af" }}>MAC: {ticket.mac}</div>}
-                            </td>
-                            <td style={{ padding:"12px 12px" }}>
-                              <div style={{ fontSize:12, fontWeight:700, color:"#374151", whiteSpace:"nowrap" }}>{ticket.assignTo||"—"}</div>
-                              {assignedPerson?.phone && <div style={{ fontSize:10, color:"#6b7280", marginTop:2 }}>📞 {assignedPerson.phone}</div>}
-                              {assignedPerson?.city && <div style={{ fontSize:10, color:"#9ca3af" }}>📍 {assignedPerson.city}</div>}
                             </td>
                             <td style={{ padding:"12px 12px" }}>
                               <span onClick={() => {
