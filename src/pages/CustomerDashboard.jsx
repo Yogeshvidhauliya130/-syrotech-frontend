@@ -520,7 +520,7 @@ export default function CustomerDashboard() {
 
                             {/* ✅ All td have borderRight:"1px solid #c4b5fd" for dark column lines */}
                             <td style={tdStyle({ whiteSpace:"nowrap" })}>
-                              <div style={{ fontSize:12, fontWeight:800, color:"#7c3aed" }}>Syro{ticket.ticketNumber||"—"}</div>
+                             <div style={{ fontSize:12, fontWeight:800, color:"#7c3aed" }}>{ticket.ticketNumber||"—"}</div>
                               <div style={{ fontSize:9, color:"#9ca3af" }}>Row {idx+1}</div>
                             </td>
                             <td style={tdStyle()}>

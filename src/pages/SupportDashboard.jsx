@@ -410,7 +410,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
             .then(r => r.json())
             .then(() => {
               // ✅ reset assignTo to currentUser?.name after submit
-              setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: currentUser?.name || "", productImage: "" });
+              setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: currentUser?.name || "", productImage: "" });
               setImagePreview(""); setFormErrors({});
               setSuccessMsg("✅ Same customer found! Issue updated in existing Ticket. Status reset to PENDING.");
               setActiveTab("tickets");
@@ -438,7 +438,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
           .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
           .then(() => {
             // ✅ reset assignTo to currentUser?.name after submit
-            setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: currentUser?.name || "", productImage: "" });
+            setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: currentUser?.name || "", productImage: "" });
             setImagePreview(""); setFormErrors({});
             setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING");
             setActiveTab("myraised");
@@ -825,7 +825,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                       return (
                         <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
                           <td style={{ padding: "12px 12px", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{ticket.ticketNumber || "—"}</div>
+                           <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>{ticket.ticketNumber || "—"}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                             <div style={{ fontSize: 9, color: "#059669", fontWeight: 700, marginTop: 2, background: "#d1fae5", padding: "1px 5px", borderRadius: 4, display: "inline-block" }}>📞 Via Support</div>
                           </td>
@@ -1032,7 +1032,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                         }}>
 
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>Syro{ticket.ticketNumber || "—"}</div>
+                           <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>{ticket.ticketNumber || "—"}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                             {ticket.issueHistory && ticket.issueHistory.length > 0 && (
                               <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>

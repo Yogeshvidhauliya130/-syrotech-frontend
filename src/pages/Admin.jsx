@@ -311,7 +311,7 @@ function Analytics() {
                   outline: isSupportRaised ? "1px solid #93c5fd" : "none",
                 }}>
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticket.ticketNumber || "—"}</div>
+                   <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>{ticket.ticketNumber || "—"}</div>
                     <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.date || "—"}</div>
                   </td>
 

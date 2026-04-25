@@ -838,7 +838,7 @@ export default function Dashboard() {
                               borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
                             }}>
                               <td style={{ padding: "12px 10px", whiteSpace: "nowrap" }}>
-                                <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticket.ticketNumber || "—"}</div>
+                               <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>{ticket.ticketNumber || "—"}</div>
                                 <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                               </td>
                               <td style={{ padding: "12px 10px" }}>
