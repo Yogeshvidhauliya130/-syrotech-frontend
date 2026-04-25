@@ -521,7 +521,7 @@ export default function CustomerDashboard() {
                 <div style={{ borderRadius:12, border:"1.5px solid #e9d5ff", boxShadow:"0 2px 12px rgba(0,0,0,0.06)", overflowX:"auto", overflowY:"auto", maxHeight:"65vh" }}>
                   <table style={{ width:"100%", borderCollapse:"collapse", background:"white", minWidth:750 }}>
                     <thead>
-                      <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)" }}>
+                      <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)", position:"sticky", top:0, zIndex:2 }}>
                         {["Ticket No","Date","Product","Model","Serial No","Status","Image","Issue"].map((h,i) => (
                           <th key={i} style={{ padding:"12px 12px", fontSize:10, fontWeight:800, color:"white", textTransform:"uppercase", letterSpacing:"0.05em", textAlign:"left", borderRight:"1px solid rgba(255,255,255,0.2)", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
