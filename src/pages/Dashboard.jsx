@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { SALES_PRODUCT_MODELS, SALES_PRODUCTS } from "../data/productModels";
 import "./Dashboard.css";
 
 const BASE_URL = "https://syrotech-backend.onrender.com";
@@ -26,7 +27,7 @@ export default function Dashboard() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
   const [form, setForm] = useState({
-    category: "", serialNo: "", mac: "", customer: "",
+    category: "", model: "", serialNo: "", mac: "", customer: "",
     email: "", phone: "", city: "", country: "", pincode: "",
     description: "", assignTo: "", productImage: ""
   });
@@ -39,12 +40,12 @@ export default function Dashboard() {
   const [imagePreview, setImagePreview]     = useState("");
   const [expandedImage, setExpandedImage]   = useState(null);
   const [issuePopup, setIssuePopup]         = useState(null);
-  const [rmaPopup, setRmaPopup]             = useState(null); // ✅ RMA detail popup
+  const [rmaPopup, setRmaPopup]             = useState(null);
 
   const [dateSort, setDateSort]           = useState("newest");
   const [productFilter, setProductFilter] = useState("all");
   const [statusFilter, setStatusFilter]   = useState("all");
-  const [searchQuery, setSearchQuery]     = useState(""); // ✅ CHANGE 1: search state
+  const [searchQuery, setSearchQuery]     = useState("");
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -142,7 +143,9 @@ export default function Dashboard() {
     const { name, value } = e.target;
     if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
     if (name === "pincode"  && value !== "" && !/^\d*$/.test(value))          return;
-    if (name === "category" || name === "city" || name === "country") {
+    if (name === "category") {
+      setForm(prev => ({ ...prev, [name]: value, model: "", assignTo: "" }));
+    } else if (name === "city" || name === "country") {
       setForm(prev => ({ ...prev, [name]: value, assignTo: "" }));
     } else {
       setForm({ ...form, [name]: value });
@@ -159,6 +162,7 @@ export default function Dashboard() {
   const validate = () => {
     const newErrors = {};
     if (!form.category)     newErrors.category = "Please select a product.";
+    if (!form.model)        newErrors.model    = "Please select a model.";
     if (!form.serialNo.trim()) newErrors.serialNo = "Serial number is required.";
     if (!form.customer.trim()) newErrors.customer = "Customer name is required.";
     else if (/\d/.test(form.customer)) newErrors.customer = "Name cannot contain numbers.";
@@ -227,7 +231,7 @@ export default function Dashboard() {
         .then(r => r.json())
         .then(updated => {
           setTickets(prev => prev.map(t => t.id === sameCustomerTicket.id ? updated : t));
-          setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+          setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
           setImagePreview("");
           setErrors({});
           setSuccessMsg(`✅ Same customer found! Issue updated in existing Ticket. Status reset to PENDING.`);
@@ -256,7 +260,7 @@ export default function Dashboard() {
       .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
       .then(saved => {
         setTickets(prev => [...prev, saved]);
-        setForm({ category: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+        setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
         setImagePreview("");
         setErrors({});
         setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING");
@@ -272,12 +276,9 @@ export default function Dashboard() {
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
-
-
   const displayTickets = myTickets
     .filter(t => productFilter === "all" || t.category === productFilter)
     .filter(t => statusFilter === "all" || (t.status || "pending").toLowerCase() === statusFilter)
-    // ✅ CHANGE 1: search filter
     .filter(t => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
@@ -322,7 +323,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-wrapper">
 
-      {/* ✅ Issue/Resolution Popup Modal */}
+      {/* Issue/Resolution Popup Modal */}
       {issuePopup && (
         <div
           onClick={() => setIssuePopup(null)}
@@ -381,7 +382,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ✅ RMA Detail Popup */}
+      {/* RMA Detail Popup */}
       {rmaPopup && (
         <div onClick={() => setRmaPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #c4b5fd" }}>
@@ -449,7 +450,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ══ RAISE TICKET ══ */}
+        {/* RAISE TICKET */}
         {activeTab === "raise" && (
           <div className="form-card">
             <div className="form-card-header">
@@ -467,11 +468,18 @@ export default function Dashboard() {
                 <label className="form-label">Product <span className="req">*</span></label>
                 <select name="category" value={form.category} onChange={handleChange} style={inputStyle("category")}>
                   <option value="">Select Product</option>
-                  <option>Router</option>
-                  <option>ONU</option>
-                  <option>Switch</option>
+                  {SALES_PRODUCTS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
                 {errors.category && <span className="field-error">{errors.category}</span>}
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Model <span className="req">*</span></label>
+                <select name="model" value={form.model} onChange={handleChange} style={{ ...inputStyle("model"), color: !form.category ? "#888" : "#111" }} disabled={!form.category}>
+                  <option value="">{form.category ? `Select ${form.category} model` : "Select product first"}</option>
+                  {(SALES_PRODUCT_MODELS[form.category] || []).map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                {errors.model && <span className="field-error">{errors.model}</span>}
               </div>
 
               <div className="form-field">
@@ -576,7 +584,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Product Image — OPTIONAL */}
+            {/* Product Image */}
             <div className="form-field" style={{ padding: "20px 36px 0" }}>
               <label className="form-label">
                 Product Image
@@ -647,7 +655,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ══ MY TICKETS ══ */}
+        {/* MY TICKETS */}
         {activeTab === "mytickets" && (
           <div>
             <div className="tickets-header">
@@ -666,7 +674,6 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                {/* ✅ CHANGE 1: Search box above filter bar */}
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <input
@@ -689,7 +696,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* FILTER BAR */}
                 <div style={{
                   background: "white", borderRadius: 12,
                   border: "1.5px solid #e0d8d0",
@@ -773,7 +779,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* TABLE — 10 columns now (Phone & City removed, merged into Customer & Assigned To) */}
                 <div style={{
                   borderRadius: 12,
                   border: "1.5px solid #e0d8d0",
@@ -793,9 +798,7 @@ export default function Dashboard() {
                       <col style={{ width: 100 }} />
                       <col style={{ width: 110 }} />
                       <col style={{ width: 130 }} />
-                      {/* ✅ CHANGE 2: Customer col wider (merged phone+city) */}
                       <col style={{ width: 160 }} />
-                      {/* ✅ CHANGE 3: Assigned To col wider (merged phone+city) */}
                       <col style={{ width: 160 }} />
                       <col style={{ width: 105 }} />
                       <col style={{ width: 75  }} />
@@ -803,7 +806,6 @@ export default function Dashboard() {
                     </colgroup>
                     <thead>
                       <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)" }}>
-                        {/* ✅ 10 columns — Phone and City removed */}
                         {["Ticket No","Date","Product","Serial No","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
                           <th key={i} style={{
                             padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white",
@@ -824,8 +826,6 @@ export default function Dashboard() {
                       ) : (
                         displayTickets.reduce((acc, ticket, idx) => {
                           const s = (ticket.status || "pending").toLowerCase();
-
-                          // ✅ CHANGE 3: look up support person details from supportPersons list
                           const assignedPerson = supportPersons.find(p =>
                             p.name && ticket.assignTo &&
                             p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim()
@@ -837,35 +837,24 @@ export default function Dashboard() {
                               background: idx % 2 === 0 ? "#faf7f4" : "white",
                               borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
                             }}>
-
-                              {/* Ticket No */}
                               <td style={{ padding: "12px 10px", whiteSpace: "nowrap" }}>
-                                <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>
-  Syro{ticket.ticketNumber || "—"}
-</div>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>Syro{ticket.ticketNumber || "—"}</div>
                                 <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                               </td>
-
-                              {/* Date */}
                               <td style={{ padding: "12px 10px" }}>
                                 <div style={{ fontSize: 11, color: "#374151", fontWeight: 600, whiteSpace: "nowrap" }}>{ticket.date || "—"}</div>
                                 {ticket.resolvedAt && (
                                   <div style={{ fontSize: 10, color: "#10b981", whiteSpace: "nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>
                                 )}
                               </td>
-
-                              {/* Product */}
                               <td style={{ padding: "12px 10px" }}>
                                 <div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.category}</div>
+                                {ticket.model && <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{ticket.model}</div>}
                               </td>
-
-                              {/* Serial No */}
                               <td style={{ padding: "12px 10px" }}>
                                 <div style={{ fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.serialNo}</div>
                                 {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap" }}>MAC: {ticket.mac}</div>}
                               </td>
-
-                              {/* ✅ CHANGE 2: Customer — name + phone + city/country combined */}
                               <td style={{ padding: "12px 10px" }}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                   {ticket.customer || "—"}
@@ -879,8 +868,6 @@ export default function Dashboard() {
                                   </div>
                                 )}
                               </td>
-
-                              {/* ✅ CHANGE 3: Assigned To — name + phone + city combined */}
                               <td style={{ padding: "12px 10px" }}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                   {ticket.assignTo || "—"}
@@ -895,8 +882,6 @@ export default function Dashboard() {
                                   <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>
                                 )}
                               </td>
-
-                              {/* Status */}
                               <td style={{ padding: "12px 10px" }}>
                                 <span
                                   onClick={() => {
@@ -913,7 +898,6 @@ export default function Dashboard() {
                                     cursor: s === "resolved" || s === "rma" ? "pointer" : "default",
                                     border: s === "resolved" ? "1.5px solid #6ee7b7" : "none",
                                   }}
-                                  title={s === "resolved" ? "Click to see resolution details" : s === "rma" ? "Click to see RMA details" : ""}
                                 >
                                   {STATUS_ICON[s]} {s.toUpperCase()}
                                 </span>
@@ -926,8 +910,6 @@ export default function Dashboard() {
                                     style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
                                 )}
                               </td>
-
-                              {/* Image */}
                               <td style={{ padding: "12px 6px", textAlign: "center" }}>
                                 {ticket.productImage ? (
                                   <button
@@ -945,8 +927,6 @@ export default function Dashboard() {
                                   <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
                                 )}
                               </td>
-
-                              {/* Issue */}
                               <td style={{ padding: "12px 10px" }}>
                                 <div
                                   onClick={() => setIssuePopup({
@@ -984,7 +964,6 @@ export default function Dashboard() {
                                   </div>
                                 )}
                               </td>
-
                             </tr>
                           );
 
