@@ -16,6 +16,7 @@ export const PRODUCT_MODELS = {
   "GCC Series": [
     "GCC6010", "GCC6010W", "GCC6011", "GCC6020", "GCC6021",
   ],
+  // Grandstream Switches only
   "Switch": [
     // Grandstream Unmanaged
     "GWN7700", "GWN7700P", "GWN7700MP", "GWN7701", "GWN7701P",
@@ -29,20 +30,28 @@ export const PRODUCT_MODELS = {
     // Grandstream L3 Managed
     "GWN7811", "GWN7811P", "GWN7812P", "GWN7813", "GWN7813P",
     "GWN7816", "GWN7816P", "GWN7821P", "GWN7822P", "GWN7830", "GWN7831", "GWN7832",
-    // Syrotech Unmanaged PoE
+  ],
+
+  // ── Syrotech Switches (separate products) ───────────
+  "Unmanaged PoE Switches": [
     "SY-0400P-2T-AI", "SY-0800P-2T-AI", "SY-4000P-1T-2S-AI",
     "SY-8000P-2T-AI", "SY-8000P-2T-2S-AI", "SY-2400P-2T-2S-AI",
-    // Syrotech Managed PoE
+  ],
+  "Managed PoE Switches": [
     "SY-8000P-2S-150W-L2", "SY-2400P-4S-400W-L2", "SY-2400P-4X-400W-L2",
-    // Syrotech Industrial Managed
+  ],
+  "Industrial Managed PoE Switches": [
     "SY-4000P-2S-IND", "SY-8000P-2S-IND", "SY-8000P-4S-IND",
     "SY-1016P-4S-IND", "SY-1024P-8CS4X-IND",
     "SY-4000-2S-IND-L2 (Non PoE)", "SY-8000-2S-IND-L2 (Non PoE)",
-    // Syrotech Industrial Unmanaged
+  ],
+  "Industrial Unmanaged PoE Switches": [
     "SY-4000-2S-IND-UM (Non PoE)", "SY-4000P-2S-IND-UM", "SY-8000P-2S-IND-UM",
-    // Syrotech L2/L3
+  ],
+  "L2/L3 Managed Switches": [
     "SY-2400-4X-L2", "SY-2400S-4X-DP", "SY-2400X-2Q28-L3",
-    // Syrotech Desktop
+  ],
+  "Desktop Switches": [
     "SY-1008",
   ],
 
@@ -142,6 +151,7 @@ export const CUSTOMER_PRODUCT_MODELS = {
   "Router":           PRODUCT_MODELS["Router"],
   "ONT":              PRODUCT_MODELS["ONT"],
   "Switch":           PRODUCT_MODELS["Switch"],
+   "AP":                    PRODUCT_MODELS["AP"],
   // ✅ ADD MORE for customer — copy line below and uncomment:
   // "AP":               PRODUCT_MODELS["AP"],
   // "OLT":              PRODUCT_MODELS["OLT"],
@@ -161,7 +171,13 @@ export const SALES_PRODUCT_MODELS = {
   "Router":                PRODUCT_MODELS["Router"],
   "AP":                    PRODUCT_MODELS["AP"],
   "GCC Series":            PRODUCT_MODELS["GCC Series"],
-  "Switch":                PRODUCT_MODELS["Switch"],
+  "Switch":                        PRODUCT_MODELS["Switch"],
+  "Unmanaged PoE Switches":         PRODUCT_MODELS["Unmanaged PoE Switches"],
+  "Managed PoE Switches":           PRODUCT_MODELS["Managed PoE Switches"],
+  "Industrial Managed PoE Switches": PRODUCT_MODELS["Industrial Managed PoE Switches"],
+  "Industrial Unmanaged PoE Switches": PRODUCT_MODELS["Industrial Unmanaged PoE Switches"],
+  "L2/L3 Managed Switches":         PRODUCT_MODELS["L2/L3 Managed Switches"],
+  "Desktop Switches":                PRODUCT_MODELS["Desktop Switches"],
   "OLT":                   PRODUCT_MODELS["OLT"],
   "ONT":                   PRODUCT_MODELS["ONT"],
   "Media Converter":       PRODUCT_MODELS["Media Converter"],
