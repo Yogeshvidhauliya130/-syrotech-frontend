@@ -124,6 +124,8 @@ export default function SupportDashboard() {
   const [expandedRow, setExpandedRow]             = useState(null);
   const [expandedImage, setExpandedImage]         = useState(null);
   const [dateSort, setDateSort]                   = useState("newest");
+  const [filterMonth, setFilterMonth] = useState("");
+const [filterYear, setFilterYear]   = useState("");
   const [resolveForm, setResolveForm]             = useState({});
   const [issuePopup, setIssuePopup]               = useState(null);
   const [rmaPopup, setRmaPopup]                   = useState(null);       // ✅ NEW: RMA detail popup
@@ -483,10 +485,16 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
     / resolved.length / (1000 * 60 * 60)
   ).toFixed(1);
 
-
-
-  // ✅ NEW: search applied to filtered
+// ✅ NEW: search applied to filtered
   const filtered = (filter === "all" ? tickets : tickets.filter(t => t.status === filter))
+    .filter(t => {
+      if (!filterMonth && !filterYear) return true;
+      const d = new Date(t.createdAt || t.date);
+      if (filterMonth && filterYear) return d.getMonth()+1 === parseInt(filterMonth) && d.getFullYear() === parseInt(filterYear);
+      if (filterMonth) return d.getMonth()+1 === parseInt(filterMonth);
+      if (filterYear)  return d.getFullYear() === parseInt(filterYear);
+      return true;
+    })
     .filter(t => {
       if (!assignedSearch.trim()) return true;
       const q = assignedSearch.toLowerCase();
@@ -511,9 +519,6 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
   const myRaisedTickets = allTickets
     .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
     .slice()
-    .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
-
-
 
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8" }}>
@@ -1025,6 +1030,30 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
               </select>
             </div>
           </div>
+
+
+
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12, flexWrap:"wrap" }}>
+  <span style={{ fontSize:12, color:"#6b7280", fontWeight:600 }}>🗓️ Filter by:</span>
+  <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
+    style={{ padding:"6px 12px", borderRadius:8, border:`1.5px solid ${filterMonth?"#10b981":"#d1d5db"}`, fontSize:12, cursor:"pointer", background:filterMonth?"#ecfdf5":"white", color:filterMonth?"#059669":"#374151", outline:"none", fontFamily:"inherit" }}>
+    <option value="">All Months</option>
+    {["January","February","March","April","May","June","July","August","September","October","November","December"].map((m,i) => (
+      <option key={i+1} value={i+1}>{m}</option>
+    ))}
+  </select>
+  <select value={filterYear} onChange={e => setFilterYear(e.target.value)}
+    style={{ padding:"6px 12px", borderRadius:8, border:`1.5px solid ${filterYear?"#10b981":"#d1d5db"}`, fontSize:12, cursor:"pointer", background:filterYear?"#ecfdf5":"white", color:filterYear?"#059669":"#374151", outline:"none", fontFamily:"inherit" }}>
+    <option value="">All Years</option>
+    {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+  </select>
+  {(filterMonth || filterYear) && (
+    <button onClick={() => { setFilterMonth(""); setFilterYear(""); }}
+      style={{ background:"#fee2e2", border:"none", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:11, color:"#dc2626", fontWeight:700 }}>
+      ✕ Clear
+    </button>
+  )}
+</div>
 
           {/* ✅ NEW: Search box above the table */}
           <div style={{ marginBottom: 12 }}>
