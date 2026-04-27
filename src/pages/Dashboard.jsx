@@ -49,6 +49,7 @@ export default function Dashboard() {
   const [productFilter, setProductFilter] = useState("all");
   const [statusFilter, setStatusFilter]   = useState("all");
   const [searchQuery, setSearchQuery]     = useState("");
+  const [monthFilter, setMonthFilter]     = useState(""); // ✅ Month picker filter
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -250,7 +251,7 @@ export default function Dashboard() {
     const newTicket = {
       ...form,
       phone:        form.phone.replace(/\s+/g, ""),
-      status:       "open",
+      status:       "pending",
       raisedBy:     currentUser?.email || "unknown",
       raisedByName: currentUser?.name  || "Unknown",
       date:         new Date().toISOString().slice(0, 10),
@@ -282,6 +283,12 @@ export default function Dashboard() {
   const displayTickets = myTickets
     .filter(t => productFilter === "all" || t.category === productFilter)
     .filter(t => statusFilter === "all" || (t.status || "pending").toLowerCase() === statusFilter)
+    .filter(t => {
+      if (!monthFilter) return true;
+      const d = new Date(t.createdAt || t.date);
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      return ym === monthFilter;
+    })
     .filter(t => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
@@ -840,6 +847,36 @@ export default function Dashboard() {
                         <option value="newest">🔽 Newest First</option>
                         <option value="oldest">🔼 Oldest First</option>
                       </select>
+                    </div>
+
+                    <div style={{ width: 1, height: 24, background: "#e0d8d0", flexShrink: 0 }} />
+
+                    {/* ✅ Month Picker */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🗓️ Month:</span>
+                      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                        <input
+                          type="month"
+                          value={monthFilter}
+                          onChange={e => setMonthFilter(e.target.value)}
+                          style={{
+                            padding: "6px 12px", borderRadius: 8,
+                            border: `1.5px solid ${monthFilter ? "#ff5a00" : "#d1d5db"}`,
+                            fontSize: 12, cursor: "pointer",
+                            background: monthFilter ? "#fff4ee" : "white",
+                            color: monthFilter ? "#ff5a00" : "#374151",
+                            outline: "none", fontWeight: monthFilter ? 700 : 400,
+                            fontFamily: "inherit",
+                          }}
+                        />
+                        {monthFilter && (
+                          <button
+                            onClick={() => setMonthFilter("")}
+                            style={{ marginLeft: 6, background: "#fee2e2", border: "none", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 11, color: "#dc2626", fontWeight: 700 }}>
+                            ✕
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div style={{ marginLeft: "auto", fontSize: 12, color: "#9ca3af", whiteSpace: "nowrap" }}>
