@@ -1141,12 +1141,18 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                           </td>
 
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
-                            <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.date}</div>
-                            {isSupportRaised && (
-                              <div style={{ fontSize: 10, color: "#92400e", fontWeight: 700, marginTop: 2 }}>📞 Support raised</div>
-                            )}
-                          </td>
+  <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
+  <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.date}</div>
+  {ticket.source === "customer" && (
+    <div style={{ fontSize: 9, fontWeight: 700, marginTop: 3, background: "#ede9fe", color: "#5b21b6", padding: "2px 6px", borderRadius: 4, display: "inline-block" }}>👥 Customer</div>
+  )}
+  {isSupportRaised && (
+    <div style={{ fontSize: 9, fontWeight: 700, marginTop: 3, background: "#fde68a", color: "#92400e", padding: "2px 6px", borderRadius: 4, display: "inline-block", border: "1px solid #d97706" }}>📞 Support</div>
+  )}
+  {!ticket.source && !isSupportRaised && (
+    <div style={{ fontSize: 9, fontWeight: 700, marginTop: 3, background: "#fff4ee", color: "#e04e00", padding: "2px 6px", borderRadius: 4, display: "inline-block" }}>🧑‍💼 Sales</div>
+  )}
+</td>
 
                           {/* ✅ Product / S/N + MAC merged into one column — click for popup */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5", cursor: "pointer" }}
