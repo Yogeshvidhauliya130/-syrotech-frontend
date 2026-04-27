@@ -1074,8 +1074,8 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                         }}>
 
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>
-                           <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>{ticket.ticketNumber || "—"}</div>
-                            <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
+                           <div style={{ fontSize: 10, fontWeight: 800, color: "#059669" }}>{ticket.ticketNumber || "—"}</div>
+                            <div style={{ fontSize: 8, color: "#9ca3af" }}>Row {idx + 1}</div>
                             {ticket.issueHistory && ticket.issueHistory.length > 0 && (
                               <div style={{ fontSize: 9, color: "#3b82f6", fontWeight: 700, marginTop: 2 }}>🔁 repeat</div>
                             )}
@@ -1097,17 +1097,13 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                           {/* ✅ Product / S/N + MAC merged into one column — click for popup */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5", cursor: "pointer" }}
                             onClick={() => setProductPopup({ category: ticket.category, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}>
-                            <div style={{ fontWeight: 700, fontSize: 13, color: "#059669", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#6ee7b7" }}>{ticket.category}</div>
-                            <div style={{ fontSize: 11, color: "#6b7280" }}>S/N: {ticket.serialNo}</div>
-                            {ticket.mac && <div style={{ fontSize: 10, color: "#9ca3af" }}>MAC: {ticket.mac}</div>}
+                            <div style={{ fontWeight: 700, fontSize: 13, color: "#059669", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#6ee7b7" }}>{ticket.category || "—"}</div>
                           </td>
 
                           {/* ✅ Customer / KYC — click for popup */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5", cursor: "pointer" }}
                             onClick={() => setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, city: ticket.city, country: ticket.country })}>
                             <div style={{ fontWeight: 600, fontSize: 13, color: "#1d4ed8", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#93c5fd" }}>{ticket.customer || "—"}</div>
-                            <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone || <span style={{ color: "#ef4444" }}>⚠ Missing</span>}</div>
-                            <div style={{ fontSize: 11, color: "#6b7280" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ") || "—"}</div>
                           </td>
 
                           <td style={{ padding: "12px 14px", maxWidth: 130, borderRight: "1px solid #d1fae5" }}>
@@ -1137,7 +1133,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                                 }
                               }}
                               style={{
-                                padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                                padding: "3px 8px", borderRadius: 12, fontSize: 9, fontWeight: 700,
                                 color: STATUS_COLOR[s], background: STATUS_BG[s],
                                 cursor: (s === "resolved" && ticket.resolutionNotes) || s === "rma" ? "pointer" : "default",
                                 border: s === "resolved" && ticket.resolutionNotes ? "1.5px solid #6ee7b7" : s === "rma" ? "1.5px solid #c4b5fd" : "none",
