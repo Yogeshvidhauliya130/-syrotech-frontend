@@ -1039,11 +1039,12 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
                     {/* ✅ Product/S/N+MAC merged, RMA col removed = 8 cols */}
                     {["Ticket No","Raised By","Product / S/N + MAC +Model","Customer / KYC","Issue","Status","Image","Actions"].map((h, i) => (
-                      <th key={i} style={{
-                        padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
-                        textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
-                        borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap"
-                      }}>{h}</th>
+  <th key={i} style={{
+    padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white",
+    textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left",
+    borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap",
+    width: i === 0 ? 60 : "auto"
+  }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
