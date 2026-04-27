@@ -41,6 +41,9 @@ export default function Dashboard() {
   const [expandedImage, setExpandedImage]   = useState(null);
   const [issuePopup, setIssuePopup]         = useState(null);
   const [rmaPopup, setRmaPopup]             = useState(null);
+  const [productPopup, setProductPopup]     = useState(null);
+  const [customerPopup, setCustomerPopup]   = useState(null);
+  const [assigneePopup, setAssigneePopup]   = useState(null);
 
   const [dateSort, setDateSort]           = useState("newest");
   const [productFilter, setProductFilter] = useState("all");
@@ -408,6 +411,66 @@ export default function Dashboard() {
               {rmaPopup.rmaCenterPhone && <div style={{ fontSize: 12, color: "#6b7280" }}>📞 {rmaPopup.rmaCenterPhone}</div>}
             </div>
             {rmaPopup.rmaSentAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
+          </div>
+        </div>
+      )}
+
+      {/* Product Detail Popup */}
+      {productPopup && (
+        <div onClick={() => setProductPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fad8be" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#c94500" }}>📦 Product Details</div>
+              <button onClick={() => setProductPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#fff8f2", borderRadius: 10, padding: "14px 16px", border: "1px solid #fad8be" }}>
+              {[["🔧 Product", productPopup.category], ["📐 Model", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Detail Popup */}
+      {customerPopup && (
+        <div onClick={() => setCustomerPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #bfdbfe" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#1d4ed8" }}>👤 Customer Details</div>
+              <button onClick={() => setCustomerPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#eff6ff", borderRadius: 10, padding: "14px 16px", border: "1px solid #bfdbfe" }}>
+              {[["👤 Name", customerPopup.customer], ["📞 Phone", customerPopup.phone], ["🏙️ City", customerPopup.city], ["🌍 Country", customerPopup.country]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 90 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignee Detail Popup */}
+      {assigneePopup && (
+        <div onClick={() => setAssigneePopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fde68a" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#92400e" }}>🛠️ Assigned Support</div>
+              <button onClick={() => setAssigneePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#fffbeb", borderRadius: 10, padding: "14px 16px", border: "1px solid #fde68a" }}>
+              {[["🛠️ Name", assigneePopup.name], ["📞 Phone", assigneePopup.phone], ["🏙️ City", assigneePopup.city], ["🎯 Specialization", assigneePopup.specialization]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -803,17 +866,16 @@ export default function Dashboard() {
                     <colgroup>
                       <col style={{ width: 85  }} />
                       <col style={{ width: 100 }} />
-                      <col style={{ width: 110 }} />
+                      <col style={{ width: 120 }} />
                       <col style={{ width: 130 }} />
-                      <col style={{ width: 160 }} />
-                      <col style={{ width: 160 }} />
+                      <col style={{ width: 130 }} />
                       <col style={{ width: 105 }} />
                       <col style={{ width: 75  }} />
                       <col style={{ width: 220 }} />
                     </colgroup>
                     <thead>
                       <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-                        {["Ticket No","Date","Product","Serial No","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
+                        {["Ticket No","Date","Product","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
                           <th key={i} style={{
                             padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white",
                             textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left",
@@ -826,7 +888,7 @@ export default function Dashboard() {
                     <tbody>
                       {displayTickets.length === 0 ? (
                         <tr>
-                          <td colSpan={9} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
+                          <td colSpan={8} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
                             No tickets found for selected filters.
                           </td>
                         </tr>
@@ -856,36 +918,29 @@ export default function Dashboard() {
                                 )}
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.category}</div>
+                                <div
+                                  onClick={() => setProductPopup({ category: ticket.category, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}
+                                  style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", color: "#ff5a00", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fad8be" }}>
+                                  {ticket.category || "—"}
+                                </div>
                                 {ticket.model && <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{ticket.model}</div>}
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <div style={{ fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ticket.serialNo}</div>
-                                {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap" }}>MAC: {ticket.mac}</div>}
-                              </td>
-                              <td style={tdStyle({ padding: "12px 10px" })}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                <div
+                                  onClick={() => setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, city: ticket.city, country: ticket.country })}
+                                  style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#93c5fd" }}>
                                   {ticket.customer || "—"}
                                 </div>
-                                {ticket.phone && (
-                                  <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2, whiteSpace: "nowrap" }}>📞 {ticket.phone}</div>
-                                )}
-                                {(ticket.city || ticket.country) && (
-                                  <div style={{ fontSize: 10, color: "#9ca3af", whiteSpace: "nowrap" }}>
-                                    📍 {[ticket.city, ticket.country].filter(Boolean).join(", ")}
-                                  </div>
-                                )}
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                <div
+                                  onClick={() => {
+                                    const p = supportPersons.find(p => p.name && ticket.assignTo && p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim());
+                                    setAssigneePopup({ name: ticket.assignTo, phone: p?.phone, city: p?.city, specialization: p?.specialization?.join(", ") });
+                                  }}
+                                  style={{ fontSize: 12, fontWeight: 700, color: "#92400e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>
                                   {ticket.assignTo || "—"}
                                 </div>
-                                {assignedPerson?.phone && (
-                                  <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2, whiteSpace: "nowrap" }}>📞 {assignedPerson.phone}</div>
-                                )}
-                                {assignedPerson?.city && (
-                                  <div style={{ fontSize: 10, color: "#9ca3af", whiteSpace: "nowrap" }}>📍 {assignedPerson.city}</div>
-                                )}
                                 {ticket.reassignedFrom && (
                                   <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>
                                 )}
@@ -978,7 +1033,7 @@ export default function Dashboard() {
                           if (expandedImage === ticket.id && ticket.productImage) {
                             acc.push(
                               <tr key={`img-${ticket.id}`}>
-                                <td colSpan={9} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
+                                <td colSpan={8} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
                                   <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
                                     <img
                                       src={ticket.productImage}
@@ -1002,7 +1057,7 @@ export default function Dashboard() {
                           if (ticket.feedbackRating) {
                             acc.push(
                               <tr key={`fb-${ticket.id}`} style={{ background: "#eff6ff" }}>
-                                <td colSpan={9} style={{ padding: "8px 20px" }}>
+                                <td colSpan={8} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#1e40af", fontWeight: 600 }}>
                                     ⭐ Your Feedback: {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
                                     {ticket.feedbackComment && ` — "${ticket.feedbackComment}"`}
@@ -1015,7 +1070,7 @@ export default function Dashboard() {
                           if (ticket.rmaStatus) {
                             acc.push(
                               <tr key={`rma-${ticket.id}`} style={{ background: "#f5f3ff" }}>
-                                <td colSpan={9} style={{ padding: "8px 20px" }}>
+                                <td colSpan={8} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#5b21b6", fontWeight: 600 }}>
                                     🔧 RMA Center: {ticket.rmaCenterName} | {ticket.rmaCenterAddress} | 📞 {ticket.rmaCenterPhone}
                                   </span>
