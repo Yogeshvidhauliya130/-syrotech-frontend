@@ -14,29 +14,59 @@ const openImageInNewTab = (imgSrc) => {
   win.document.close();
 };
 
-// ✅ Shared td style with dark right border line
 const tdStyle = (extra = {}) => ({
   padding: "12px 12px",
   borderRight: "1px solid #c4b5fd",
   ...extra,
 });
 
+// ✅ Auto-assign: product+city → product+country → product → any
+function getAutoAssign(supportPersons, category, city, country) {
+  if (!supportPersons || supportPersons.length === 0) return "";
+  const product = (category || "").toLowerCase();
+  const c       = (city    || "").toLowerCase().trim();
+  const co      = (country || "").toLowerCase().trim();
+
+  if (product) {
+    const level1 = supportPersons.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product) && c && p.city && p.city.toLowerCase().trim() === c;
+    });
+    if (level1.length > 0) return level1[0].name;
+
+    const level2 = supportPersons.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product) && co && p.country && p.country.toLowerCase().trim() === co;
+    });
+    if (level2.length > 0) return level2[0].name;
+
+    const level3 = supportPersons.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product);
+    });
+    if (level3.length > 0) return level3[0].name;
+  }
+
+  return supportPersons[0]?.name || "";
+}
+
 export default function CustomerDashboard() {
   const navigate    = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
-  const [activeTab, setActiveTab]       = useState("raise");
-  const [tickets, setTickets]           = useState([]);
+  const [activeTab, setActiveTab]           = useState("raise");
+  const [tickets, setTickets]               = useState([]);
   const [supportPersons, setSupportPersons] = useState([]);
-  const [submitting, setSubmitting]     = useState(false);
-  const [successMsg, setSuccessMsg]     = useState("");
-  const [imagePreview, setImagePreview] = useState("");
-  const [expandedImage, setExpandedImage] = useState(null);
-  const [issuePopup, setIssuePopup]     = useState(null);
-  const [rmaPopup, setRmaPopup]         = useState(null);
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [dateSort, setDateSort]         = useState("newest");
+  const [submitting, setSubmitting]         = useState(false);
+  const [successMsg, setSuccessMsg]         = useState("");
+  const [imagePreview, setImagePreview]     = useState("");
+  const [expandedImage, setExpandedImage]   = useState(null);
+  const [issuePopup, setIssuePopup]         = useState(null);
+  const [rmaPopup, setRmaPopup]             = useState(null);
+  const [productPopup, setProductPopup]     = useState(null); // ✅ product detail popup
+  const [searchQuery, setSearchQuery]       = useState("");
+  const [statusFilter, setStatusFilter]     = useState("all");
+  const [dateSort, setDateSort]             = useState("newest");
 
   const currentUserForForm = JSON.parse(localStorage.getItem("currentUser")) || {};
   const [form, setForm] = useState({
@@ -55,6 +85,13 @@ export default function CustomerDashboard() {
       .then(users => setSupportPersons(users.filter(u => u.role === "support" && u.approved)))
       .catch(console.error);
   }, []);
+
+  // ✅ Auto-assign whenever category, city, or country changes
+  useEffect(() => {
+    if (supportPersons.length === 0) return;
+    const assigned = getAutoAssign(supportPersons, form.category, form.city, form.country);
+    setForm(prev => ({ ...prev, assignTo: assigned }));
+  }, [form.category, form.city, form.country, supportPersons]);
 
   const fetchTickets = () => {
     fetch(`${BASE_URL}/tickets`)
@@ -79,9 +116,7 @@ export default function CustomerDashboard() {
     const { name, value } = e.target;
     if (name === "pincode" && value !== "" && !/^\d*$/.test(value)) return;
     if (name === "category") {
-      setForm(prev => ({ ...prev, [name]: value, model: "", assignTo: "" }));
-    } else if (name === "city" || name === "country") {
-      setForm(prev => ({ ...prev, [name]: value, assignTo: "" }));
+      setForm(prev => ({ ...prev, [name]: value, model: "" }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -95,43 +130,6 @@ export default function CustomerDashboard() {
     const reader = new FileReader();
     reader.onload = (ev) => { setForm(prev => ({ ...prev, productImage: ev.target.result })); setImagePreview(ev.target.result); setErrors(prev => ({ ...prev, productImage: "" })); };
     reader.readAsDataURL(file);
-  };
-
-  const getFilteredSupportPersons = () => {
-    const product = form.category;
-    const city    = (form.city    || "").toLowerCase().trim();
-    const country = (form.country || "").toLowerCase().trim();
-    if (!product) return supportPersons;
-    const level1 = supportPersons.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) && city && p.city && p.city.toLowerCase().trim() === city;
-    });
-    if (level1.length > 0) return level1;
-    const level2 = supportPersons.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) && country && p.country && p.country.toLowerCase().trim() === country;
-    });
-    if (level2.length > 0) return level2;
-    const level3 = supportPersons.filter(p => {
-      const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return specs.map(s => s.toLowerCase()).includes(product.toLowerCase());
-    });
-    if (level3.length > 0) return level3;
-    return supportPersons;
-  };
-
-  const getFilterMessage = () => {
-    const product = form.category;
-    const city    = (form.city    || "").toLowerCase().trim();
-    const country = (form.country || "").toLowerCase().trim();
-    if (!product) return null;
-    const level1 = supportPersons.filter(p => { const specs = Array.isArray(p.specialization) ? p.specialization : []; return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) && city && p.city && p.city.toLowerCase().trim() === city; });
-    if (level1.length > 0 && city) return { msg: `✅ Showing ${product} specialists in ${form.city}`, color: "#10b981", bg: "#ecfdf5" };
-    const level2 = supportPersons.filter(p => { const specs = Array.isArray(p.specialization) ? p.specialization : []; return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()) && country && p.country && p.country.toLowerCase().trim() === country; });
-    if (level2.length > 0 && country) return { msg: `⚠️ No specialist in ${form.city || "your city"} — showing ${product} specialists in ${form.country}`, color: "#f59e0b", bg: "#fffbeb" };
-    const level3 = supportPersons.filter(p => { const specs = Array.isArray(p.specialization) ? p.specialization : []; return specs.map(s => s.toLowerCase()).includes(product.toLowerCase()); });
-    if (level3.length > 0) return { msg: `ℹ️ No location match — showing all ${product} specialists`, color: "#3b82f6", bg: "#eff6ff" };
-    return { msg: `⚠️ No specialist found for ${product} — showing all support persons`, color: "#ef4444", bg: "#fef2f2" };
   };
 
   const validate = () => {
@@ -149,9 +147,8 @@ export default function CustomerDashboard() {
     if (!form.country)         e.country     = "Please select a country.";
     if (!form.pincode.trim())  e.pincode     = "Pincode is required.";
     else if (!/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode.";
-    if (!form.assignTo)        e.assignTo    = "Please assign a support person.";
+    // ✅ No minimum limit — only required + max 500
     if (!form.description.trim()) e.description = "Description is required.";
-    else if (form.description.trim().length < 20) e.description = "Description must be at least 20 characters.";
     else if (form.description.trim().length > 500) e.description = "Description cannot exceed 500 characters.";
     return e;
   };
@@ -230,9 +227,6 @@ export default function CustomerDashboard() {
     boxSizing:"border-box", color:"#111827", transition:"border-color 0.18s",
   });
 
-  const filteredSupportPersons = getFilteredSupportPersons();
-  const filterMessage          = getFilterMessage();
-
   return (
     <div style={{ minHeight:"100vh", background:"#f4f0fa", fontFamily:"DM Sans, sans-serif" }}>
 
@@ -279,6 +273,26 @@ export default function CustomerDashboard() {
               {rmaPopup.rmaCenterPhone && <div style={{ fontSize:12, color:"#6b7280" }}>📞 {rmaPopup.rmaCenterPhone}</div>}
             </div>
             {rmaPopup.rmaSentAt && <div style={{ fontSize:11, color:"#9ca3af", marginTop:12 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Product Detail Popup */}
+      {productPopup && (
+        <div onClick={() => setProductPopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:420, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #c4b5fd" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <div style={{ fontSize:14, fontWeight:800, color:"#5b21b6" }}>📦 Product Details</div>
+              <button onClick={() => setProductPopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background:"#f5f3ff", borderRadius:10, padding:"14px 16px", border:"1px solid #c4b5fd" }}>
+              {[["📦 Product", productPopup.category], ["📐 Model", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]].map(([label, val]) => (
+                <div key={label} style={{ display:"flex", gap:10, marginBottom:10 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", minWidth:110 }}>{label}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:"#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -395,21 +409,25 @@ export default function CustomerDashboard() {
                 <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={iStyle("pincode")} />
                 {errors.pincode && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.pincode}</span>}
               </div>
+
+              {/* ✅ Auto-assign display — read only */}
               <div style={{ gridColumn:"1/-1" }}>
-                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-                  Assign Support Person <span style={{ color:"#7c3aed" }}>*</span>
-                  {form.category && <span style={{ fontSize:10, color:"#9ca3af", textTransform:"none", marginLeft:6 }}>(filtered by product & location)</span>}
-                </label>
-                {filterMessage && (
-                  <div style={{ fontSize:11, fontWeight:600, color:filterMessage.color, background:filterMessage.bg, padding:"6px 10px", borderRadius:6, marginBottom:6, border:`1px solid ${filterMessage.color}22` }}>{filterMessage.msg}</div>
-                )}
-                <select name="assignTo" value={form.assignTo} onChange={handleChange} style={iStyle("assignTo")}>
-                  <option value="">{form.category ? `Choose ${form.category} specialist` : "Select product first"}</option>
-                  {filteredSupportPersons.map(p => (
-                    <option key={p.email} value={p.name}>{p.name} — {p.city||"—"}{p.specialization?.length>0?` (${p.specialization.join(", ")})`:""}</option>
-                  ))}
-                </select>
-                {errors.assignTo && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.assignTo}</span>}
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Assigned Support Person</label>
+                <div style={{
+                  width:"100%", padding:"10px 13px", borderRadius:9,
+                  border:"1.5px solid #c4b5fd", background:"#f5f3ff",
+                  fontSize:14, fontFamily:"inherit", boxSizing:"border-box",
+                  color: form.assignTo ? "#5b21b6" : "#9ca3af",
+                  fontWeight: form.assignTo ? 700 : 400,
+                  display:"flex", alignItems:"center", gap:8,
+                  cursor:"not-allowed", userSelect:"none",
+                }}>
+                  {form.assignTo
+                    ? <><span>🛠️</span><span>{form.assignTo}</span></>
+                    : <span>⏳ Will be assigned automatically based on your product & location</span>
+                  }
+                </div>
+                <span style={{ fontSize:10, color:"#9ca3af", marginTop:3, display:"block" }}>🔒 Auto-assigned based on product specialization and your location</span>
               </div>
             </div>
 
@@ -440,15 +458,18 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description — ✅ No minimum limit */}
             <div style={{ marginBottom:20 }}>
-              <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Issue Description <span style={{ color:"#7c3aed" }}>*</span> <span style={{ fontSize:10, color:"#9ca3af", textTransform:"none", fontWeight:400 }}>(min 20, max 500 chars)</span></label>
+              <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>
+                Issue Description <span style={{ color:"#7c3aed" }}>*</span>
+                <span style={{ fontSize:10, color:"#9ca3af", textTransform:"none", fontWeight:400 }}> (max 500 chars)</span>
+              </label>
               <textarea name="description" rows={4} placeholder="Describe the issue — what happened, when it started, what error you see..." value={form.description} onChange={handleChange}
                 style={{ ...iStyle("description"), resize:"vertical", fontFamily:"inherit", lineHeight:1.6 }} />
               <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginTop:3 }}>
                 {errors.description ? <span style={{ color:"#ef4444" }}>{errors.description}</span> : <span style={{ color:"#9ca3af" }}>{form.description.length}/500</span>}
-                <span style={{ color: form.description.length < 20 ? "#ef4444" : "#10b981", fontWeight:600 }}>
-                  {form.description.length < 20 ? `${20-form.description.length} more needed` : `${500-form.description.length} left`}
+                <span style={{ color: form.description.length > 450 ? "#ef4444" : "#10b981", fontWeight:600 }}>
+                  {500 - form.description.length} left
                 </span>
               </div>
             </div>
@@ -478,14 +499,12 @@ export default function CustomerDashboard() {
               </div>
             ) : (
               <>
-                {/* Search */}
                 <div style={{ marginBottom:12, display:"flex", gap:10 }}>
                   <input placeholder="🔍 Search by serial no, product, date, city..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                     style={{ flex:1, padding:"10px 16px", borderRadius:10, border:"1.5px solid #d1d5db", fontSize:13, background:"white", color:"#374151", outline:"none", fontFamily:"inherit" }} />
                   {searchQuery && <button onClick={() => setSearchQuery("")} style={{ background:"#f3f4f6", border:"1px solid #d1d5db", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#6b7280", fontWeight:600 }}>✕ Clear</button>}
                 </div>
 
-                {/* Status filter */}
                 <div style={{ background:"white", borderRadius:12, border:"1.5px solid #e9d5ff", padding:"12px 16px", marginBottom:14, display:"flex", gap:8, flexWrap:"wrap", alignItems:"center", justifyContent:"space-between" }}>
                   <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                     {[["all","All","#374151","#f3f4f6"],["open","🔓 Open","#e04e00","#fff4ee"],["resolved","✅ Resolved","#1a7a46","#edfaf3"],["rma","🔧 RMA","#7c3aed","#f5f3ff"]].map(([key,label,col,bg]) => (
@@ -500,48 +519,45 @@ export default function CustomerDashboard() {
                   </select>
                 </div>
 
-                {/* ✅ Table: wider (minWidth:950) + dark column lines (borderCollapse:separate) + sticky header */}
+                {/* ✅ 7 cols: removed separate Model column, Product click → popup */}
                 <div style={{ borderRadius:12, border:"1.5px solid #e9d5ff", boxShadow:"0 2px 12px rgba(0,0,0,0.06)", overflowX:"auto", overflowY:"auto", maxHeight:"65vh" }}>
-                  <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:950 }}>
+                  <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:820 }}>
                     <thead>
                       <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)", position:"sticky", top:0, zIndex:2 }}>
-                        {["Ticket No","Date","Product","Model","Serial No","Status","Image","Issue"].map((h,i) => (
+                        {["Ticket No","Date","Product","Serial No","Status","Image","Issue"].map((h,i) => (
                           <th key={i} style={{ padding:"12px 12px", fontSize:10, fontWeight:800, color:"white", textTransform:"uppercase", letterSpacing:"0.05em", textAlign:"left", borderRight:"1px solid rgba(255,255,255,0.2)", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {displayTickets.length === 0 ? (
-                        <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#9ca3af", fontSize:14 }}>No tickets found.</td></tr>
+                        <tr><td colSpan={7} style={{ textAlign:"center", padding:40, color:"#9ca3af", fontSize:14 }}>No tickets found.</td></tr>
                       ) : displayTickets.reduce((acc, ticket, idx) => {
                         const s = (ticket.status||"pending").toLowerCase();
                         acc.push(
                           <tr key={ticket.id} style={{ borderBottom:"1px solid #e9d5ff", background:idx%2===0?"#faf8ff":"white", borderLeft:`4px solid ${STATUS_COLOR[s]||"#ccc"}` }}>
-
-                            {/* ✅ All td have borderRight:"1px solid #c4b5fd" for dark column lines */}
                             <td style={tdStyle({ whiteSpace:"nowrap" })}>
-                             <div style={{ fontSize:12, fontWeight:800, color:"#7c3aed" }}>{ticket.ticketNumber||"—"}</div>
-                              <div style={{ fontSize:9, color:"#9ca3af" }}>Row {idx+1}</div>
+                              <div style={{ fontSize:10, fontWeight:800, color:"#7c3aed" }}>{ticket.ticketNumber||"—"}</div>
+                              <div style={{ fontSize:8, color:"#9ca3af" }}>Row {idx+1}</div>
                             </td>
                             <td style={tdStyle()}>
                               <div style={{ fontSize:11, color:"#374151", fontWeight:600, whiteSpace:"nowrap" }}>{ticket.date||"—"}</div>
                               {ticket.resolvedAt && <div style={{ fontSize:10, color:"#10b981", whiteSpace:"nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
                             </td>
-                            <td style={tdStyle()}>
-                              <div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap" }}>{ticket.category||"—"}</div>
+                            {/* ✅ Product — click opens popup */}
+                            <td style={tdStyle({ cursor:"pointer" })}
+                              onClick={() => setProductPopup({ category:ticket.category, model:ticket.model, serialNo:ticket.serialNo, mac:ticket.mac })}>
+                              <div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap", color:"#7c3aed", textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#c4b5fd" }}>{ticket.category||"—"}</div>
                             </td>
                             <td style={tdStyle()}>
-                              <div style={{ fontSize:12, color:"#374151", whiteSpace:"nowrap" }}>{ticket.model||"—"}</div>
-                            </td>
-                            <td style={tdStyle()}>
-                              <div style={{ fontSize:11, whiteSpace:"nowrap" }}>{ticket.serialNo}</div>
+                              <div style={{ fontSize:11, whiteSpace:"nowrap" }}>{ticket.serialNo||"—"}</div>
                               {ticket.mac && <div style={{ fontSize:9, color:"#9ca3af" }}>MAC: {ticket.mac}</div>}
                             </td>
                             <td style={tdStyle()}>
                               <span onClick={() => {
                                 if (s==="resolved" && ticket.resolutionNotes) setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt });
                                 else if (s==="rma") setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt });
-                              }} style={{ padding:"3px 8px", borderRadius:10, fontSize:10, fontWeight:700, color:STATUS_COLOR[s], background:STATUS_BG[s], display:"inline-block", whiteSpace:"nowrap", cursor:(s==="resolved"||s==="rma")?"pointer":"default" }}>
+                              }} style={{ padding:"3px 8px", borderRadius:10, fontSize:9, fontWeight:700, color:STATUS_COLOR[s], background:STATUS_BG[s], display:"inline-block", whiteSpace:"nowrap", cursor:(s==="resolved"||s==="rma")?"pointer":"default" }}>
                                 {STATUS_ICON[s]} {s.toUpperCase()}
                               </span>
                               {s==="resolved" && ticket.resolutionNotes && <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })} style={{ fontSize:9, color:"#059669", marginTop:3, cursor:"pointer", fontWeight:600 }}>📋 View details</div>}
@@ -564,7 +580,7 @@ export default function CustomerDashboard() {
                         if (expandedImage===ticket.id && ticket.productImage) {
                           acc.push(
                             <tr key={`img-${ticket.id}`} style={{ background:"#f0fdf4" }}>
-                              <td colSpan={8} style={{ padding:"12px 20px" }}>
+                              <td colSpan={7} style={{ padding:"12px 20px" }}>
                                 <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
                                   <img src={ticket.productImage} alt="Product" style={{ maxHeight:180, maxWidth:260, borderRadius:8, border:"2px solid #86efac", cursor:"pointer" }} onClick={() => openImageInNewTab(ticket.productImage)} />
                                   <div style={{ fontSize:12, color:"#065f46" }}>
