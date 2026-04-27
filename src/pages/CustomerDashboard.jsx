@@ -64,6 +64,7 @@ export default function CustomerDashboard() {
   const [issuePopup, setIssuePopup]         = useState(null);
   const [rmaPopup, setRmaPopup]             = useState(null);
   const [productPopup, setProductPopup]     = useState(null); // ✅ product detail popup
+  const [assigneePopup, setAssigneePopup]   = useState(null); // ✅ assignee detail popup
   const [searchQuery, setSearchQuery]       = useState("");
   const [statusFilter, setStatusFilter]     = useState("all");
   const [dateSort, setDateSort]             = useState("newest");
@@ -289,6 +290,26 @@ export default function CustomerDashboard() {
               {[["📦 Product", productPopup.category], ["📐 Model", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]].map(([label, val]) => (
                 <div key={label} style={{ display:"flex", gap:10, marginBottom:10 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", minWidth:110 }}>{label}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:"#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Assignee Detail Popup */}
+      {assigneePopup && (
+        <div onClick={() => setAssigneePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:420, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #fde68a" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <div style={{ fontSize:14, fontWeight:800, color:"#92400e" }}>🛠️ Support Person</div>
+              <button onClick={() => setAssigneePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background:"#fffbeb", borderRadius:10, padding:"14px 16px", border:"1px solid #fde68a" }}>
+              {[["🛠️ Name", assigneePopup.name], ["📞 Phone", assigneePopup.phone], ["🏙️ City", assigneePopup.city]].map(([label, val]) => (
+                <div key={label} style={{ display:"flex", gap:10, marginBottom:10 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", minWidth:90 }}>{label}</div>
                   <div style={{ fontSize:13, fontWeight:600, color:"#111" }}>{val || "—"}</div>
                 </div>
               ))}
@@ -524,7 +545,7 @@ export default function CustomerDashboard() {
                   <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:820 }}>
                     <thead>
                       <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)", position:"sticky", top:0, zIndex:2 }}>
-                        {["Ticket No","Date","Product","Serial No","Status","Image","Issue"].map((h,i) => (
+                        {["Ticket No","Date","Product","Assigned To","Status","Image","Issue"].map((h,i) => (
                           <th key={i} style={{ padding:"12px 12px", fontSize:10, fontWeight:800, color:"white", textTransform:"uppercase", letterSpacing:"0.05em", textAlign:"left", borderRight:"1px solid rgba(255,255,255,0.2)", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
                       </tr>
@@ -549,9 +570,13 @@ export default function CustomerDashboard() {
                               onClick={() => setProductPopup({ category:ticket.category, model:ticket.model, serialNo:ticket.serialNo, mac:ticket.mac })}>
                               <div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap", color:"#7c3aed", textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#c4b5fd" }}>{ticket.category||"—"}</div>
                             </td>
-                            <td style={tdStyle()}>
-                              <div style={{ fontSize:11, whiteSpace:"nowrap" }}>{ticket.serialNo||"—"}</div>
-                              {ticket.mac && <div style={{ fontSize:9, color:"#9ca3af" }}>MAC: {ticket.mac}</div>}
+                            {/* ✅ Assigned To — click opens popup */}
+                            <td style={tdStyle({ cursor:"pointer" })}
+                              onClick={() => {
+                                const p = supportPersons.find(p => p.name && ticket.assignTo && p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim());
+                                setAssigneePopup({ name: ticket.assignTo, phone: p?.phone, city: p?.city });
+                              }}>
+                              <div style={{ fontWeight:600, fontSize:12, whiteSpace:"nowrap", color:"#92400e", textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#fde68a" }}>{ticket.assignTo||"—"}</div>
                             </td>
                             <td style={tdStyle()}>
                               <span onClick={() => {
