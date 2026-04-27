@@ -307,7 +307,7 @@ export default function CustomerDashboard() {
               <button onClick={() => setAssigneePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
             </div>
             <div style={{ background:"#fffbeb", borderRadius:10, padding:"14px 16px", border:"1px solid #fde68a" }}>
-              {[["🛠️ Name", assigneePopup.name], ["📞 Phone", assigneePopup.phone], ["🏙️ City", assigneePopup.city]].map(([label, val]) => (
+             {[["🛠️ Name", assigneePopup.name], ["📞 Phone", assigneePopup.phone], ["✉️ Email", assigneePopup.email], ["🏙️ City", assigneePopup.city]].map(([label, val]) => (
                 <div key={label} style={{ display:"flex", gap:10, marginBottom:10 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", minWidth:90 }}>{label}</div>
                   <div style={{ fontSize:13, fontWeight:600, color:"#111" }}>{val || "—"}</div>
@@ -574,7 +574,7 @@ export default function CustomerDashboard() {
                             <td style={tdStyle({ cursor:"pointer" })}
                               onClick={() => {
                                 const p = supportPersons.find(p => p.name && ticket.assignTo && p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim());
-                                setAssigneePopup({ name: ticket.assignTo, phone: p?.phone, city: p?.city });
+                                setAssigneePopup({ name: ticket.assignTo, phone: p?.phone, email: p?.email, city: p?.city });
                               }}>
                               <div style={{ fontWeight:600, fontSize:12, whiteSpace:"nowrap", color:"#92400e", textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#fde68a" }}>{ticket.assignTo||"—"}</div>
                             </td>
