@@ -886,7 +886,7 @@ export default function Dashboard() {
                         fontFamily: "inherit",
                       }}>
                       <option value="">All Years</option>
-                      {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                      {[2020,2021,2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                     {(filterMonth || filterYear) && (
                       <button
