@@ -49,7 +49,8 @@ export default function Dashboard() {
   const [productFilter, setProductFilter] = useState("all");
   const [statusFilter, setStatusFilter]   = useState("all");
   const [searchQuery, setSearchQuery]     = useState("");
-  const [monthFilter, setMonthFilter]     = useState(""); // ✅ Month picker filter
+  const [filterMonth, setFilterMonth]     = useState(""); // ✅ Month dropdown (1-12)
+  const [filterYear, setFilterYear]       = useState("");  // ✅ Year dropdown
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -181,7 +182,6 @@ export default function Dashboard() {
     else if (!/^\d{6}$/.test(form.pincode.trim())) newErrors.pincode = "Enter a valid 6-digit pincode.";
     if (!form.assignTo)       newErrors.assignTo = "Please assign a support person.";
     if (!form.description.trim()) newErrors.description = "Description is required.";
-    else if (form.description.trim().length < 20) newErrors.description = "Description must be at least 20 characters.";
     else if (form.description.trim().length > 500) newErrors.description = "Description cannot exceed 500 characters.";
     return newErrors;
   };
@@ -284,10 +284,14 @@ export default function Dashboard() {
     .filter(t => productFilter === "all" || t.category === productFilter)
     .filter(t => statusFilter === "all" || (t.status || "pending").toLowerCase() === statusFilter)
     .filter(t => {
-      if (!monthFilter) return true;
+      if (!filterMonth && !filterYear) return true;
       const d = new Date(t.createdAt || t.date);
-      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      return ym === monthFilter;
+      if (filterMonth && filterYear) {
+        return d.getMonth() + 1 === parseInt(filterMonth) && d.getFullYear() === parseInt(filterYear);
+      }
+      if (filterMonth) return d.getMonth() + 1 === parseInt(filterMonth);
+      if (filterYear)  return d.getFullYear() === parseInt(filterYear);
+      return true;
     })
     .filter(t => {
       if (!searchQuery.trim()) return true;
@@ -706,7 +710,7 @@ export default function Dashboard() {
             <div className="form-field" style={{ padding: "20px 36px 0" }}>
               <label className="form-label">
                 Issue Description <span className="req">*</span>
-                <span className="form-hint"> (min 20, max 500 characters)</span>
+                <span className="form-hint"> (max 500 characters)</span>
               </label>
               <textarea name="description" rows={4}
                 placeholder="Describe the issue in detail — what happened, when it started, what error you see..."
@@ -718,8 +722,8 @@ export default function Dashboard() {
                   ? <span className="field-error">{errors.description}</span>
                   : <span className="field-hint">{form.description.length}/500 characters</span>
                 }
-                <span className={`char-count ${form.description.length < 20 ? "char-short" : form.description.length > 450 ? "char-warn" : "char-ok"}`}>
-                  {form.description.length < 20 ? `${20 - form.description.length} more chars needed` : `${500 - form.description.length} chars left`}
+                <span className={`char-count ${form.description.length > 450 ? "char-warn" : "char-ok"}`}>
+                  {500 - form.description.length} chars left
                 </span>
               </div>
             </div>
@@ -811,73 +815,86 @@ export default function Dashboard() {
 
                   <div style={{ height: 1, background: "#f0ede8" }} />
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🔧 Product:</span>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {["all", ...uniqueProducts].map(p => (
-                          <button key={p} onClick={() => setProductFilter(p)} style={{
-                            padding: "5px 12px", borderRadius: 16,
-                            border: productFilter === p ? "none" : "1px solid #d1d5db",
-                            background: productFilter === p ? "#ff5a00" : "white",
-                            color: productFilter === p ? "white" : "#555",
-                            fontWeight: productFilter === p ? 700 : 400,
-                            fontSize: 12, cursor: "pointer", whiteSpace: "nowrap"
-                          }}>
-                            {p === "all" ? "All Products" : p}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    {/* ✅ Product — select dropdown */}
+                    <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🔧 Product:</span>
+                    <select
+                      value={productFilter}
+                      onChange={e => setProductFilter(e.target.value)}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8,
+                        border: `1.5px solid ${productFilter !== "all" ? "#ff5a00" : "#d1d5db"}`,
+                        fontSize: 12, cursor: "pointer",
+                        background: productFilter !== "all" ? "#fff4ee" : "white",
+                        color: productFilter !== "all" ? "#ff5a00" : "#374151",
+                        outline: "none", fontWeight: productFilter !== "all" ? 700 : 400,
+                        fontFamily: "inherit",
+                      }}>
+                      <option value="all">All Products</option>
+                      {uniqueProducts.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
 
                     <div style={{ width: 1, height: 24, background: "#e0d8d0", flexShrink: 0 }} />
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📅 Sort by Date:</span>
-                      <select
-                        value={dateSort}
-                        onChange={e => setDateSort(e.target.value)}
-                        style={{
-                          padding: "6px 14px", borderRadius: 8,
-                          border: "1.5px solid #d1d5db", fontSize: 12,
-                          cursor: "pointer", background: "white", color: "#374151",
-                          outline: "none", minWidth: 160, fontWeight: 600,
-                        }}
-                      >
-                        <option value="newest">🔽 Newest First</option>
-                        <option value="oldest">🔼 Oldest First</option>
-                      </select>
-                    </div>
+                    {/* Sort by Date */}
+                    <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📅 Sort:</span>
+                    <select
+                      value={dateSort}
+                      onChange={e => setDateSort(e.target.value)}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8,
+                        border: "1.5px solid #d1d5db", fontSize: 12,
+                        cursor: "pointer", background: "white", color: "#374151",
+                        outline: "none", minWidth: 140, fontWeight: 600,
+                        fontFamily: "inherit",
+                      }}>
+                      <option value="newest">🔽 Newest First</option>
+                      <option value="oldest">🔼 Oldest First</option>
+                    </select>
 
                     <div style={{ width: 1, height: 24, background: "#e0d8d0", flexShrink: 0 }} />
 
-                    {/* ✅ Month Picker */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🗓️ Month:</span>
-                      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                        <input
-                          type="month"
-                          value={monthFilter}
-                          onChange={e => setMonthFilter(e.target.value)}
-                          style={{
-                            padding: "6px 12px", borderRadius: 8,
-                            border: `1.5px solid ${monthFilter ? "#ff5a00" : "#d1d5db"}`,
-                            fontSize: 12, cursor: "pointer",
-                            background: monthFilter ? "#fff4ee" : "white",
-                            color: monthFilter ? "#ff5a00" : "#374151",
-                            outline: "none", fontWeight: monthFilter ? 700 : 400,
-                            fontFamily: "inherit",
-                          }}
-                        />
-                        {monthFilter && (
-                          <button
-                            onClick={() => setMonthFilter("")}
-                            style={{ marginLeft: 6, background: "#fee2e2", border: "none", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 11, color: "#dc2626", fontWeight: 700 }}>
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    {/* ✅ Month + Year dropdowns */}
+                    <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🗓️ Filter:</span>
+                    <select
+                      value={filterMonth}
+                      onChange={e => setFilterMonth(e.target.value)}
+                      style={{
+                        padding: "6px 12px", borderRadius: 8,
+                        border: `1.5px solid ${filterMonth ? "#ff5a00" : "#d1d5db"}`,
+                        fontSize: 12, cursor: "pointer",
+                        background: filterMonth ? "#fff4ee" : "white",
+                        color: filterMonth ? "#ff5a00" : "#374151",
+                        outline: "none", fontWeight: filterMonth ? 700 : 400,
+                        fontFamily: "inherit",
+                      }}>
+                      <option value="">All Months</option>
+                      {["January","February","March","April","May","June","July","August","September","October","November","December"].map((m, i) => (
+                        <option key={i+1} value={i+1}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={filterYear}
+                      onChange={e => setFilterYear(e.target.value)}
+                      style={{
+                        padding: "6px 12px", borderRadius: 8,
+                        border: `1.5px solid ${filterYear ? "#ff5a00" : "#d1d5db"}`,
+                        fontSize: 12, cursor: "pointer",
+                        background: filterYear ? "#fff4ee" : "white",
+                        color: filterYear ? "#ff5a00" : "#374151",
+                        outline: "none", fontWeight: filterYear ? 700 : 400,
+                        fontFamily: "inherit",
+                      }}>
+                      <option value="">All Years</option>
+                      {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                    {(filterMonth || filterYear) && (
+                      <button
+                        onClick={() => { setFilterMonth(""); setFilterYear(""); }}
+                        style={{ background: "#fee2e2", border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 11, color: "#dc2626", fontWeight: 700 }}>
+                        ✕ Clear
+                      </button>
+                    )}
 
                     <div style={{ marginLeft: "auto", fontSize: 12, color: "#9ca3af", whiteSpace: "nowrap" }}>
                       Showing <strong style={{ color: "#374151" }}>{displayTickets.length}</strong> of <strong style={{ color: "#374151" }}>{myTickets.length}</strong> tickets
