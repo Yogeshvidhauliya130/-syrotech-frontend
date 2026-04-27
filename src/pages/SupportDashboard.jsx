@@ -128,6 +128,8 @@ export default function SupportDashboard() {
   const [issuePopup, setIssuePopup]               = useState(null);
   const [rmaPopup, setRmaPopup]                   = useState(null);       // ✅ NEW: RMA detail popup
   const [assignedSearch, setAssignedSearch]       = useState("");          // ✅ NEW: search filter
+  const [productPopup, setProductPopup]           = useState(null);       // ✅ Product detail popup
+  const [customerPopup, setCustomerPopup]         = useState(null);       // ✅ Customer detail popup
 
   // ── Tab ──
   const [activeTab, setActiveTab] = useState("tickets");
@@ -590,6 +592,46 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
         </div>
       )}
 
+      {/* Product Detail Popup */}
+      {productPopup && (
+        <div onClick={() => setProductPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #d1fae5" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#059669" }}>📦 Product Details</div>
+              <button onClick={() => setProductPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#f0fdf4", borderRadius: 10, padding: "14px 16px", border: "1px solid #bbf7d0" }}>
+              {[["🔧 Product", productPopup.category], ["📐 Model", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Detail Popup */}
+      {customerPopup && (
+        <div onClick={() => setCustomerPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #bfdbfe" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#1d4ed8" }}>👤 Customer Details</div>
+              <button onClick={() => setCustomerPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#eff6ff", borderRadius: 10, padding: "14px 16px", border: "1px solid #bfdbfe" }}>
+              {[["👤 Name", customerPopup.customer], ["📞 Phone", customerPopup.phone], ["🏙️ City", customerPopup.city], ["🌍 Country", customerPopup.country]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 90 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{
         background: "linear-gradient(135deg, #10b981, #059669)", color: "white",
@@ -811,9 +853,9 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
           ) : (
             <>
               <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "75vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
+                <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1100, background: "white" }}>
                   <thead>
-                    <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
+                    <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
                       {["Ticket No","Date","Product","Serial No","Customer","Phone","City","Assigned To","Status","Issue","RMA"].map((h, i) => (
                         <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                       ))}
@@ -824,31 +866,31 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                       const s = (ticket.status || "pending").toLowerCase();
                       return (
                         <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
-                          <td style={{ padding: "12px 12px", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 12px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>
                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>{ticket.ticketNumber || "—"}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                             <div style={{ fontSize: 9, color: "#059669", fontWeight: 700, marginTop: 2, background: "#d1fae5", padding: "1px 5px", borderRadius: 4, display: "inline-block" }}>📞 Via Support</div>
                           </td>
-                          <td style={{ padding: "12px 12px" }}>
+                          <td style={{ padding: "12px 12px", borderRight: "1px solid #d1fae5" }}>
                             <div style={{ fontSize: 11, color: "#374151", fontWeight: 600, whiteSpace: "nowrap" }}>{ticket.date || "—"}</div>
                             {ticket.resolvedAt && <div style={{ fontSize: 10, color: "#10b981", whiteSpace: "nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
                           </td>
-                          <td style={{ padding: "12px 12px" }}><div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>{ticket.category}</div></td>
-                          <td style={{ padding: "12px 12px" }}>
+                          <td style={{ padding: "12px 12px", borderRight: "1px solid #d1fae5" }}><div style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>{ticket.category}</div></td>
+                          <td style={{ padding: "12px 12px", borderRight: "1px solid #d1fae5" }}>
                             <div style={{ fontSize: 11, whiteSpace: "nowrap" }}>{ticket.serialNo}</div>
                             {ticket.mac && <div style={{ fontSize: 9, color: "#9ca3af" }}>MAC: {ticket.mac}</div>}
                           </td>
-                          <td style={{ padding: "12px 12px", fontSize: 12, whiteSpace: "nowrap" }}>{ticket.customer || "—"}</td>
-                          <td style={{ padding: "12px 12px", fontSize: 12, whiteSpace: "nowrap" }}>{ticket.phone || "—"}</td>
-                          <td style={{ padding: "12px 12px" }}>
+                          <td style={{ padding: "12px 12px", fontSize: 12, whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>{ticket.customer || "—"}</td>
+                          <td style={{ padding: "12px 12px", fontSize: 12, whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>{ticket.phone || "—"}</td>
+                          <td style={{ padding: "12px 12px", borderRight: "1px solid #d1fae5" }}>
                             <div style={{ fontSize: 12, whiteSpace: "nowrap" }}>{ticket.city || "—"}</div>
                             {ticket.country && <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.country}</div>}
                           </td>
-                          <td style={{ padding: "12px 12px" }}>
+                          <td style={{ padding: "12px 12px", borderRight: "1px solid #d1fae5" }}>
                             <div style={{ fontSize: 12, whiteSpace: "nowrap" }}>{ticket.assignTo || "—"}</div>
                             {ticket.reassignedFrom && <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>}
                           </td>
-                          <td style={{ padding: "12px 12px" }}>
+                          <td style={{ padding: "12px 12px", borderRight: "1px solid #d1fae5" }}>
                             <span
                               onClick={() => {
                                 if (s === "resolved" && ticket.resolutionNotes) setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken });
@@ -862,7 +904,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                                 style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
                             )}
                           </td>
-                          <td style={{ padding: "12px 12px", maxWidth: 200 }}>
+                          <td style={{ padding: "12px 12px", maxWidth: 200, borderRight: "1px solid #d1fae5" }}>
                             <div
                               onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
                               style={{ fontSize: 12, color: "#374151", cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180, textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
@@ -992,9 +1034,9 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
           {/* TABLE */}
           {filtered.length > 0 && (
             <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100, background: "white" }}>
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1100, background: "white" }}>
                 <thead>
-                  <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
+                  <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
                     {/* ✅ Product/S/N+MAC merged, RMA col removed = 8 cols */}
                     {["Ticket No","Raised By","Product / S/N + MAC","Customer / KYC","Issue","Status","Image","Actions"].map((h, i) => (
                       <th key={i} style={{
@@ -1031,7 +1073,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                             : (s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc"))}`,
                         }}>
 
-                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>
                            <div style={{ fontSize: 12, fontWeight: 800, color: "#059669" }}>{ticket.ticketNumber || "—"}</div>
                             <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                             {ticket.issueHistory && ticket.issueHistory.length > 0 && (
@@ -1044,7 +1086,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                             )}
                           </td>
 
-                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
                             <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.date}</div>
                             {isSupportRaised && (
@@ -1052,23 +1094,26 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                             )}
                           </td>
 
-                          {/* ✅ Product / S/N + MAC merged into one column */}
-                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                            <div style={{ fontWeight: 700, fontSize: 13 }}>{ticket.category}</div>
+                          {/* ✅ Product / S/N + MAC merged into one column — click for popup */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5", cursor: "pointer" }}
+                            onClick={() => setProductPopup({ category: ticket.category, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: "#059669", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#6ee7b7" }}>{ticket.category}</div>
                             <div style={{ fontSize: 11, color: "#6b7280" }}>S/N: {ticket.serialNo}</div>
                             {ticket.mac && <div style={{ fontSize: 10, color: "#9ca3af" }}>MAC: {ticket.mac}</div>}
                           </td>
 
-                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                            <div style={{ fontWeight: 600, fontSize: 13 }}>{ticket.customer || "—"}</div>
+                          {/* ✅ Customer / KYC — click for popup */}
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5", cursor: "pointer" }}
+                            onClick={() => setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, city: ticket.city, country: ticket.country })}>
+                            <div style={{ fontWeight: 600, fontSize: 13, color: "#1d4ed8", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#93c5fd" }}>{ticket.customer || "—"}</div>
                             <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone || <span style={{ color: "#ef4444" }}>⚠ Missing</span>}</div>
                             <div style={{ fontSize: 11, color: "#6b7280" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ") || "—"}</div>
                           </td>
 
-                          <td style={{ padding: "12px 14px", maxWidth: 180 }}>
+                          <td style={{ padding: "12px 14px", maxWidth: 130, borderRight: "1px solid #d1fae5" }}>
                             <div
                               onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                              style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
+                              style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 110, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
                               title="Click to view full issue">
                               {ticket.description?.length > 35 ? ticket.description.slice(0, 35) + "…" : ticket.description || "—"}
                             </div>
@@ -1082,7 +1127,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                           </td>
 
                           {/* ✅ Status — click RMA to show popup */}
-                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5" }}>
                             <span
                               onClick={() => {
                                 if (s === "resolved" && ticket.resolutionNotes) {
@@ -1117,7 +1162,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                             })()}
                           </td>
 
-                          <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                          <td style={{ padding: "12px 14px", textAlign: "center", borderRight: "1px solid #d1fae5" }}>
                             {ticket.productImage ? (
                               <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
                                 style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#065f46" }}>
@@ -1154,7 +1199,7 @@ if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
                                 <button
                                   onClick={() => setReassignForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !showReassign } }))}
                                   style={{ background: showReassign ? "#fef9c3" : "#fff7ed", border: `1.5px solid ${showReassign ? "#f59e0b" : "#fed7aa"}`, color: "#92400e", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
-                                  🔄
+                                  🔄 Reassign
                                 </button>
                               )}
                             </div>
