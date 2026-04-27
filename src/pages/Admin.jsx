@@ -149,8 +149,12 @@ function Analytics() {
   const [issuePopup, setIssuePopup]     = useState(null);
   const [feedbackData, setFeedbackData] = useState({});
   const [savingId, setSavingId]         = useState(null);
-  const [rmaPopup, setRmaPopup]         = useState(null);           // ✅ NEW: RMA detail popup
-  const [supportPersons, setSupportPersons] = useState([]);         // ✅ NEW: for Assigned To details
+  const [rmaPopup, setRmaPopup]         = useState(null);
+  const [supportPersons, setSupportPersons] = useState([]);
+  const [productPopup, setProductPopup]   = useState(null);   // ✅ Product detail popup
+  const [customerPopup, setCustomerPopup] = useState(null);   // ✅ Customer detail popup
+  const [assigneePopup, setAssigneePopup] = useState(null);   // ✅ Assignee detail popup
+  const [sourceFilter, setSourceFilter]   = useState("all");  // ✅ Source filter
 
   const saveFeedback = (ticketId, ticket) => {
     const fb = feedbackData[ticketId] || {};
@@ -178,15 +182,12 @@ function Analytics() {
     return () => clearInterval(id);
   }, []);
 
-  // ✅ NEW: Fetch support persons for Assigned To column details
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
       .then(r => r.json())
       .then(users => setSupportPersons(users.filter(u => u.role === "support" && u.approved)))
       .catch(console.error);
   }, []);
-
-
 
   const counts = {
     all:      tickets.length,
@@ -198,12 +199,21 @@ function Analytics() {
 
   const filtered = tickets
     .filter(t => filter === "all" || (t.status || "pending").toLowerCase() === filter)
+    .filter(t => {
+      if (sourceFilter === "customer") return t.source === "customer";
+      if (sourceFilter === "support")  return t.source === "support";
+      if (sourceFilter === "sales")    return !t.source || (t.source !== "customer" && t.source !== "support");
+      return true;
+    })
     .filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.customer, t.phone, t.email, t.category, t.serialNo]
       .some(f => (f || "").toLowerCase().includes(search.toLowerCase())))
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
   const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
   const STATUS_BG    = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff" };
+
+  // ✅ Shared td style with right border line
+  const tdStyle = (extra = {}) => ({ borderRight: "1px solid #e0d8d0", ...extra });
 
   return (
     <div className="tab-content">
@@ -232,7 +242,6 @@ function Analytics() {
         </div>
       )}
 
-      {/* ✅ NEW: RMA Detail Popup */}
       {rmaPopup && (
         <div onClick={() => setRmaPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #c4b5fd" }}>
@@ -252,6 +261,66 @@ function Analytics() {
               {rmaPopup.rmaCenterPhone && <div style={{ fontSize: 12, color: "#6b7280" }}>📞 {rmaPopup.rmaCenterPhone}</div>}
             </div>
             {rmaPopup.rmaSentAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Product Detail Popup */}
+      {productPopup && (
+        <div onClick={() => setProductPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fad8be" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#c94500" }}>📦 Device Details</div>
+              <button onClick={() => setProductPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#fff8f2", borderRadius: 10, padding: "14px 16px", border: "1px solid #fad8be" }}>
+              {[["🔧 Product", productPopup.category], ["📐 Model", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Customer Detail Popup */}
+      {customerPopup && (
+        <div onClick={() => setCustomerPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #bfdbfe" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#1d4ed8" }}>👤 Customer Details</div>
+              <button onClick={() => setCustomerPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#eff6ff", borderRadius: 10, padding: "14px 16px", border: "1px solid #bfdbfe" }}>
+              {[["👤 Name", customerPopup.customer], ["📞 Phone", customerPopup.phone], ["✉️ Email", customerPopup.email], ["🏙️ City", customerPopup.city], ["🌍 Country", customerPopup.country]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 90 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Assignee Detail Popup */}
+      {assigneePopup && (
+        <div onClick={() => setAssigneePopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fde68a" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#92400e" }}>🛠️ Assigned Support</div>
+              <button onClick={() => setAssigneePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#fffbeb", borderRadius: 10, padding: "14px 16px", border: "1px solid #fde68a" }}>
+              {[["🛠️ Name", assigneePopup.name], ["📞 Phone", assigneePopup.phone], ["🏙️ City", assigneePopup.city], ["🎯 Specialization", assigneePopup.specialization]].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -276,13 +345,35 @@ function Analytics() {
         </div>
       </div>
 
+      {/* ✅ Source Filter */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14, background: "white", borderRadius: 10, padding: "10px 14px", border: "1.5px solid #e0d8d0" }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", whiteSpace: "nowrap" }}>🎫 Raised By:</span>
+        {[
+          ["all",      "All Tickets",       "#374151", "#f3f4f6", tickets.length],
+          ["customer", "👥 Customer",        "#7c3aed", "#f5f3ff", tickets.filter(t => t.source === "customer").length],
+          ["sales",    "🧑‍💼 Sales Person",   "#ff5a00", "#fff4ee", tickets.filter(t => !t.source || (t.source !== "customer" && t.source !== "support")).length],
+          ["support",  "🛠️ Support Person",  "#059669", "#ecfdf5", tickets.filter(t => t.source === "support").length],
+        ].map(([key, label, col, bg, cnt]) => (
+          <button key={key} onClick={() => setSourceFilter(key)} style={{
+            padding: "5px 14px", borderRadius: 16, cursor: "pointer",
+            border: sourceFilter === key ? `2px solid ${col}` : "1px solid #d1d5db",
+            background: sourceFilter === key ? bg : "white",
+            color: sourceFilter === key ? col : "#555",
+            fontWeight: sourceFilter === key ? 700 : 400,
+            fontSize: 12, whiteSpace: "nowrap",
+          }}>
+            {label} <span style={{ marginLeft: 4, background: sourceFilter === key ? col : "#e5e7eb", color: sourceFilter === key ? "white" : "#555", borderRadius: 10, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>{cnt}</span>
+          </button>
+        ))}
+      </div>
+
       <div style={{ marginBottom: 14 }}>
         <input placeholder="🔍 Search by name, agent, phone, product..." value={search} onChange={e => setSearch(e.target.value)}
           style={{ width: "100%", padding: "10px 16px", border: "1.5px solid #d1d5db", borderRadius: 10, fontSize: 13, outline: "none", background: "white", fontFamily: "inherit", color: "#111", boxSizing: "border-box" }} />
       </div>
 
       <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1300, background: "white" }}>
+        <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1300, background: "white" }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
               {["Ticket No","Assigned To","Raised By","Customer Info","Device Info","Issue","Status","Customer Rating"].map((h, i) => (
@@ -296,39 +387,32 @@ function Analytics() {
             ) : filtered.map((ticket, idx) => {
               const s               = (ticket.status || "pending").toLowerCase();
               const isResolved      = s === "resolved";
-              const isSupportRaised = ticket.source === "support"; // ✅
-              // ✅ NEW: look up assigned support person details
+              const isSupportRaised = ticket.source === "support";
               const assignedPerson  = supportPersons.find(p =>
                 p.name && ticket.assignTo &&
                 p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim()
               );
               return (
-                // ✅ CHANGE 4: Distinct highlight in Admin Analytics for support-raised tickets
                 <tr key={ticket.id} style={{
                   borderBottom: "1px solid #f0ede8",
                   background: isSupportRaised ? "#e0f2fe" : (idx % 2 === 0 ? "#faf7f4" : "white"),
                   borderLeft: isSupportRaised ? "6px solid #2563eb" : `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
                   outline: isSupportRaised ? "1px solid #93c5fd" : "none",
                 }}>
-                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                  <td style={tdStyle({ padding: "12px 14px", whiteSpace: "nowrap" })}>
                    <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>{ticket.ticketNumber || "—"}</div>
                     <div style={{ fontSize: 9, color: "#9ca3af" }}>{ticket.date || "—"}</div>
                   </td>
 
-                  {/* ✅ NEW: Assigned To — name + phone + city from supportPersons */}
-                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.assignTo || "—"}</div>
-                    {assignedPerson?.phone && (
-                      <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>📞 {assignedPerson.phone}</div>
-                    )}
-                    {assignedPerson?.city && (
-                      <div style={{ fontSize: 11, color: "#9ca3af" }}>📍 {assignedPerson.city}</div>
-                    )}
+                  {/* ✅ Assigned To — click for popup */}
+                  <td style={tdStyle({ padding: "12px 14px", whiteSpace: "nowrap", cursor: "pointer" })}
+                    onClick={() => setAssigneePopup({ name: ticket.assignTo, phone: assignedPerson?.phone, city: assignedPerson?.city, specialization: assignedPerson?.specialization?.join(", ") })}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>{ticket.assignTo || "—"}</div>
                     {ticket.reassignedFrom && <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700 }}>🔄 from {ticket.reassignedFrom}</div>}
                   </td>
 
-                  {/* ✅ Raised By with distinct support badge */}
-                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                  {/* Raised By */}
+                  <td style={tdStyle({ padding: "12px 14px", whiteSpace: "nowrap" })}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.raisedByName || "—"}</div>
                     <div style={{ fontSize: 10, color: "#9ca3af" }}>{ticket.raisedBy || ""}</div>
                     {isSupportRaised && (
@@ -337,18 +421,21 @@ function Analytics() {
                       </div>
                     )}
                   </td>
-                  <td style={{ padding: "12px 14px", minWidth: 170 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{ticket.customer || "—"}</div>
-                    {ticket.phone && <div style={{ fontSize: 11, color: "#6b7280" }}>📞 {ticket.phone}</div>}
-                    {ticket.email && <div style={{ fontSize: 11, color: "#6b7280" }}>✉️ {ticket.email}</div>}
-                    {(ticket.city || ticket.country) && <div style={{ fontSize: 11, color: "#9ca3af" }}>📍 {[ticket.city, ticket.country].filter(Boolean).join(", ")}</div>}
+
+                  {/* ✅ Customer Info — show only name, click for popup */}
+                  <td style={tdStyle({ padding: "12px 14px", whiteSpace: "nowrap", cursor: "pointer" })}
+                    onClick={() => setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, email: ticket.email, city: ticket.city, country: ticket.country })}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#93c5fd" }}>{ticket.customer || "—"}</div>
                   </td>
-                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{ticket.category || "—"}</div>
-                    <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>S/N: {ticket.serialNo || "—"}</div>
-                    {ticket.mac && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 1 }}>MAC: {ticket.mac}</div>}
+
+                  {/* ✅ Device Info — show only product, click for popup */}
+                  <td style={tdStyle({ padding: "12px 14px", whiteSpace: "nowrap", cursor: "pointer" })}
+                    onClick={() => setProductPopup({ category: ticket.category, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#c94500", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fad8be" }}>{ticket.category || "—"}</div>
                   </td>
-                  <td style={{ padding: "12px 14px", maxWidth: 180 }}>
+
+                  {/* Issue */}
+                  <td style={tdStyle({ padding: "12px 14px", maxWidth: 180 })}>
                     <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
                       style={{ fontSize: 12, color: "#374151", lineHeight: 1.5, cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160, textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
                       title="Click to view full issue">
@@ -360,8 +447,8 @@ function Analytics() {
                     )}
                   </td>
 
-                  {/* ✅ NEW: Status — click RMA to show rmaPopup */}
-                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                  {/* Status */}
+                  <td style={tdStyle({ padding: "12px 14px", whiteSpace: "nowrap" })}>
                     <span
                       onClick={() => {
                         if (s === "rma") {
@@ -384,6 +471,7 @@ function Analytics() {
                     {ticket.resolvedAt && <div style={{ fontSize: 10, color: "#10b981", marginTop: 2 }}>✅ Solved: <strong>{new Date(ticket.resolvedAt).toLocaleString()}</strong></div>}
                   </td>
 
+                  {/* Customer Rating */}
                   <td style={{ padding: "12px 14px" }}>
                     {!isResolved ? (
                       <div style={{ fontSize: 11, color: "#d1d5db", padding: "6px 0" }}>🔒 Only after resolved</div>
