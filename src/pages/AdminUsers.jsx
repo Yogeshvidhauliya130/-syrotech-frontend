@@ -417,9 +417,10 @@ export default function AdminUsers() {
       <h3 className="section-label" style={{ marginTop: 28 }}>🛠️ Support Persons ({supportPersons.length})</h3>
       {supportPersons.length === 0 ? <div className="empty-state">No support persons found.</div> : (
         <div style={tableWrap}>
-          <table style={{ width: "100%", borderCollapse: "collapse", background: "white", minWidth: 820 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", background: "white", minWidth: 900 }}>
             <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
-              <tr>{["S.No","Name","Email","Phone","City","Country","Specialization","Added On","Status"].map((h,i) => <th key={i} style={thStyle("#10b981")}>{h}</th>)}</tr>
+              {/* ✅ Added Action column */}
+              <tr>{["S.No","Name","Email","Phone","City","Country","Specialization","Added On","Status","Action"].map((h,i) => <th key={i} style={thStyle("#10b981")}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {supportPersons.map((u, idx) => (
@@ -447,6 +448,18 @@ export default function AdminUsers() {
                   <td style={{ ...tdStyle, color:"#6b7280" }}>{fmtDate(u.createdAt)}</td>
                   <td style={tdStyle}>
                     <span style={{ background:"#ecfdf5", color:"#059669", padding:"3px 10px", borderRadius:10, fontSize:11, fontWeight:700 }}>✅ Active</span>
+                  </td>
+                  {/* ✅ NEW: Remove button */}
+                  <td style={tdStyle}>
+                    <button
+                      className="btn-reject"
+                      onClick={() => {
+                        if (window.confirm(`Remove ${u.name} from support persons?`)) {
+                          removeUser(u.email);
+                        }
+                      }}>
+                      Remove
+                    </button>
                   </td>
                 </tr>
               ))}
