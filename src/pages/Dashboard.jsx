@@ -250,7 +250,7 @@ export default function Dashboard() {
     const newTicket = {
       ...form,
       phone:        form.phone.replace(/\s+/g, ""),
-      status:       "pending",
+      status:       "open",
       raisedBy:     currentUser?.email || "unknown",
       raisedByName: currentUser?.name  || "Unknown",
       date:         new Date().toISOString().slice(0, 10),
