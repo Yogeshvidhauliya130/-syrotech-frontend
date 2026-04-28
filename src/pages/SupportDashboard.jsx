@@ -342,7 +342,7 @@ export default function SupportDashboard() {
     if (!form.category)        e.category    = "Please select a product.";
     if (!form.model)           e.model       = "Please select a model.";
     if (!form.serialNo.trim()) e.serialNo    = "Serial number is required.";
-    if (!form.mac.trim())      e.mac         = "MAC address is required.";
+   
     if (!form.customer.trim()) e.customer    = "Customer name is required.";
     else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
     else if (form.customer.trim().length < 2) e.customer = "Enter a valid full name.";
@@ -708,7 +708,7 @@ export default function SupportDashboard() {
               </div>
 
               <div className="form-field">
-                <label className="form-label">MAC Address <span className="req">*</span></label>
+               <label className="form-label">MAC Address</label>
                 <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF" value={form.mac} onChange={handleChange} style={inputStyle("mac")} />
                 {formErrors.mac && <span className="field-error">{formErrors.mac}</span>}
               </div>
