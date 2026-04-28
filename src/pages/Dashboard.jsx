@@ -249,14 +249,15 @@ export default function Dashboard() {
 
     setSubmitting(true);
     const newTicket = {
-      ...form,
-      phone:        form.phone.replace(/\s+/g, ""),
-      status:       "pending",
-      raisedBy:     currentUser?.email || "unknown",
-      raisedByName: currentUser?.name  || "Unknown",
-      date:         new Date().toISOString().slice(0, 10),
-      createdAt:    new Date().toISOString(),
-    };
+  ...form,
+  phone:        form.phone.replace(/\s+/g, ""),
+  status:       "open",
+  acceptedAt:   new Date().toISOString(),
+  raisedBy:     currentUser?.email || "unknown",
+  raisedByName: currentUser?.name  || "Unknown",
+  date:         new Date().toISOString().slice(0, 10),
+  createdAt:    new Date().toISOString(),
+};
     fetch(`${BASE_URL}/tickets`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newTicket)
@@ -317,7 +318,7 @@ export default function Dashboard() {
 
   const statusCounts = {
     all:      myTickets.length,
-    pending:  myTickets.filter(t => t.status === "pending").length,
+   
     open:     myTickets.filter(t => t.status === "open").length,
     resolved: myTickets.filter(t => t.status === "resolved").length,
     rma:      myTickets.filter(t => t.status === "rma").length,
@@ -787,7 +788,7 @@ export default function Dashboard() {
                     <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📋 Status:</span>
                     {[
                       ["all",      "All",        "#374151", "#f3f4f6"],
-                      ["pending",  "⏳ Pending",  "#b45309", "#fffbeb"],
+                     
                       ["open",     "🔓 Open",     "#e04e00", "#fff4ee"],
                       ["resolved", "✅ Resolved", "#1a7a46", "#edfaf3"],
                       ["rma",      "🔧 RMA",      "#7c3aed", "#f5f3ff"],
