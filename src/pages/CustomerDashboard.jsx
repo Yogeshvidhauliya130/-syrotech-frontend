@@ -172,6 +172,7 @@ export default function CustomerDashboard() {
     if (!form.phone.trim())    e.phone       = "Phone number is required.";
     else if (!/^\d{10}$/.test(form.phone.replace(/\s+/g,""))) e.phone = "Enter a valid 10-digit phone.";
     if (!form.city.trim())     e.city        = "City is required.";
+    if (!form.state.trim())    e.state       = "State is required.";
     if (!form.country)         e.country     = "Please select a country.";
     if (!form.pincode.trim())  e.pincode     = "Pincode is required.";
     else if (!/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode.";
@@ -470,7 +471,7 @@ export default function CustomerDashboard() {
 
               {/* ✅ State — select + input both (new field) */}
               <div>
-                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>State</label>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>State <span style={{ color:"#7c3aed" }}>*</span></label>
                 {!stateCustom ? (
                   <select
                     name="state"
@@ -511,25 +512,7 @@ export default function CustomerDashboard() {
                 {errors.pincode && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.pincode}</span>}
               </div>
 
-              {/* ✅ Auto-assign display — read only */}
-              <div style={{ gridColumn:"1/-1" }}>
-                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Assigned Support Person</label>
-                <div style={{
-                  width:"100%", padding:"10px 13px", borderRadius:9,
-                  border:"1.5px solid #c4b5fd", background:"#f5f3ff",
-                  fontSize:14, fontFamily:"inherit", boxSizing:"border-box",
-                  color: form.assignTo ? "#5b21b6" : "#9ca3af",
-                  fontWeight: form.assignTo ? 700 : 400,
-                  display:"flex", alignItems:"center", gap:8,
-                  cursor:"not-allowed", userSelect:"none",
-                }}>
-                  {form.assignTo
-                    ? <><span>🛠️</span><span>{form.assignTo}</span></>
-                    : <span>⏳ Will be assigned automatically based on your product & location</span>
-                  }
-                </div>
-                <span style={{ fontSize:10, color:"#9ca3af", marginTop:3, display:"block" }}>🔒 Auto-assigned based on product specialization and your location</span>
-              </div>
+              
             </div>
 
             {/* Product Image */}
