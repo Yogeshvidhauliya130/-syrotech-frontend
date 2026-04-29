@@ -17,6 +17,7 @@ const openImageInNewTab = (imgSrc) => {
 const tdStyle = (extra = {}) => ({
   padding: "12px 12px",
   borderRight: "1px solid #c4b5fd",
+  textAlign: "left",
   ...extra,
 });
 
