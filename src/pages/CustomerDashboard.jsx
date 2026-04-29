@@ -584,6 +584,12 @@ export default function CustomerDashboard() {
                               </span>
                               {s==="resolved" && ticket.resolutionNotes && <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })} style={{ fontSize:9, color:"#059669", marginTop:3, cursor:"pointer", fontWeight:600 }}>📋 View details</div>}
                               {s==="rma" && <div onClick={() => setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt })} style={{ fontSize:9, color:"#7c3aed", marginTop:3, cursor:"pointer", fontWeight:600 }}>🔧 View RMA</div>}
+                              {ticket.createdAt && ticket.resolvedAt && s === "resolved" && (() => {
+  const diff = new Date(ticket.resolvedAt) - new Date(ticket.createdAt);
+  const hrs  = Math.floor(diff / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return <div style={{ fontSize:9, color:"#6b7280", marginTop:3, fontWeight:600 }}>⏱️ Closed in {hrs}h {mins}m</div>;
+})()}
                             </td>
                             <td style={tdStyle()}>
                               {ticket.productImage ? (
