@@ -67,6 +67,7 @@ export default function CustomerDashboard() {
   const [assigneePopup, setAssigneePopup]   = useState(null); // ✅ assignee detail popup
   const [searchQuery, setSearchQuery]       = useState("");
   const [statusFilter, setStatusFilter]     = useState("all");
+  const [dateSort, setDateSort] = useState("newest");
   const [hoverRating, setHoverRating]       = useState({}); // ✅ hover state per ticket
 
   const currentUserForForm = JSON.parse(localStorage.getItem("currentUser")) || {};
