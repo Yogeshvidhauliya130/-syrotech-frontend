@@ -17,10 +17,12 @@ const openImageInNewTab = (imgSrc) => {
       <body style="margin:0;background:#111;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:20px;box-sizing:border-box;">
         <img src="${imgSrc}" style="max-width:100%;height:auto;border-radius:8px;" />
       </body>
-    </html>
+    </html>   
   `);
   win.document.close();
 };
+
+
 
 export default function Dashboard() {
   const navigate    = useNavigate();
@@ -317,8 +319,7 @@ export default function Dashboard() {
   const uniqueProducts = [...new Set(myTickets.map(t => t.category).filter(Boolean))];
 
   const statusCounts = {
-    all:      myTickets.length,
-   
+    all:      myTickets.length, 
     open:     myTickets.filter(t => t.status === "open").length,
     resolved: myTickets.filter(t => t.status === "resolved").length,
     rma:      myTickets.filter(t => t.status === "rma").length,
