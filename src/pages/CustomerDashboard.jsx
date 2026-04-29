@@ -20,6 +20,29 @@ const tdStyle = (extra = {}) => ({
   ...extra,
 });
 
+// ✅ Indian States list
+const INDIAN_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+  "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
+  "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+  "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
+  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
+  "Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"
+];
+
+// ✅ Indian Cities list
+const INDIAN_CITIES = [
+  "Mumbai","Delhi","Bangalore","Hyderabad","Ahmedabad","Chennai","Kolkata",
+  "Surat","Pune","Jaipur","Lucknow","Kanpur","Nagpur","Indore","Thane",
+  "Bhopal","Visakhapatnam","Pimpri-Chinchwad","Patna","Vadodara","Ghaziabad",
+  "Ludhiana","Agra","Nashik","Faridabad","Meerut","Rajkot","Varanasi",
+  "Srinagar","Aurangabad","Dhanbad","Amritsar","Navi Mumbai","Allahabad",
+  "Ranchi","Howrah","Coimbatore","Jabalpur","Gwalior","Vijayawada","Jodhpur",
+  "Madurai","Raipur","Kota","Chandigarh","Guwahati","Noida","Bhubaneswar",
+  "Thiruvananthapuram","Gurugram"
+];
+
 // ✅ Auto-assign: product+city → product+country → product → any
 function getAutoAssign(supportPersons, category, city, country) {
   if (!supportPersons || supportPersons.length === 0) return "";
@@ -63,12 +86,16 @@ export default function CustomerDashboard() {
   const [expandedImage, setExpandedImage]   = useState(null);
   const [issuePopup, setIssuePopup]         = useState(null);
   const [rmaPopup, setRmaPopup]             = useState(null);
-  const [productPopup, setProductPopup]     = useState(null); // ✅ product detail popup
-  const [assigneePopup, setAssigneePopup]   = useState(null); // ✅ assignee detail popup
+  const [productPopup, setProductPopup]     = useState(null);
+  const [assigneePopup, setAssigneePopup]   = useState(null);
   const [searchQuery, setSearchQuery]       = useState("");
   const [statusFilter, setStatusFilter]     = useState("all");
-  const [dateSort, setDateSort] = useState("newest");
-  const [hoverRating, setHoverRating]       = useState({}); // ✅ hover state per ticket
+  const [dateSort, setDateSort]             = useState("newest");
+  const [hoverRating, setHoverRating]       = useState({});
+
+  // ✅ city/state custom input toggle
+  const [cityCustom, setCityCustom]   = useState(false);
+  const [stateCustom, setStateCustom] = useState(false);
 
   const currentUserForForm = JSON.parse(localStorage.getItem("currentUser")) || {};
   const [form, setForm] = useState({
@@ -76,7 +103,7 @@ export default function CustomerDashboard() {
     customer: currentUserForForm.name  || "",
     email:    currentUserForForm.email || "",
     phone:    currentUserForForm.phone || "",
-    city: "", country: "", pincode: "",
+    city: "", state: "", country: "", pincode: "", companyName: "",
     description: "", assignTo: "", productImage: "",
   });
   const [errors, setErrors] = useState({});
@@ -88,7 +115,6 @@ export default function CustomerDashboard() {
       .catch(console.error);
   }, []);
 
-  // ✅ Auto-assign whenever category, city, or country changes
   useEffect(() => {
     if (supportPersons.length === 0) return;
     const assigned = getAutoAssign(supportPersons, form.category, form.city, form.country);
@@ -149,7 +175,6 @@ export default function CustomerDashboard() {
     if (!form.country)         e.country     = "Please select a country.";
     if (!form.pincode.trim())  e.pincode     = "Pincode is required.";
     else if (!/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode.";
-    // ✅ No minimum limit — only required + max 500
     if (!form.description.trim()) e.description = "Description is required.";
     else if (form.description.trim().length > 500) e.description = "Description cannot exceed 500 characters.";
     return e;
@@ -180,7 +205,7 @@ export default function CustomerDashboard() {
       if (form.productImage) updates.productImage = form.productImage;
       fetch(`${BASE_URL}/tickets/${sameTicket.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
         .then(r => r.json())
-        .then(() => { setForm({ category:"", model:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Same device found! Your issue has been updated. Status reset to PENDING."); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 6000); })
+        .then(() => { setForm({ category:"", model:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", state:"", country:"", pincode:"", companyName:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Same device found! Your issue has been updated. Status reset to PENDING."); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 6000); })
         .catch(() => setErrors({ submit: "❌ Failed to update ticket." }))
         .finally(() => setSubmitting(false));
       return;
@@ -201,7 +226,7 @@ export default function CustomerDashboard() {
     };
     fetch(`${BASE_URL}/tickets`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTicket) })
       .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
-      .then(() => { setForm({ category:"", model:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", country:"", pincode:"", description:"", assignTo:"", productImage:"" }); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Ticket submitted successfully! Status: OPEN"); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 4000); })
+      .then(() => { setForm({ category:"", model:"", serialNo:"", mac:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", state:"", country:"", pincode:"", companyName:"", description:"", assignTo:"", productImage:""}); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Ticket submitted successfully! Status: OPEN"); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 4000); })
       .catch(() => setErrors({ submit: "❌ Failed to submit ticket." }))
       .finally(() => setSubmitting(false));
   };
@@ -409,11 +434,65 @@ export default function CustomerDashboard() {
                   : <span style={{ fontSize:10, color:"#9ca3af", marginTop:3, display:"block" }}>{(form.phone||"").replace(/\s+/g,"").length}/10 digits</span>
                 }
               </div>
+
+
+
+              <div>
+  <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Company Name</label>
+  <input name="companyName" placeholder="e.g. ABC Pvt Ltd" value={form.companyName} onChange={handleChange} style={iStyle("companyName")} />
+</div>
+
+              {/* ✅ City — select + input both */}
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>City <span style={{ color:"#7c3aed" }}>*</span></label>
-                <input name="city" placeholder="e.g. Mumbai" value={form.city} onChange={handleChange} style={iStyle("city")} />
+                {!cityCustom ? (
+                  <select
+                    name="city"
+                    value={form.city}
+                    onChange={e => {
+                      if (e.target.value === "__other__") { setCityCustom(true); setForm(prev => ({ ...prev, city: "" })); }
+                      else handleChange(e);
+                    }}
+                    style={iStyle("city")}>
+                    <option value="">Select City</option>
+                    {INDIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="__other__">✏️ Type manually...</option>
+                  </select>
+                ) : (
+                  <div style={{ display:"flex", gap:6 }}>
+                    <input name="city" placeholder="Type your city" value={form.city} onChange={handleChange} style={{ ...iStyle("city"), flex:1 }} />
+                    <button type="button" onClick={() => { setCityCustom(false); setForm(prev => ({ ...prev, city: "" })); }}
+                      style={{ padding:"8px 10px", borderRadius:9, border:"1.5px solid #d1d5db", background:"#f3f4f6", cursor:"pointer", fontSize:12, color:"#6b7280", whiteSpace:"nowrap" }}>↩ List</button>
+                  </div>
+                )}
                 {errors.city && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.city}</span>}
               </div>
+
+              {/* ✅ State — select + input both (new field) */}
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>State</label>
+                {!stateCustom ? (
+                  <select
+                    name="state"
+                    value={form.state}
+                    onChange={e => {
+                      if (e.target.value === "__other__") { setStateCustom(true); setForm(prev => ({ ...prev, state: "" })); }
+                      else handleChange(e);
+                    }}
+                    style={iStyle("state")}>
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="__other__">✏️ Type manually...</option>
+                  </select>
+                ) : (
+                  <div style={{ display:"flex", gap:6 }}>
+                    <input name="state" placeholder="Type your state" value={form.state} onChange={handleChange} style={{ ...iStyle("state"), flex:1 }} />
+                    <button type="button" onClick={() => { setStateCustom(false); setForm(prev => ({ ...prev, state: "" })); }}
+                      style={{ padding:"8px 10px", borderRadius:9, border:"1.5px solid #d1d5db", background:"#f3f4f6", cursor:"pointer", fontSize:12, color:"#6b7280", whiteSpace:"nowrap" }}>↩ List</button>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>Country <span style={{ color:"#7c3aed" }}>*</span></label>
                 <select name="country" value={form.country} onChange={handleChange} style={iStyle("country")}>
@@ -480,7 +559,7 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            {/* Description — ✅ No minimum limit */}
+            {/* Description */}
             <div style={{ marginBottom:20 }}>
               <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>
                 Issue Description <span style={{ color:"#7c3aed" }}>*</span>
@@ -541,12 +620,10 @@ export default function CustomerDashboard() {
                   </select>
                 </div>
 
-                {/* ✅ 7 cols: removed separate Model column, Product click → popup */}
                 <div style={{ borderRadius:12, border:"1.5px solid #e9d5ff", boxShadow:"0 2px 12px rgba(0,0,0,0.06)", overflowX:"auto", overflowY:"auto", maxHeight:"65vh" }}>
                   <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:960 }}>
                     <thead>
                       <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)", position:"sticky", top:0, zIndex:2 }}>
-                        {/* ✅ 8 cols: no Assigned To, added Model + Feedback */}
                         {["Ticket No","Date","Product","Model","Status","Image","Issue","Feedback"].map((h,i) => (
                           <th key={i} style={{ padding:"12px 12px", fontSize:10, fontWeight:800, color:"white", textTransform:"uppercase", letterSpacing:"0.05em", textAlign:"left", borderRight:"1px solid rgba(255,255,255,0.2)", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
@@ -566,12 +643,10 @@ export default function CustomerDashboard() {
                               <div style={{ fontSize:11, color:"#374151", fontWeight:600, whiteSpace:"nowrap" }}>{ticket.date||"—"}</div>
                               {ticket.resolvedAt && <div style={{ fontSize:10, color:"#10b981", whiteSpace:"nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
                             </td>
-                            {/* ✅ Product — click opens popup */}
                             <td style={tdStyle({ cursor:"pointer" })}
                               onClick={() => setProductPopup({ category:ticket.category, model:ticket.model, serialNo:ticket.serialNo, mac:ticket.mac })}>
                               <div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap", color:"#7c3aed", textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#c4b5fd" }}>{ticket.category||"—"}</div>
                             </td>
-                            {/* ✅ Model column */}
                             <td style={tdStyle()}>
                               <div style={{ fontSize:11, color:"#374151", whiteSpace:"nowrap" }}>{ticket.model||"—"}</div>
                             </td>
@@ -585,11 +660,11 @@ export default function CustomerDashboard() {
                               {s==="resolved" && ticket.resolutionNotes && <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })} style={{ fontSize:9, color:"#059669", marginTop:3, cursor:"pointer", fontWeight:600 }}>📋 View details</div>}
                               {s==="rma" && <div onClick={() => setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt })} style={{ fontSize:9, color:"#7c3aed", marginTop:3, cursor:"pointer", fontWeight:600 }}>🔧 View RMA</div>}
                               {ticket.createdAt && ticket.resolvedAt && s === "resolved" && (() => {
-  const diff = new Date(ticket.resolvedAt) - new Date(ticket.createdAt);
-  const hrs  = Math.floor(diff / (1000 * 60 * 60));
-  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return <div style={{ fontSize:9, color:"#6b7280", marginTop:3, fontWeight:600 }}>⏱️ Closed in {hrs}h {mins}m</div>;
-})()}
+                                const diff = new Date(ticket.resolvedAt) - new Date(ticket.createdAt);
+                                const hrs  = Math.floor(diff / (1000 * 60 * 60));
+                                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                return <div style={{ fontSize:9, color:"#6b7280", marginTop:3, fontWeight:600 }}>⏱️ Closed in {hrs}h {mins}m</div>;
+                              })()}
                             </td>
                             <td style={tdStyle()}>
                               {ticket.productImage ? (
@@ -602,7 +677,6 @@ export default function CustomerDashboard() {
                                 {ticket.description?.length>40?ticket.description.slice(0,40)+"…":ticket.description||"—"}
                               </div>
                             </td>
-                            {/* ✅ Feedback column */}
                             <td style={{ padding:"12px 12px", borderRight:"1px solid #c4b5fd" }}>
                               {ticket.feedbackRating ? (
                                 <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700 }}>
@@ -616,10 +690,9 @@ export default function CustomerDashboard() {
                                         onMouseEnter={() => setHoverRating(prev => ({ ...prev, [ticket.id]: star }))}
                                         onMouseLeave={() => setHoverRating(prev => ({ ...prev, [ticket.id]: 0 }))}
                                         onClick={() => {
-                                          const rating = star;
                                           fetch(`${BASE_URL}/tickets/${ticket.id}`, {
                                             method:"PATCH", headers:{"Content-Type":"application/json"},
-                                            body: JSON.stringify({ feedbackRating: rating, feedbackReceivedAt: new Date().toISOString() })
+                                            body: JSON.stringify({ feedbackRating: star, feedbackReceivedAt: new Date().toISOString() })
                                           }).then(r => r.json()).then(() => fetchTickets()).catch(console.error);
                                         }}
                                         style={{ fontSize:16, cursor:"pointer", color: (hoverRating[ticket.id]||0) >= star ? "#f59e0b" : "#d1d5db", transition:"color 0.1s" }}>
