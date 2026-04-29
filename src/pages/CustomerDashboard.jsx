@@ -67,7 +67,7 @@ export default function CustomerDashboard() {
   const [assigneePopup, setAssigneePopup]   = useState(null); // ✅ assignee detail popup
   const [searchQuery, setSearchQuery]       = useState("");
   const [statusFilter, setStatusFilter]     = useState("all");
-  const [dateSort, setDateSort]             = useState("newest");
+  const [hoverRating, setHoverRating]       = useState({}); // ✅ hover state per ticket
 
   const currentUserForForm = JSON.parse(localStorage.getItem("currentUser")) || {};
   const [form, setForm] = useState({
@@ -307,7 +307,7 @@ export default function CustomerDashboard() {
               <button onClick={() => setAssigneePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
             </div>
             <div style={{ background:"#fffbeb", borderRadius:10, padding:"14px 16px", border:"1px solid #fde68a" }}>
-             {[["🛠️ Name", assigneePopup.name], ["📞 Phone", assigneePopup.phone], ["✉️ Email", assigneePopup.email], ["🏙️ City", assigneePopup.city]].map(([label, val]) => (
+              {[["🛠️ Name", assigneePopup.name], ["📞 Phone", assigneePopup.phone], ["🏙️ City", assigneePopup.city]].map(([label, val]) => (
                 <div key={label} style={{ display:"flex", gap:10, marginBottom:10 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", minWidth:90 }}>{label}</div>
                   <div style={{ fontSize:13, fontWeight:600, color:"#111" }}>{val || "—"}</div>
@@ -542,24 +542,24 @@ export default function CustomerDashboard() {
 
                 {/* ✅ 7 cols: removed separate Model column, Product click → popup */}
                 <div style={{ borderRadius:12, border:"1.5px solid #e9d5ff", boxShadow:"0 2px 12px rgba(0,0,0,0.06)", overflowX:"auto", overflowY:"auto", maxHeight:"65vh" }}>
-                  <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:820 }}>
+                  <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:960 }}>
                     <thead>
                       <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)", position:"sticky", top:0, zIndex:2 }}>
-                        {["Ticket No","Date","Product","Assigned To","Status","Image","Issue"].map((h,i) => (
+                        {/* ✅ 8 cols: no Assigned To, added Model + Feedback */}
+                        {["Ticket No","Date","Product","Model","Status","Image","Issue","Feedback"].map((h,i) => (
                           <th key={i} style={{ padding:"12px 12px", fontSize:10, fontWeight:800, color:"white", textTransform:"uppercase", letterSpacing:"0.05em", textAlign:"left", borderRight:"1px solid rgba(255,255,255,0.2)", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {displayTickets.length === 0 ? (
-                        <tr><td colSpan={7} style={{ textAlign:"center", padding:40, color:"#9ca3af", fontSize:14 }}>No tickets found.</td></tr>
+                        <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#9ca3af", fontSize:14 }}>No tickets found.</td></tr>
                       ) : displayTickets.reduce((acc, ticket, idx) => {
                         const s = (ticket.status||"pending").toLowerCase();
                         acc.push(
                           <tr key={ticket.id} style={{ borderBottom:"1px solid #e9d5ff", background:idx%2===0?"#faf8ff":"white", borderLeft:`4px solid ${STATUS_COLOR[s]||"#ccc"}` }}>
                             <td style={tdStyle({ whiteSpace:"nowrap" })}>
                               <div style={{ fontSize:10, fontWeight:800, color:"#7c3aed" }}>{ticket.ticketNumber||"—"}</div>
-                              <div style={{ fontSize:8, color:"#9ca3af" }}>Row {idx+1}</div>
                             </td>
                             <td style={tdStyle()}>
                               <div style={{ fontSize:11, color:"#374151", fontWeight:600, whiteSpace:"nowrap" }}>{ticket.date||"—"}</div>
@@ -570,13 +570,9 @@ export default function CustomerDashboard() {
                               onClick={() => setProductPopup({ category:ticket.category, model:ticket.model, serialNo:ticket.serialNo, mac:ticket.mac })}>
                               <div style={{ fontWeight:700, fontSize:12, whiteSpace:"nowrap", color:"#7c3aed", textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#c4b5fd" }}>{ticket.category||"—"}</div>
                             </td>
-                            {/* ✅ Assigned To — click opens popup */}
-                            <td style={tdStyle({ cursor:"pointer" })}
-                              onClick={() => {
-                                const p = supportPersons.find(p => p.name && ticket.assignTo && p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim());
-                                setAssigneePopup({ name: ticket.assignTo, phone: p?.phone, email: p?.email, city: p?.city });
-                              }}>
-                              <div style={{ fontWeight:600, fontSize:12, whiteSpace:"nowrap", color:"#92400e", textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#fde68a" }}>{ticket.assignTo||"—"}</div>
+                            {/* ✅ Model column */}
+                            <td style={tdStyle()}>
+                              <div style={{ fontSize:11, color:"#374151", whiteSpace:"nowrap" }}>{ticket.model||"—"}</div>
                             </td>
                             <td style={tdStyle()}>
                               <span onClick={() => {
@@ -588,24 +584,58 @@ export default function CustomerDashboard() {
                               {s==="resolved" && ticket.resolutionNotes && <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })} style={{ fontSize:9, color:"#059669", marginTop:3, cursor:"pointer", fontWeight:600 }}>📋 View details</div>}
                               {s==="rma" && <div onClick={() => setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt })} style={{ fontSize:9, color:"#7c3aed", marginTop:3, cursor:"pointer", fontWeight:600 }}>🔧 View RMA</div>}
                             </td>
-                            <td style={tdStyle({ textAlign:"center" })}>
+                            <td style={tdStyle()}>
                               {ticket.productImage ? (
                                 <button onClick={() => setExpandedImage(prev => prev===ticket.id?null:ticket.id)} style={{ background:expandedImage===ticket.id?"#dcfce7":"#f0fdf4", border:"1.5px solid #86efac", borderRadius:6, padding:"4px 8px", cursor:"pointer", fontSize:10, fontWeight:700, color:"#065f46" }}>📷 {expandedImage===ticket.id?"Hide":"View"}</button>
                               ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
                             </td>
-                            <td style={{ padding:"12px 12px" }}>
+                            <td style={tdStyle()}>
                               <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })}
-                                style={{ fontSize:12, color:"#374151", cursor:"pointer", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:180, textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#9ca3af" }}>
+                                style={{ fontSize:12, color:"#374151", cursor:"pointer", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160, textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#9ca3af" }}>
                                 {ticket.description?.length>40?ticket.description.slice(0,40)+"…":ticket.description||"—"}
                               </div>
-                              {ticket.feedbackRating && <div style={{ fontSize:10, color:"#f59e0b", marginTop:3 }}>⭐ {ticket.feedbackRating}/5</div>}
+                            </td>
+                            {/* ✅ Feedback column */}
+                            <td style={{ padding:"12px 12px", borderRight:"1px solid #c4b5fd" }}>
+                              {ticket.feedbackRating ? (
+                                <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700 }}>
+                                  {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5-ticket.feedbackRating)} {ticket.feedbackRating}/5
+                                </div>
+                              ) : s === "resolved" ? (
+                                <div>
+                                  <div style={{ display:"flex", gap:2, marginBottom:4 }}>
+                                    {[1,2,3,4,5].map(star => (
+                                      <span key={star}
+                                        onMouseEnter={() => setHoverRating(prev => ({ ...prev, [ticket.id]: star }))}
+                                        onMouseLeave={() => setHoverRating(prev => ({ ...prev, [ticket.id]: 0 }))}
+                                        onClick={() => {
+                                          const rating = star;
+                                          fetch(`${BASE_URL}/tickets/${ticket.id}`, {
+                                            method:"PATCH", headers:{"Content-Type":"application/json"},
+                                            body: JSON.stringify({ feedbackRating: rating, feedbackReceivedAt: new Date().toISOString() })
+                                          }).then(r => r.json()).then(() => fetchTickets()).catch(console.error);
+                                        }}
+                                        style={{ fontSize:16, cursor:"pointer", color: (hoverRating[ticket.id]||0) >= star ? "#f59e0b" : "#d1d5db", transition:"color 0.1s" }}>
+                                        ★
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <div style={{ fontSize:9, color:"#6b7280" }}>Click to rate</div>
+                                </div>
+                              ) : (
+                                <div style={{ display:"flex", gap:2 }}>
+                                  {[1,2,3,4,5].map(star => (
+                                    <span key={star} style={{ fontSize:16, color:"#e5e7eb", cursor:"not-allowed" }}>★</span>
+                                  ))}
+                                </div>
+                              )}
                             </td>
                           </tr>
                         );
                         if (expandedImage===ticket.id && ticket.productImage) {
                           acc.push(
                             <tr key={`img-${ticket.id}`} style={{ background:"#f0fdf4" }}>
-                              <td colSpan={7} style={{ padding:"12px 20px" }}>
+                              <td colSpan={8} style={{ padding:"12px 20px" }}>
                                 <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
                                   <img src={ticket.productImage} alt="Product" style={{ maxHeight:180, maxWidth:260, borderRadius:8, border:"2px solid #86efac", cursor:"pointer" }} onClick={() => openImageInNewTab(ticket.productImage)} />
                                   <div style={{ fontSize:12, color:"#065f46" }}>
@@ -633,7 +663,3 @@ export default function CustomerDashboard() {
     </div>
   );
 }
-
-
-
-
