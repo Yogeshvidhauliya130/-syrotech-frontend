@@ -541,48 +541,78 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ✅ Reassign Detail Popup */}
-      {reassignPopup && (
-        <div onClick={() => setReassignPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fed7aa" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#c2410c" }}>🔄 Reassignment Details</div>
-              <button onClick={() => setReassignPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
-            </div>
-            <div style={{ background: "#fff7ed", borderRadius: 10, padding: "14px 16px", marginBottom: 12, border: "1px solid #fed7aa" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#c2410c", textTransform: "uppercase", marginBottom: 8 }}>Previously Assigned To:</div>
-              {(() => {
-                const old = supportPersons.find(p => p.name && reassignPopup.reassignedFrom && p.name.toLowerCase().trim() === reassignPopup.reassignedFrom.toLowerCase().trim());
-                return [["👤 Name", reassignPopup.reassignedFrom], ["📞 Phone", old?.phone], ["🏙️ City", old?.city], ["✉️ Email", old?.email], ["🎯 Specialist", old?.specialization?.join(", ")]].map(([label, val]) => (
-                  <div key={label} style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+      {/* ✅ Reassign Detail Popup — compact timeline */}
+{reassignPopup && (
+  <div onClick={() => setReassignPopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"20px 22px", maxWidth:420, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #fed7aa", maxHeight:"80vh", overflowY:"auto" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+        <div style={{ fontSize:13, fontWeight:800, color:"#c2410c" }}>🔄 Reassignment History</div>
+        <button onClick={() => setReassignPopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:12, color:"#374151" }}>✕</button>
+      </div>
+
+      {/* Full history from reassignHistory array */}
+      {Array.isArray(reassignPopup.reassignHistory) && reassignPopup.reassignHistory.length > 0 ? (
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {reassignPopup.reassignHistory.map((entry, i) => {
+            const fromP = supportPersons.find(p => p.name && entry.from && p.name.toLowerCase().trim() === entry.from.toLowerCase().trim());
+            const toP   = supportPersons.find(p => p.name && entry.to   && p.name.toLowerCase().trim() === entry.to.toLowerCase().trim());
+            return (
+              <div key={i} style={{ border:"1px solid #e0d8d0", borderRadius:10, overflow:"hidden", fontSize:12 }}>
+                <div style={{ background:"#fff7ed", padding:"6px 12px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <span style={{ fontWeight:700, color:"#c2410c", fontSize:11 }}>Step {i+1}</span>
+                  {entry.at && <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.at).toLocaleString()}</span>}
+                </div>
+                <div style={{ padding:"8px 12px", display:"flex", gap:8, alignItems:"center" }}>
+                  {/* FROM */}
+                  <div style={{ flex:1, background:"#fef2f2", borderRadius:8, padding:"6px 10px", border:"1px solid #fca5a5" }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:"#dc2626", marginBottom:4 }}>FROM</div>
+                    <div style={{ fontWeight:700, color:"#111" }}>{entry.from || "—"}</div>
+                    {fromP?.city && <div style={{ fontSize:10, color:"#6b7280" }}>🏙️ {fromP.city}</div>}
+                    {fromP?.email && <div style={{ fontSize:10, color:"#6b7280" }}>✉️ {fromP.email}</div>}
+                    {fromP?.specialization && <div style={{ fontSize:10, color:"#6b7280" }}>🎯 {fromP.specialization.join(", ")}</div>}
                   </div>
-                ));
-              })()}
-            </div>
-            <div style={{ background: "#f0fdf4", borderRadius: 10, padding: "14px 16px", marginBottom: 12, border: "1px solid #86efac" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", marginBottom: 8 }}>Now Assigned To:</div>
-              {(() => {
-                const newP = supportPersons.find(p => p.name && reassignPopup.assignTo && p.name.toLowerCase().trim() === reassignPopup.assignTo.toLowerCase().trim());
-                return [["👤 Name", reassignPopup.assignTo], ["📞 Phone", newP?.phone], ["🏙️ City", newP?.city], ["✉️ Email", newP?.email], ["🎯 Specialist", newP?.specialization?.join(", ")]].map(([label, val]) => (
-                  <div key={label} style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                  <div style={{ fontSize:16 }}>→</div>
+                  {/* TO */}
+                  <div style={{ flex:1, background:"#f0fdf4", borderRadius:8, padding:"6px 10px", border:"1px solid #86efac" }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:"#059669", marginBottom:4 }}>TO</div>
+                    <div style={{ fontWeight:700, color:"#111" }}>{entry.to || "—"}</div>
+                    {toP?.city && <div style={{ fontSize:10, color:"#6b7280" }}>🏙️ {toP.city}</div>}
+                    {toP?.email && <div style={{ fontSize:10, color:"#6b7280" }}>✉️ {toP.email}</div>}
+                    {toP?.specialization && <div style={{ fontSize:10, color:"#6b7280" }}>🎯 {toP.specialization.join(", ")}</div>}
                   </div>
-                ));
-              })()}
-            </div>
-            {reassignPopup.reassignReason && (
-              <div style={{ background: "#fefce8", borderRadius: 8, padding: "10px 14px", border: "1px solid #fde047" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#854d0e", marginBottom: 4 }}>📝 Reason:</div>
-                <div style={{ fontSize: 13, color: "#374151" }}>{reassignPopup.reassignReason}</div>
+                </div>
+                {entry.reason && <div style={{ padding:"4px 12px 8px", fontSize:11, color:"#92400e", background:"#fffbeb" }}>📝 {entry.reason}</div>}
               </div>
-            )}
-            {reassignPopup.reassignedAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10 }}>📅 Reassigned on: {new Date(reassignPopup.reassignedAt).toLocaleString()}</div>}
+            );
+          })}
+        </div>
+      ) : (
+        /* Fallback: show single reassign from reassignedFrom/assignTo */
+        <div style={{ border:"1px solid #e0d8d0", borderRadius:10, overflow:"hidden", fontSize:12 }}>
+          <div style={{ background:"#fff7ed", padding:"6px 12px" }}>
+            <span style={{ fontWeight:700, color:"#c2410c", fontSize:11 }}>Reassigned</span>
+            {reassignPopup.reassignedAt && <span style={{ fontSize:10, color:"#9ca3af", marginLeft:8 }}>{new Date(reassignPopup.reassignedAt).toLocaleString()}</span>}
           </div>
+          <div style={{ padding:"8px 12px", display:"flex", gap:8, alignItems:"center" }}>
+            <div style={{ flex:1, background:"#fef2f2", borderRadius:8, padding:"6px 10px", border:"1px solid #fca5a5" }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"#dc2626", marginBottom:4 }}>FROM</div>
+              <div style={{ fontWeight:700, color:"#111" }}>{reassignPopup.reassignedFrom || "—"}</div>
+              {(() => { const p = supportPersons.find(x => x.name && reassignPopup.reassignedFrom && x.name.toLowerCase().trim() === reassignPopup.reassignedFrom.toLowerCase().trim()); return p ? <><div style={{ fontSize:10, color:"#6b7280" }}>🏙️ {p.city}</div><div style={{ fontSize:10, color:"#6b7280" }}>✉️ {p.email}</div></> : null; })()}
+            </div>
+            <div style={{ fontSize:16 }}>→</div>
+            <div style={{ flex:1, background:"#f0fdf4", borderRadius:8, padding:"6px 10px", border:"1px solid #86efac" }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"#059669", marginBottom:4 }}>TO</div>
+              <div style={{ fontWeight:700, color:"#111" }}>{reassignPopup.assignTo || "—"}</div>
+              {(() => { const p = supportPersons.find(x => x.name && reassignPopup.assignTo && x.name.toLowerCase().trim() === reassignPopup.assignTo.toLowerCase().trim()); return p ? <><div style={{ fontSize:10, color:"#6b7280" }}>🏙️ {p.city}</div><div style={{ fontSize:10, color:"#6b7280" }}>✉️ {p.email}</div></> : null; })()}
+            </div>
+          </div>
+          {reassignPopup.reassignReason && <div style={{ padding:"4px 12px 8px", fontSize:11, color:"#92400e", background:"#fffbeb" }}>📝 {reassignPopup.reassignReason}</div>}
         </div>
       )}
+    </div>
+  </div>
+)}
+      
 
       {/* Navbar */}
       <div className="dash-navbar">
@@ -1008,7 +1038,7 @@ export default function Dashboard() {
                                   {ticket.assignTo || "—"}
                                 </div>
                                 {ticket.reassignedFrom && (
-                                  <div onClick={() => setReassignPopup({ reassignedFrom: ticket.reassignedFrom, assignTo: ticket.assignTo, reassignReason: ticket.reassignReason, reassignedAt: ticket.reassignedAt })}
+                                  <div onClick={() => setReassignPopup({ reassignedFrom: ticket.reassignedFrom, assignTo: ticket.assignTo, reassignReason: ticket.reassignReason, reassignedAt: ticket.reassignedAt, reassignHistory: ticket.reassignHistory })}
                                     style={{ fontSize: 9, color: "#c2410c", fontWeight: 700, cursor: "pointer", marginTop: 2 }}>🔄 reassigned — click</div>
                                 )}
                               </td>
