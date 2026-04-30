@@ -226,7 +226,7 @@ export default function SupportDashboard() {
         assignTo: rf.newPerson, reassignedFrom: currentUser?.name,
         reassignReason: rf.reason.trim(), reassignedAt: new Date().toISOString(),
         reassignHistory: [...existingHistory, historyEntry],
-        acceptedAt: null, status: "pending",
+       acceptedAt: new Date().toISOString(), status: "open",
       })
     })
       .then(r => r.json())
