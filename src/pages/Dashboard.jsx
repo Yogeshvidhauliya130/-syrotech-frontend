@@ -560,7 +560,7 @@ export default function Dashboard() {
               <div key={i} style={{ border:"1px solid #e0d8d0", borderRadius:10, overflow:"hidden", fontSize:12 }}>
                 <div style={{ background:"#fff7ed", padding:"6px 12px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <span style={{ fontWeight:700, color:"#c2410c", fontSize:11 }}>Step {i+1}</span>
-                  {entry.at && <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.at).toLocaleString()}</span>}
+              {(entry.at || entry.timestamp) && <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.at || entry.timestamp).toLocaleString()}</span>}
                 </div>
                 <div style={{ padding:"8px 12px", display:"flex", gap:8, alignItems:"center" }}>
                   {/* FROM */}
@@ -995,7 +995,7 @@ export default function Dashboard() {
                         </tr>
                       ) : (
                         displayTickets.reduce((acc, ticket, idx) => {
-                          const s = (ticket.status || "pending").toLowerCase();
+                         const s = (ticket.status || "open").toLowerCase();
                           const assignedPerson = supportPersons.find(p =>
                             p.name && ticket.assignTo &&
                             p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim()
