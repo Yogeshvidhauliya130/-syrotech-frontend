@@ -444,39 +444,31 @@ export default function CustomerDashboard() {
   <input name="companyName" placeholder="e.g. ABC Pvt Ltd" value={form.companyName} onChange={handleChange} style={iStyle("companyName")} />
 </div>
 
-{/* ✅ City — select + input both */}
-<div>
-  <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-    City <span style={{ color:"#7c3aed" }}>*</span>
-  </label>
-  {!cityCustom ? (
-    <select
-      name="city"
-      value={form.city}
-      onChange={e => {
-        if (e.target.value === "__other__") { setCityCustom(true); setForm(prev => ({ ...prev, city: "" })); }
-        else handleChange(e);
-      }}
-      style={iStyle("city")}
-    >
-      <option value="__other__">✏️ Type manually...</option>
-      <option value="">Select City</option>
-      {INDIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-    </select>
-  ) : (
-    <div style={{ display:"flex", gap:6 }}>
-      <input name="city" placeholder="Type your city" value={form.city} onChange={handleChange} style={{ ...iStyle("city"), flex:1 }} />
-      <button
-        type="button"
-        onClick={() => { setCityCustom(false); setForm(prev => ({ ...prev, city: "" })); }}
-        style={{ padding:"8px 10px", borderRadius:9, border:"1.5px solid #d1d5db", background:"#f3f4f6", cursor:"pointer", fontSize:12, color:"#6b7280", whiteSpace:"nowrap" }}
-      >
-        ↩ List
-      </button>
-    </div>
-  )}
-  {errors.city && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.city}</span>}
-</div>
+              {/* ✅ City — select + input both */}
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.05em" }}>City <span style={{ color:"#7c3aed" }}>*</span></label>
+                {!cityCustom ? (
+                  <select
+                    name="city"
+                    value={form.city}
+                    onChange={e => {
+                      if (e.target.value === "__other__") { setCityCustom(true); setForm(prev => ({ ...prev, city: "" })); }
+                      else handleChange(e);
+                    }}
+                    style={iStyle("city")}>
+                    <option value="">Select City</option>
+                    <option value="__other__">✏️ Type manually...</option>
+                    {INDIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                ) : (
+                  <div style={{ display:"flex", gap:6 }}>
+                    <input name="city" placeholder="Type your city" value={form.city} onChange={handleChange} style={{ ...iStyle("city"), flex:1 }} />
+                    <button type="button" onClick={() => { setCityCustom(false); setForm(prev => ({ ...prev, city: "" })); }}
+                      style={{ padding:"8px 10px", borderRadius:9, border:"1.5px solid #d1d5db", background:"#f3f4f6", cursor:"pointer", fontSize:12, color:"#6b7280", whiteSpace:"nowrap" }}>↩ List</button>
+                  </div>
+                )}
+                {errors.city && <span className="cust-field-error" style={{ fontSize:11, color:"#ef4444", marginTop:3, display:"block" }}>{errors.city}</span>}
+              </div>
 
               {/* ✅ State — select + input both (new field) */}
               <div>
