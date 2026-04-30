@@ -457,8 +457,8 @@ export default function CustomerDashboard() {
                     }}
                     style={iStyle("city")}>
                     <option value="">Select City</option>
-                    {INDIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                     <option value="__other__">✏️ Type manually...</option>
+                    {INDIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 ) : (
                   <div style={{ display:"flex", gap:6 }}>
