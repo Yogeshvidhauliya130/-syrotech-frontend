@@ -139,17 +139,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* <div className="field-group">
-              <label className="field-label">Select Role</label>
-              <select value={selectedRole}
-                onChange={e => { setSelectedRole(e.target.value); setError(""); }}
-                className="field-input">
-                <option value="">-- Select your role --</option>
-                {ROLES.map(r => (
-                  <option key={r.key} value={r.key}>{r.icon} {r.label}</option>
-                ))}
-              </select>
-            </div> */}
+         
 
             <button className={`btn-primary ${loading ? "btn-loading" : ""}`}
               onClick={handleLogin} disabled={loading}>
