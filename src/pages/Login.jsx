@@ -108,6 +108,19 @@ export default function Login() {
             <h2 className="form-title">Welcome Back</h2>
             <p className="form-subtitle">Sign in to your account</p>
 
+
+             <div className="field-group">
+              <label className="field-label">Select Role</label>
+              <select value={selectedRole}
+                onChange={e => { setSelectedRole(e.target.value); setError(""); }}
+                className="field-input">
+                <option value="">-- Select your role --</option>
+                {ROLES.map(r => (
+                  <option key={r.key} value={r.key}>{r.icon} {r.label}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="field-group">
               <label className="field-label">Email / Username</label>
               <input type="text" name="email" placeholder="you@example.com"
@@ -126,7 +139,7 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="field-group">
+            {/* <div className="field-group">
               <label className="field-label">Select Role</label>
               <select value={selectedRole}
                 onChange={e => { setSelectedRole(e.target.value); setError(""); }}
@@ -136,7 +149,7 @@ export default function Login() {
                   <option key={r.key} value={r.key}>{r.icon} {r.label}</option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             <button className={`btn-primary ${loading ? "btn-loading" : ""}`}
               onClick={handleLogin} disabled={loading}>

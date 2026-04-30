@@ -578,7 +578,8 @@ export default function Dashboard() {
                     <div style={{ fontWeight:700, color:"#111" }}>{entry.to || "—"}</div>
                     {toP?.city && <div style={{ fontSize:10, color:"#6b7280" }}>🏙️ {toP.city}</div>}
                     {toP?.email && <div style={{ fontSize:10, color:"#6b7280" }}>✉️ {toP.email}</div>}
-                   
+                    {toP?.specialization && <div style={{ fontSize:10, color:"#6b7280" }}>🎯 {toP.specialization.join(", ")}</div>}
+                  </div>
                 </div>
                 {entry.reason && <div style={{ padding:"4px 12px 8px", fontSize:11, color:"#92400e", background:"#fffbeb" }}>📝 {entry.reason}</div>}
               </div>
