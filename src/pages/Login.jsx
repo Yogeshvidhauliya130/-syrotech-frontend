@@ -122,7 +122,7 @@ export default function Login() {
             </div>
 
             <div className="field-group">
-              <label className="field-label">Email / Username</label>
+              <label className="field-label">Email </label>
               <input type="text" name="email" placeholder="you@example.com"
                 value={form.email} onChange={handleChange} className="field-input" />
             </div>
