@@ -22,7 +22,66 @@ const openImageInNewTab = (imgSrc) => {
   win.document.close();
 };
 
+// ✅ Indian States list
+const INDIAN_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+  "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
+  "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+  "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
+  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
+  "Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"
+];
 
+// ✅ Indian Cities list
+const INDIAN_CITIES = [
+  "Mumbai","Delhi","Bangalore","Hyderabad","Ahmedabad","Chennai","Kolkata",
+  "Surat","Pune","Jaipur","Lucknow","Kanpur","Nagpur","Indore","Thane",
+  "Bhopal","Visakhapatnam","Pimpri-Chinchwad","Patna","Vadodara","Ghaziabad",
+  "Ludhiana","Agra","Nashik","Faridabad","Meerut","Rajkot","Varanasi",
+  "Srinagar","Aurangabad","Dhanbad","Amritsar","Navi Mumbai","Allahabad",
+  "Ranchi","Howrah","Coimbatore","Jabalpur","Gwalior","Vijayawada","Jodhpur",
+  "Madurai","Raipur","Kota","Chandigarh","Guwahati","Noida","Bhubaneswar",
+  "Thiruvananthapuram","Gurugram"
+];
+
+// ✅ Auto-assign: pick specialist with fewest open tickets
+function getAutoAssignByLeastTickets(supportPersons, category, city, country, tickets) {
+  if (!supportPersons || supportPersons.length === 0) return "";
+  const product = (category || "").toLowerCase();
+  const c  = (city    || "").toLowerCase().trim();
+  const co = (country || "").toLowerCase().trim();
+
+  const countOpen = (name) =>
+    tickets.filter(t => t.assignTo === name && (t.status === "open" || t.status === "pending")).length;
+
+  const pickLeast = (list) => {
+    if (list.length === 0) return "";
+    return list.reduce((best, p) => countOpen(p.name) < countOpen(best.name) ? p : best, list[0]).name;
+  };
+
+  if (product) {
+    const level1 = supportPersons.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product) && c && p.city && p.city.toLowerCase().trim() === c;
+    });
+    if (level1.length > 0) return pickLeast(level1);
+
+    const level2 = supportPersons.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product) && co && p.country && p.country.toLowerCase().trim() === co;
+    });
+    if (level2.length > 0) return pickLeast(level2);
+
+    const level3 = supportPersons.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return specs.map(s => s.toLowerCase()).includes(product);
+    });
+    if (level3.length > 0) return pickLeast(level3);
+  }
+
+  return pickLeast(supportPersons);
+}
 
 export default function Dashboard() {
   const navigate    = useNavigate();
@@ -30,7 +89,7 @@ export default function Dashboard() {
 
   const [form, setForm] = useState({
     category: "", model: "", serialNo: "", mac: "", customer: "",
-    email: "", phone: "", city: "", country: "", pincode: "",
+    email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "",
     description: "", assignTo: "", productImage: ""
   });
   const [errors, setErrors]                 = useState({});
@@ -46,13 +105,19 @@ export default function Dashboard() {
   const [productPopup, setProductPopup]     = useState(null);
   const [customerPopup, setCustomerPopup]   = useState(null);
   const [assigneePopup, setAssigneePopup]   = useState(null);
+  const [reassignPopup, setReassignPopup]   = useState(null); // ✅ reassign popup
 
-  const [dateSort, setDateSort]           = useState("newest");
-  const [productFilter, setProductFilter] = useState("all");
-  const [statusFilter, setStatusFilter]   = useState("all");
-  const [searchQuery, setSearchQuery]     = useState("");
-  const [filterMonth, setFilterMonth]     = useState(""); // ✅ Month dropdown (1-12)
-  const [filterYear, setFilterYear]       = useState("");  // ✅ Year dropdown
+  // ✅ city/state custom toggle
+  const [cityCustom, setCityCustom]   = useState(false);
+  const [stateCustom, setStateCustom] = useState(false);
+
+  const [dateSort, setDateSort]             = useState("newest");
+  const [productFilter, setProductFilter]   = useState("all");
+  const [statusFilter, setStatusFilter]     = useState("all");
+  const [searchQuery, setSearchQuery]       = useState("");
+  const [filterYear, setFilterYear]         = useState("");  // ✅ Year first
+  const [filterMonth, setFilterMonth]       = useState(""); // ✅ Month second
+  const [reassignFilter, setReassignFilter] = useState(false); // ✅ reassign filter
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -73,6 +138,13 @@ export default function Dashboard() {
     const id = setInterval(fetchTickets, 10000);
     return () => clearInterval(id);
   }, []);
+
+  // ✅ Auto-assign whenever category/city/country/tickets changes
+  useEffect(() => {
+    if (supportPersons.length === 0 || !form.category) return;
+    const assigned = getAutoAssignByLeastTickets(supportPersons, form.category, form.city, form.country, tickets);
+    setForm(prev => ({ ...prev, assignTo: assigned }));
+  }, [form.category, form.city, form.country, supportPersons, tickets]);
 
   const getFilteredSupportPersons = () => {
     const product = form.category;
@@ -179,10 +251,10 @@ export default function Dashboard() {
     if (!form.phone.trim()) newErrors.phone = "Contact number is required.";
     else if (!/^\d{10}$/.test(form.phone.replace(/\s+/g, ""))) newErrors.phone = "Enter a valid 10-digit phone number.";
     if (!form.city.trim())    newErrors.city    = "City is required.";
+    if (!form.state.trim())   newErrors.state   = "State is required.";
     if (!form.country)        newErrors.country = "Please select a country.";
     if (!form.pincode.trim()) newErrors.pincode = "Pincode is required.";
     else if (!/^\d{6}$/.test(form.pincode.trim())) newErrors.pincode = "Enter a valid 6-digit pincode.";
-    if (!form.assignTo)       newErrors.assignTo = "Please assign a support person.";
     if (!form.description.trim()) newErrors.description = "Description is required.";
     else if (form.description.trim().length > 500) newErrors.description = "Description cannot exceed 500 characters.";
     return newErrors;
@@ -237,7 +309,7 @@ export default function Dashboard() {
         .then(r => r.json())
         .then(updated => {
           setTickets(prev => prev.map(t => t.id === sameCustomerTicket.id ? updated : t));
-          setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+          setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "", description: "", assignTo: "", productImage: "" });
           setImagePreview("");
           setErrors({});
           setSuccessMsg(`✅ Same customer found! Issue updated in existing Ticket. Status reset to PENDING.`);
@@ -251,15 +323,15 @@ export default function Dashboard() {
 
     setSubmitting(true);
     const newTicket = {
-  ...form,
-  phone:        form.phone.replace(/\s+/g, ""),
-  status:       "open",
-  acceptedAt:   new Date().toISOString(),
-  raisedBy:     currentUser?.email || "unknown",
-  raisedByName: currentUser?.name  || "Unknown",
-  date:         new Date().toISOString().slice(0, 10),
-  createdAt:    new Date().toISOString(),
-};
+      ...form,
+      phone:        form.phone.replace(/\s+/g, ""),
+      status:       "open",
+      acceptedAt:   new Date().toISOString(),
+      raisedBy:     currentUser?.email || "unknown",
+      raisedByName: currentUser?.name  || "Unknown",
+      date:         new Date().toISOString().slice(0, 10),
+      createdAt:    new Date().toISOString(),
+    };
     fetch(`${BASE_URL}/tickets`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newTicket)
@@ -267,7 +339,7 @@ export default function Dashboard() {
       .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
       .then(saved => {
         setTickets(prev => [...prev, saved]);
-        setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", country: "", pincode: "", description: "", assignTo: "", productImage: "" });
+        setForm({ category: "", model: "", serialNo: "", mac: "", customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "", description: "", assignTo: "", productImage: "" });
         setImagePreview("");
         setErrors({});
         setSuccessMsg("✅ Ticket submitted successfully! Status: PENDING");
@@ -296,6 +368,7 @@ export default function Dashboard() {
       if (filterYear)  return d.getFullYear() === parseInt(filterYear);
       return true;
     })
+    .filter(t => !reassignFilter || !!t.reassignedFrom)
     .filter(t => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
@@ -319,7 +392,7 @@ export default function Dashboard() {
   const uniqueProducts = [...new Set(myTickets.map(t => t.category).filter(Boolean))];
 
   const statusCounts = {
-    all:      myTickets.length, 
+    all:      myTickets.length,
     open:     myTickets.filter(t => t.status === "open").length,
     resolved: myTickets.filter(t => t.status === "resolved").length,
     rma:      myTickets.filter(t => t.status === "rma").length,
@@ -336,9 +409,10 @@ export default function Dashboard() {
     fontFamily: "DM Sans, sans-serif", color: "#111",
   });
 
-  // ✅ Shared td style with dark right border line
+  // ✅ Shared td style with left-aligned text
   const tdStyle = (extra = {}) => ({
     borderRight: "1px solid #e0d8d0",
+    textAlign: "left",
     ...extra,
   });
 
@@ -347,28 +421,13 @@ export default function Dashboard() {
 
       {/* Issue/Resolution Popup Modal */}
       {issuePopup && (
-        <div
-          onClick={() => setIssuePopup(null)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
-            padding: 20
-          }}>
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: "white", borderRadius: 14, padding: "24px 28px",
-              maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-              border: "2px solid #fad8be"
-            }}>
+        <div onClick={() => setIssuePopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fad8be" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#c94500" }}>
                 {issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}
               </div>
-              <button onClick={() => setIssuePopup(null)}
-                style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>
-                ✕ Close
-              </button>
+              <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
             {issuePopup.resolutionNotes ? (
               <>
@@ -379,18 +438,12 @@ export default function Dashboard() {
                   {issuePopup.resolutionNotes}
                 </div>
                 {issuePopup.resolutionTimeTaken && (
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
-                    ⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong>
-                  </div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>⏱️ Time taken: <strong>{issuePopup.resolutionTimeTaken}</strong></div>
                 )}
                 {issuePopup.resolvedAt && (
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 14 }}>
-                    📅 Resolved on: <strong>{new Date(issuePopup.resolvedAt).toLocaleString()}</strong>
-                  </div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 14 }}>📅 Resolved on: <strong>{new Date(issuePopup.resolvedAt).toLocaleString()}</strong></div>
                 )}
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                  📋 Original Issue:
-                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>📋 Original Issue:</div>
                 <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, background: "#f9fafb", padding: "12px 14px", borderRadius: 8, border: "1px solid #e5e7eb", borderLeft: "3px solid #ff5a00" }}>
                   {issuePopup.description}
                 </div>
@@ -457,7 +510,7 @@ export default function Dashboard() {
               <button onClick={() => setCustomerPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
             <div style={{ background: "#eff6ff", borderRadius: 10, padding: "14px 16px", border: "1px solid #bfdbfe" }}>
-              {[["👤 Name", customerPopup.customer], ["📞 Phone", customerPopup.phone], ["🏙️ City", customerPopup.city], ["🌍 Country", customerPopup.country]].map(([label, val]) => (
+              {[["👤 Name", customerPopup.customer], ["📞 Phone", customerPopup.phone], ["🏙️ City", customerPopup.city], ["🗺️ State", customerPopup.state], ["🌍 Country", customerPopup.country], ["🏢 Company", customerPopup.companyName]].map(([label, val]) => (
                 <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 90 }}>{label}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
@@ -484,6 +537,49 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Reassign Detail Popup */}
+      {reassignPopup && (
+        <div onClick={() => setReassignPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fed7aa" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#c2410c" }}>🔄 Reassignment Details</div>
+              <button onClick={() => setReassignPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#fff7ed", borderRadius: 10, padding: "14px 16px", marginBottom: 12, border: "1px solid #fed7aa" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#c2410c", textTransform: "uppercase", marginBottom: 8 }}>Previously Assigned To:</div>
+              {(() => {
+                const old = supportPersons.find(p => p.name && reassignPopup.reassignedFrom && p.name.toLowerCase().trim() === reassignPopup.reassignedFrom.toLowerCase().trim());
+                return [["👤 Name", reassignPopup.reassignedFrom], ["📞 Phone", old?.phone], ["🏙️ City", old?.city], ["✉️ Email", old?.email], ["🎯 Specialist", old?.specialization?.join(", ")]].map(([label, val]) => (
+                  <div key={label} style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                  </div>
+                ));
+              })()}
+            </div>
+            <div style={{ background: "#f0fdf4", borderRadius: 10, padding: "14px 16px", marginBottom: 12, border: "1px solid #86efac" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", marginBottom: 8 }}>Now Assigned To:</div>
+              {(() => {
+                const newP = supportPersons.find(p => p.name && reassignPopup.assignTo && p.name.toLowerCase().trim() === reassignPopup.assignTo.toLowerCase().trim());
+                return [["👤 Name", reassignPopup.assignTo], ["📞 Phone", newP?.phone], ["🏙️ City", newP?.city], ["✉️ Email", newP?.email], ["🎯 Specialist", newP?.specialization?.join(", ")]].map(([label, val]) => (
+                  <div key={label} style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                  </div>
+                ));
+              })()}
+            </div>
+            {reassignPopup.reassignReason && (
+              <div style={{ background: "#fefce8", borderRadius: 8, padding: "10px 14px", border: "1px solid #fde047" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#854d0e", marginBottom: 4 }}>📝 Reason:</div>
+                <div style={{ fontSize: 13, color: "#374151" }}>{reassignPopup.reassignReason}</div>
+              </div>
+            )}
+            {reassignPopup.reassignedAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10 }}>📅 Reassigned on: {new Date(reassignPopup.reassignedAt).toLocaleString()}</div>}
           </div>
         </div>
       )}
@@ -522,12 +618,7 @@ export default function Dashboard() {
       <div className="dash-body">
 
         {successMsg && (
-          <div style={{
-            background: "#ecfdf5", border: "1.5px solid #6ee7b7",
-            borderRadius: 10, padding: "12px 20px", marginBottom: 16,
-            fontSize: 14, fontWeight: 600, color: "#065f46",
-            display: "flex", alignItems: "center", gap: 10
-          }}>
+          <div style={{ background: "#ecfdf5", border: "1.5px solid #6ee7b7", borderRadius: 10, padding: "12px 20px", marginBottom: 16, fontSize: 14, fontWeight: 600, color: "#065f46", display: "flex", alignItems: "center", gap: 10 }}>
             {successMsg}
           </div>
         )}
@@ -566,35 +657,30 @@ export default function Dashboard() {
 
               <div className="form-field">
                 <label className="form-label">Serial Number <span className="req">*</span></label>
-                <input name="serialNo" placeholder="e.g. SYR-20240001"
-                  value={form.serialNo} onChange={handleChange} style={inputStyle("serialNo")} />
+                <input name="serialNo" placeholder="e.g. SYR-20240001" value={form.serialNo} onChange={handleChange} style={inputStyle("serialNo")} />
                 {errors.serialNo && <span className="field-error">{errors.serialNo}</span>}
               </div>
 
               <div className="form-field">
                 <label className="form-label">MAC Address</label>
-                <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF"
-                  value={form.mac} onChange={handleChange} style={inputStyle("mac")} />
+                <input name="mac" placeholder="e.g. AA:BB:CC:DD:EE:FF" value={form.mac} onChange={handleChange} style={inputStyle("mac")} />
               </div>
 
               <div className="form-field">
                 <label className="form-label">Customer Name <span className="req">*</span></label>
-                <input name="customer" placeholder="Full name (letters only)"
-                  value={form.customer} onChange={handleChange} style={inputStyle("customer")} />
+                <input name="customer" placeholder="Full name (letters only)" value={form.customer} onChange={handleChange} style={inputStyle("customer")} />
                 {errors.customer && <span className="field-error">{errors.customer}</span>}
               </div>
 
               <div className="form-field">
                 <label className="form-label">Customer Email <span className="req">*</span></label>
-                <input name="email" placeholder="customer@email.com"
-                  value={form.email} onChange={handleChange} style={inputStyle("email")} />
+                <input name="email" placeholder="customer@email.com" value={form.email} onChange={handleChange} style={inputStyle("email")} />
                 {errors.email && <span className="field-error">{errors.email}</span>}
               </div>
 
               <div className="form-field">
                 <label className="form-label">Contact Number <span className="req">*</span><span className="form-hint"> (10 digits)</span></label>
-                <input name="phone" placeholder="e.g. 9876543210"
-                  value={form.phone} onChange={handleChange} maxLength={10} style={inputStyle("phone")} />
+                <input name="phone" placeholder="e.g. 9876543210" value={form.phone} onChange={handleChange} maxLength={10} style={inputStyle("phone")} />
                 {errors.phone
                   ? <span className="field-error">{errors.phone}</span>
                   : <span className="field-hint">{form.phone.replace(/\s+/g,"").length}/10 digits</span>
@@ -602,67 +688,74 @@ export default function Dashboard() {
               </div>
 
               <div className="form-field">
+                <label className="form-label">Company Name</label>
+                <input name="companyName" placeholder="e.g. ABC Pvt Ltd" value={form.companyName} onChange={handleChange} style={inputStyle("companyName")} />
+              </div>
+
+              {/* ✅ City — dropdown + manual input */}
+              <div className="form-field">
                 <label className="form-label">City <span className="req">*</span></label>
-                <input name="city" placeholder="e.g. Mumbai"
-                  value={form.city} onChange={handleChange} style={inputStyle("city")} />
+                {!cityCustom ? (
+                  <select name="city" value={form.city} onChange={e => {
+                    if (e.target.value === "__other__") { setCityCustom(true); setForm(prev => ({ ...prev, city: "", assignTo: "" })); }
+                    else handleChange(e);
+                  }} style={inputStyle("city")}>
+                    <option value="">Select City</option>
+                    {INDIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="__other__">✏️ Type manually...</option>
+                  </select>
+                ) : (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input name="city" placeholder="Type your city" value={form.city} onChange={handleChange} style={{ ...inputStyle("city"), flex: 1 }} />
+                    <button type="button" onClick={() => { setCityCustom(false); setForm(prev => ({ ...prev, city: "", assignTo: "" })); }}
+                      style={{ padding: "8px 10px", borderRadius: 9, border: "1.5px solid #ddd5c8", background: "#f0ebe3", cursor: "pointer", fontSize: 12, color: "#6b7280", whiteSpace: "nowrap" }}>↩ List</button>
+                  </div>
+                )}
                 {errors.city && <span className="field-error">{errors.city}</span>}
+              </div>
+
+              {/* ✅ State — dropdown + manual input */}
+              <div className="form-field">
+                <label className="form-label">State <span className="req">*</span></label>
+                {!stateCustom ? (
+                  <select name="state" value={form.state} onChange={e => {
+                    if (e.target.value === "__other__") { setStateCustom(true); setForm(prev => ({ ...prev, state: "" })); }
+                    else handleChange(e);
+                  }} style={inputStyle("state")}>
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="__other__">✏️ Type manually...</option>
+                  </select>
+                ) : (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input name="state" placeholder="Type your state" value={form.state} onChange={handleChange} style={{ ...inputStyle("state"), flex: 1 }} />
+                    <button type="button" onClick={() => { setStateCustom(false); setForm(prev => ({ ...prev, state: "" })); }}
+                      style={{ padding: "8px 10px", borderRadius: 9, border: "1.5px solid #ddd5c8", background: "#f0ebe3", cursor: "pointer", fontSize: 12, color: "#6b7280", whiteSpace: "nowrap" }}>↩ List</button>
+                  </div>
+                )}
+                {errors.state && <span className="field-error">{errors.state}</span>}
               </div>
 
               <div className="form-field">
                 <label className="form-label">Country <span className="req">*</span></label>
                 <select name="country" value={form.country} onChange={handleChange} style={inputStyle("country")}>
                   <option value="">Select Country</option>
-                  <option>India</option>
-                  <option>United States</option>
-                  <option>United Kingdom</option>
-                  <option>United Arab Emirates</option>
-                  <option>Saudi Arabia</option>
-                  <option>Canada</option>
-                  <option>Australia</option>
-                  <option>Singapore</option>
-                  <option>Germany</option>
-                  <option>France</option>
-                  <option>Nepal</option>
-                  <option>Bangladesh</option>
-                  <option>Sri Lanka</option>
-                  <option>Pakistan</option>
-                  <option>Other</option>
+                  <option>India</option><option>United States</option><option>United Kingdom</option>
+                  <option>United Arab Emirates</option><option>Saudi Arabia</option><option>Canada</option>
+                  <option>Australia</option><option>Singapore</option><option>Germany</option>
+                  <option>France</option><option>Nepal</option><option>Bangladesh</option>
+                  <option>Sri Lanka</option><option>Pakistan</option><option>Other</option>
                 </select>
                 {errors.country && <span className="field-error">{errors.country}</span>}
               </div>
 
               <div className="form-field">
                 <label className="form-label">Pincode <span className="req">*</span><span className="form-hint"> (6 digits)</span></label>
-                <input name="pincode" placeholder="e.g. 400001"
-                  value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
+                <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
                 {errors.pincode
                   ? <span className="field-error">{errors.pincode}</span>
                   : <span className="field-hint">{form.pincode.length}/6 digits</span>
                 }
-              </div>
-
-              <div className="form-field">
-                <label className="form-label">
-                  Assign Support Person <span className="req">*</span>
-                  {form.category && <span className="form-hint"> (filtered by product & location)</span>}
-                </label>
-                {filterMessage && (
-                  <div style={{ fontSize: 11, fontWeight: 600, color: filterMessage.color, background: filterMessage.bg, padding: "6px 10px", borderRadius: 6, marginBottom: 6, border: `1px solid ${filterMessage.color}22` }}>
-                    {filterMessage.msg}
-                  </div>
-                )}
-                <select name="assignTo" value={form.assignTo} onChange={handleChange} style={inputStyle("assignTo")}>
-                  <option value="">
-                    {form.category ? `Choose ${form.category} specialist${form.city ? ` in ${form.city}` : ""}` : "Select product first to filter specialists"}
-                  </option>
-                  {filteredSupportPersons.map(p => (
-                    <option key={p.email} value={p.name}>
-                      {p.name} — {p.city || "—"}
-                      {p.specialization && p.specialization.length > 0 ? ` (${p.specialization.join(", ")})` : ""}
-                    </option>
-                  ))}
-                </select>
-                {errors.assignTo && <span className="field-error">{errors.assignTo}</span>}
               </div>
             </div>
 
@@ -672,34 +765,24 @@ export default function Dashboard() {
                 Product Image
                 <span className="form-hint"> (optional — upload photo showing serial no & MAC address)</span>
               </label>
-              <div style={{
-                border: `2px dashed ${errors.productImage ? "#ef4444" : "#ddd5c8"}`,
-                borderRadius: 10, padding: "16px 20px",
-                background: "#f9f7f4", textAlign: "center",
-              }}>
+              <div style={{ border: `2px dashed ${errors.productImage ? "#ef4444" : "#ddd5c8"}`, borderRadius: 10, padding: "16px 20px", background: "#f9f7f4", textAlign: "center" }}>
                 {!imagePreview ? (
                   <div>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
                     <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>Upload product photo (max 3MB)</div>
                     <label style={{ background: "#ff5a00", color: "white", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-block" }}>
-                      Choose Image
-                      <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+                      Choose Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
                     </label>
                   </div>
                 ) : (
                   <div>
-                    <img src={imagePreview} alt="Product"
-                      style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
+                    <img src={imagePreview} alt="Product" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
                     <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
                       <label style={{ background: "#f0ebe3", color: "#555", border: "1px solid #ddd5c8", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>
-                        Change Image
-                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+                        Change Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
                       </label>
-                      <button type="button"
-                        onClick={() => { setImagePreview(""); setForm(prev => ({ ...prev, productImage: "" })); }}
-                        style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
-                        Remove
-                      </button>
+                      <button type="button" onClick={() => { setImagePreview(""); setForm(prev => ({ ...prev, productImage: "" })); }}
+                        style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Remove</button>
                     </div>
                     <div style={{ fontSize: 11, color: "#10b981", marginTop: 8, fontWeight: 600 }}>✅ Image uploaded</div>
                   </div>
@@ -762,12 +845,7 @@ export default function Dashboard() {
                       placeholder="🔍 Search by name, date, serial no, phone, city, product..."
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      style={{
-                        flex: 1, padding: "10px 16px", borderRadius: 10,
-                        border: "1.5px solid #d1d5db", fontSize: 13,
-                        background: "white", color: "#374151", outline: "none",
-                        fontFamily: "inherit",
-                      }}
+                      style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: "1.5px solid #d1d5db", fontSize: 13, background: "white", color: "#374151", outline: "none", fontFamily: "inherit" }}
                     />
                     {searchQuery && (
                       <button onClick={() => setSearchQuery("")}
@@ -778,18 +856,11 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div style={{
-                  background: "white", borderRadius: 12,
-                  border: "1.5px solid #e0d8d0",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                  marginBottom: 14, padding: "14px 16px",
-                  display: "flex", flexDirection: "column", gap: 12
-                }}>
+                <div style={{ background: "white", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", marginBottom: 14, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📋 Status:</span>
                     {[
                       ["all",      "All",        "#374151", "#f3f4f6"],
-                     
                       ["open",     "🔓 Open",     "#e04e00", "#fff4ee"],
                       ["resolved", "✅ Resolved", "#1a7a46", "#edfaf3"],
                       ["rma",      "🔧 RMA",      "#7c3aed", "#f5f3ff"],
@@ -803,16 +874,25 @@ export default function Dashboard() {
                         fontSize: 12, cursor: "pointer", whiteSpace: "nowrap"
                       }}>
                         {label}
-                        <span style={{
-                          marginLeft: 5,
-                          background: statusFilter === key ? col : "#e5e7eb",
-                          color: statusFilter === key ? "white" : "#555",
-                          borderRadius: 10, padding: "1px 6px", fontSize: 10, fontWeight: 700
-                        }}>
+                        <span style={{ marginLeft: 5, background: statusFilter === key ? col : "#e5e7eb", color: statusFilter === key ? "white" : "#555", borderRadius: 10, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
                           {statusCounts[key] ?? 0}
                         </span>
                       </button>
                     ))}
+                    {/* ✅ Reassign filter button */}
+                    <button onClick={() => setReassignFilter(p => !p)} style={{
+                      padding: "5px 12px", borderRadius: 16,
+                      border: reassignFilter ? "2px solid #c2410c" : "1px solid #d1d5db",
+                      background: reassignFilter ? "#fff7ed" : "white",
+                      color: reassignFilter ? "#c2410c" : "#555",
+                      fontWeight: reassignFilter ? 700 : 400,
+                      fontSize: 12, cursor: "pointer", whiteSpace: "nowrap"
+                    }}>
+                      🔄 Reassigned
+                      <span style={{ marginLeft: 5, background: reassignFilter ? "#c2410c" : "#e5e7eb", color: reassignFilter ? "white" : "#555", borderRadius: 10, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
+                        {myTickets.filter(t => !!t.reassignedFrom).length}
+                      </span>
+                    </button>
                   </div>
 
                   <div style={{ height: 1, background: "#f0ede8" }} />
@@ -820,18 +900,7 @@ export default function Dashboard() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     {/* ✅ Product — select dropdown */}
                     <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🔧 Product:</span>
-                    <select
-                      value={productFilter}
-                      onChange={e => setProductFilter(e.target.value)}
-                      style={{
-                        padding: "6px 14px", borderRadius: 8,
-                        border: `1.5px solid ${productFilter !== "all" ? "#ff5a00" : "#d1d5db"}`,
-                        fontSize: 12, cursor: "pointer",
-                        background: productFilter !== "all" ? "#fff4ee" : "white",
-                        color: productFilter !== "all" ? "#ff5a00" : "#374151",
-                        outline: "none", fontWeight: productFilter !== "all" ? 700 : 400,
-                        fontFamily: "inherit",
-                      }}>
+                    <select value={productFilter} onChange={e => setProductFilter(e.target.value)} style={{ padding: "6px 14px", borderRadius: 8, border: `1.5px solid ${productFilter !== "all" ? "#ff5a00" : "#d1d5db"}`, fontSize: 12, cursor: "pointer", background: productFilter !== "all" ? "#fff4ee" : "white", color: productFilter !== "all" ? "#ff5a00" : "#374151", outline: "none", fontWeight: productFilter !== "all" ? 700 : 400, fontFamily: "inherit" }}>
                       <option value="all">All Products</option>
                       {uniqueProducts.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
@@ -840,62 +909,27 @@ export default function Dashboard() {
 
                     {/* Sort by Date */}
                     <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📅 Sort:</span>
-                    <select
-                      value={dateSort}
-                      onChange={e => setDateSort(e.target.value)}
-                      style={{
-                        padding: "6px 14px", borderRadius: 8,
-                        border: "1.5px solid #d1d5db", fontSize: 12,
-                        cursor: "pointer", background: "white", color: "#374151",
-                        outline: "none", minWidth: 140, fontWeight: 600,
-                        fontFamily: "inherit",
-                      }}>
+                    <select value={dateSort} onChange={e => setDateSort(e.target.value)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 12, cursor: "pointer", background: "white", color: "#374151", outline: "none", minWidth: 140, fontWeight: 600, fontFamily: "inherit" }}>
                       <option value="newest">🔽 Newest First</option>
                       <option value="oldest">🔼 Oldest First</option>
                     </select>
 
                     <div style={{ width: 1, height: 24, background: "#e0d8d0", flexShrink: 0 }} />
 
-                    {/* ✅ Month + Year dropdowns */}
+                    {/* ✅ Year then Month dropdowns */}
                     <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>🗓️ Filter:</span>
-                    <select
-                      value={filterMonth}
-                      onChange={e => setFilterMonth(e.target.value)}
-                      style={{
-                        padding: "6px 12px", borderRadius: 8,
-                        border: `1.5px solid ${filterMonth ? "#ff5a00" : "#d1d5db"}`,
-                        fontSize: 12, cursor: "pointer",
-                        background: filterMonth ? "#fff4ee" : "white",
-                        color: filterMonth ? "#ff5a00" : "#374151",
-                        outline: "none", fontWeight: filterMonth ? 700 : 400,
-                        fontFamily: "inherit",
-                      }}>
+                    <select value={filterYear} onChange={e => setFilterYear(e.target.value)} style={{ padding: "6px 12px", borderRadius: 8, border: `1.5px solid ${filterYear ? "#ff5a00" : "#d1d5db"}`, fontSize: 12, cursor: "pointer", background: filterYear ? "#fff4ee" : "white", color: filterYear ? "#ff5a00" : "#374151", outline: "none", fontWeight: filterYear ? 700 : 400, fontFamily: "inherit" }}>
+                      <option value="">All Years</option>
+                      {[2020,2021,2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                    <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)} style={{ padding: "6px 12px", borderRadius: 8, border: `1.5px solid ${filterMonth ? "#ff5a00" : "#d1d5db"}`, fontSize: 12, cursor: "pointer", background: filterMonth ? "#fff4ee" : "white", color: filterMonth ? "#ff5a00" : "#374151", outline: "none", fontWeight: filterMonth ? 700 : 400, fontFamily: "inherit" }}>
                       <option value="">All Months</option>
                       {["January","February","March","April","May","June","July","August","September","October","November","December"].map((m, i) => (
                         <option key={i+1} value={i+1}>{m}</option>
                       ))}
                     </select>
-                    <select
-                      value={filterYear}
-                      onChange={e => setFilterYear(e.target.value)}
-                      style={{
-                        padding: "6px 12px", borderRadius: 8,
-                        border: `1.5px solid ${filterYear ? "#ff5a00" : "#d1d5db"}`,
-                        fontSize: 12, cursor: "pointer",
-                        background: filterYear ? "#fff4ee" : "white",
-                        color: filterYear ? "#ff5a00" : "#374151",
-                        outline: "none", fontWeight: filterYear ? 700 : 400,
-                        fontFamily: "inherit",
-                      }}>
-                      <option value="">All Years</option>
-                      {[2020,2021,2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
                     {(filterMonth || filterYear) && (
-                      <button
-                        onClick={() => { setFilterMonth(""); setFilterYear(""); }}
-                        style={{ background: "#fee2e2", border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 11, color: "#dc2626", fontWeight: 700 }}>
-                        ✕ Clear
-                      </button>
+                      <button onClick={() => { setFilterMonth(""); setFilterYear(""); }} style={{ background: "#fee2e2", border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 11, color: "#dc2626", fontWeight: 700 }}>✕ Clear</button>
                     )}
 
                     <div style={{ marginLeft: "auto", fontSize: 12, color: "#9ca3af", whiteSpace: "nowrap" }}>
@@ -904,25 +938,13 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div style={{
-                  borderRadius: 12,
-                  border: "1.5px solid #e0d8d0",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-                  overflowX: "scroll",
-                  overflowY: "auto",
-                  maxHeight: "72vh",
-                }}>
-                  <table style={{
-                    width: "100%",
-                    borderCollapse: "separate",
-                    borderSpacing: 0,
-                    background: "white",
-                    minWidth: 1000,
-                  }}>
+                <div style={{ borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflowX: "scroll", overflowY: "auto", maxHeight: "72vh" }}>
+                  <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, background: "white", minWidth: 1100 }}>
                     <colgroup>
                       <col style={{ width: 85  }} />
                       <col style={{ width: 100 }} />
-                      <col style={{ width: 120 }} />
+                      <col style={{ width: 110 }} />
+                      <col style={{ width: 110 }} />
                       <col style={{ width: 130 }} />
                       <col style={{ width: 130 }} />
                       <col style={{ width: 105 }} />
@@ -931,22 +953,15 @@ export default function Dashboard() {
                     </colgroup>
                     <thead>
                       <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-                        {["Ticket No","Date","Product","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
-                          <th key={i} style={{
-                            padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white",
-                            textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left",
-                            borderRight: "1px solid rgba(255,255,255,0.2)",
-                            whiteSpace: "nowrap"
-                          }}>{h}</th>
+                        {["Ticket No","Date","Product","Model","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
+                          <th key={i} style={{ padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {displayTickets.length === 0 ? (
                         <tr>
-                          <td colSpan={8} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>
-                            No tickets found for selected filters.
-                          </td>
+                          <td colSpan={9} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>No tickets found for selected filters.</td>
                         </tr>
                       ) : (
                         displayTickets.reduce((acc, ticket, idx) => {
@@ -957,15 +972,10 @@ export default function Dashboard() {
                           );
 
                           acc.push(
-                            <tr key={ticket.id} style={{
-                              borderBottom: "1px solid #f0ede8",
-                              background: idx % 2 === 0 ? "#faf7f4" : "white",
-                              borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
-                            }}>
-                              {/* ✅ All td now have borderRight for dark column lines */}
+                            <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#faf7f4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
+                              {/* ✅ Ticket No — no Row number */}
                               <td style={tdStyle({ padding: "12px 10px", whiteSpace: "nowrap" })}>
                                 <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>{ticket.ticketNumber || "—"}</div>
-                                <div style={{ fontSize: 9, color: "#9ca3af" }}>Row {idx + 1}</div>
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
                                 <div style={{ fontSize: 11, color: "#374151", fontWeight: 600, whiteSpace: "nowrap" }}>{ticket.date || "—"}</div>
@@ -973,51 +983,43 @@ export default function Dashboard() {
                                   <div style={{ fontSize: 10, color: "#10b981", whiteSpace: "nowrap" }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>
                                 )}
                               </td>
+                              {/* ✅ Product column — click opens popup */}
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <div
-                                  onClick={() => setProductPopup({ category: ticket.category, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}
+                                <div onClick={() => setProductPopup({ category: ticket.category, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}
                                   style={{ fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", color: "#ff5a00", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fad8be" }}>
                                   {ticket.category || "—"}
                                 </div>
-                                {ticket.model && <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{ticket.model}</div>}
+                              </td>
+                              {/* ✅ Model column */}
+                              <td style={tdStyle({ padding: "12px 10px" })}>
+                                <div style={{ fontSize: 11, color: "#374151", whiteSpace: "nowrap" }}>{ticket.model || "—"}</div>
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <div
-                                  onClick={() => setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, city: ticket.city, country: ticket.country })}
+                                <div onClick={() => setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, city: ticket.city, state: ticket.state, country: ticket.country, companyName: ticket.companyName })}
                                   style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#93c5fd" }}>
                                   {ticket.customer || "—"}
                                 </div>
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <div
-                                  onClick={() => {
-                                    const p = supportPersons.find(p => p.name && ticket.assignTo && p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim());
-                                    setAssigneePopup({ name: ticket.assignTo, phone: p?.phone, city: p?.city, specialization: p?.specialization?.join(", ") });
-                                  }}
-                                  style={{ fontSize: 12, fontWeight: 700, color: "#92400e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>
+                                <div onClick={() => {
+                                  const p = supportPersons.find(p => p.name && ticket.assignTo && p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim());
+                                  setAssigneePopup({ name: ticket.assignTo, phone: p?.phone, city: p?.city, specialization: p?.specialization?.join(", ") });
+                                }} style={{ fontSize: 12, fontWeight: 700, color: "#92400e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>
                                   {ticket.assignTo || "—"}
                                 </div>
                                 {ticket.reassignedFrom && (
-                                  <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700 }}>🔄 reassigned</div>
+                                  <div onClick={() => setReassignPopup({ reassignedFrom: ticket.reassignedFrom, assignTo: ticket.assignTo, reassignReason: ticket.reassignReason, reassignedAt: ticket.reassignedAt })}
+                                    style={{ fontSize: 9, color: "#c2410c", fontWeight: 700, cursor: "pointer", marginTop: 2 }}>🔄 reassigned — click</div>
                                 )}
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <span
-                                  onClick={() => {
-                                    if (s === "resolved") {
-                                      setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt });
-                                    } else if (s === "rma") {
-                                      setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
-                                    }
-                                  }}
-                                  style={{
-                                    padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700,
-                                    color: STATUS_COLOR[s], background: STATUS_BG[s],
-                                    display: "inline-block", whiteSpace: "nowrap",
-                                    cursor: s === "resolved" || s === "rma" ? "pointer" : "default",
-                                    border: s === "resolved" ? "1.5px solid #6ee7b7" : "none",
-                                  }}
-                                >
+                                <span onClick={() => {
+                                  if (s === "resolved") {
+                                    setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt });
+                                  } else if (s === "rma") {
+                                    setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
+                                  }
+                                }} style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap", cursor: s === "resolved" || s === "rma" ? "pointer" : "default", border: s === "resolved" ? "1.5px solid #6ee7b7" : "none" }}>
                                   {STATUS_ICON[s]} {s.toUpperCase()}
                                 </span>
                                 {s === "resolved" && ticket.resolutionNotes && (
@@ -1031,15 +1033,8 @@ export default function Dashboard() {
                               </td>
                               <td style={tdStyle({ padding: "12px 6px", textAlign: "center" })}>
                                 {ticket.productImage ? (
-                                  <button
-                                    onClick={() => setExpandedImage(prev => prev === ticket.id ? null : ticket.id)}
-                                    style={{
-                                      background: expandedImage === ticket.id ? "#dcfce7" : "#f0fdf4",
-                                      border: "1.5px solid #86efac",
-                                      borderRadius: 6, padding: "4px 8px", cursor: "pointer",
-                                      fontSize: 10, fontWeight: 700, color: "#065f46",
-                                      whiteSpace: "nowrap"
-                                    }}>
+                                  <button onClick={() => setExpandedImage(prev => prev === ticket.id ? null : ticket.id)}
+                                    style={{ background: expandedImage === ticket.id ? "#dcfce7" : "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: "#065f46", whiteSpace: "nowrap" }}>
                                     📷 {expandedImage === ticket.id ? "Hide" : "View"}
                                   </button>
                                 ) : (
@@ -1047,40 +1042,14 @@ export default function Dashboard() {
                                 )}
                               </td>
                               <td style={{ padding: "12px 10px" }}>
-                                <div
-                                  onClick={() => setIssuePopup({
-                                    description: ticket.description,
-                                    resolutionNotes: ticket.resolutionNotes,
-                                    resolutionTimeTaken: ticket.resolutionTimeTaken,
-                                    resolvedBy: ticket.resolvedBy,
-                                    resolvedAt: ticket.resolvedAt,
-                                  })}
-                                  style={{
-                                    fontSize: 12, color: "#374151", lineHeight: 1.6,
-                                    cursor: "pointer",
-                                    overflow: "hidden", textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap", maxWidth: 200,
-                                    textDecoration: "underline", textDecorationStyle: "dotted",
-                                    textDecorationColor: "#9ca3af"
-                                  }}
-                                  title="Click to view full issue"
-                                >
-                                  {ticket.description?.length > 40
-                                    ? ticket.description.slice(0, 40) + "…"
-                                    : ticket.description || "—"}
+                                <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
+                                  style={{ fontSize: 12, color: "#374151", lineHeight: 1.6, cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200, textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
+                                  title="Click to view full issue">
+                                  {ticket.description?.length > 40 ? ticket.description.slice(0, 40) + "…" : ticket.description || "—"}
                                 </div>
                                 {s === "resolved" && ticket.resolutionNotes && (
-                                  <div
-                                    onClick={() => setIssuePopup({
-                                      description: ticket.description,
-                                      resolutionNotes: ticket.resolutionNotes,
-                                      resolutionTimeTaken: ticket.resolutionTimeTaken,
-                                      resolvedBy: ticket.resolvedBy,
-                                      resolvedAt: ticket.resolvedAt,
-                                    })}
-                                    style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>
-                                    ✅ Resolved — click to view
-                                  </div>
+                                  <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
+                                    style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
                                 )}
                               </td>
                             </tr>
@@ -1089,14 +1058,9 @@ export default function Dashboard() {
                           if (expandedImage === ticket.id && ticket.productImage) {
                             acc.push(
                               <tr key={`img-${ticket.id}`}>
-                                <td colSpan={8} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
+                                <td colSpan={9} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
                                   <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
-                                    <img
-                                      src={ticket.productImage}
-                                      alt="Product"
-                                      style={{ maxHeight: 220, maxWidth: 300, borderRadius: 10, border: "2px solid #86efac", cursor: "pointer", objectFit: "contain", background: "white" }}
-                                      onClick={() => openImageInNewTab(ticket.productImage)}
-                                    />
+                                    <img src={ticket.productImage} alt="Product" style={{ maxHeight: 220, maxWidth: 300, borderRadius: 10, border: "2px solid #86efac", cursor: "pointer", objectFit: "contain", background: "white" }} onClick={() => openImageInNewTab(ticket.productImage)} />
                                     <div style={{ fontSize: 13, color: "#065f46" }}>
                                       <div style={{ fontWeight: 800, marginBottom: 6, fontSize: 14 }}>📷 Product Image</div>
                                       <div style={{ color: "#6b7280", marginBottom: 4 }}>Product: <strong>{ticket.category}</strong></div>
@@ -1113,7 +1077,7 @@ export default function Dashboard() {
                           if (ticket.feedbackRating) {
                             acc.push(
                               <tr key={`fb-${ticket.id}`} style={{ background: "#eff6ff" }}>
-                                <td colSpan={8} style={{ padding: "8px 20px" }}>
+                                <td colSpan={9} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#1e40af", fontWeight: 600 }}>
                                     ⭐ Your Feedback: {"★".repeat(ticket.feedbackRating)}{"☆".repeat(5 - ticket.feedbackRating)} ({ticket.feedbackRating}/5)
                                     {ticket.feedbackComment && ` — "${ticket.feedbackComment}"`}
@@ -1126,7 +1090,7 @@ export default function Dashboard() {
                           if (ticket.rmaStatus) {
                             acc.push(
                               <tr key={`rma-${ticket.id}`} style={{ background: "#f5f3ff" }}>
-                                <td colSpan={8} style={{ padding: "8px 20px" }}>
+                                <td colSpan={9} style={{ padding: "8px 20px" }}>
                                   <span style={{ fontSize: 12, color: "#5b21b6", fontWeight: 600 }}>
                                     🔧 RMA Center: {ticket.rmaCenterName} | {ticket.rmaCenterAddress} | 📞 {ticket.rmaCenterPhone}
                                   </span>
