@@ -1944,6 +1944,8 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
     <option value="rnd">⚙️ R&D</option>
   </select>
 )}
+
+
 <select
   value={["customer","dealer","distributor","sipartner"].includes(sourceFilter) ? sourceFilter : "customer"}
   onChange={e => setSourceFilter(e.target.value)}
@@ -1992,32 +1994,7 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
 )}
 
 
-   {sourceFilter === "support" && (
-  <div style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
-    <span style={{ fontSize:12, color:"#6b7280", fontWeight:600 }}>📡 Via:</span>
-    {[
-      ["all","All"],
-      ["support-email","📧 Email"],
-      ["syrocare-app","📱 App"],
-      ["website","🌐 Web"],
-      ["whatsapp","💬 WA"],
-      ["direct-call","📞 Call"],
-      ["rnd","⚙️ R&D"],
-    ].map(([key, label]) => (
-      <button key={key} onClick={() => setAssignedViaFilter(key)} style={{
-        padding:"5px 10px", borderRadius:16, fontSize:11, cursor:"pointer",
-        border: assignedViaFilter === key ? "2px solid #d97706" : "1px solid #d1d5db",
-        background: assignedViaFilter === key ? "#d97706" : "white",
-        color: assignedViaFilter === key ? "white" : "#555",
-        fontWeight: assignedViaFilter === key ? 700 : 400
-      }}>{label}</button>
-    ))}
-    {assignedViaFilter !== "all" && (
-      <button onClick={() => setAssignedViaFilter("all")}
-        style={{ background:"#fee2e2", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontSize:11, color:"#dc2626", fontWeight:700 }}>✕ Clear</button>
-    )}
-  </div>
-)}
+  
 
 
 
