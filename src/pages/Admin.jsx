@@ -1167,7 +1167,7 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
   const d = new Date(t.createdAt || t.date);
   if (filterDate) return d.toDateString() === new Date(filterDate).toDateString();
   if (filterYear && filterMonth) return d.getFullYear() === parseInt(filterYear) && d.getMonth() + 1 === parseInt(filterMonth);
-  if (filterYear) return d.getFullYear() === parseInt(filterYear);~
+  if (filterYear) return d.getFullYear() === parseInt(filterYear);
   if (filterMonth) return d.getMonth() + 1 === parseInt(filterMonth);
  return true;
 })
