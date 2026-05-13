@@ -11,7 +11,7 @@ export function useProducts() {
     fetch(`${BASE_URL}/api/products`)
       .then(r => r.json())
       .then(data => {
-        if (data && Object.keys(data).length > 0) setProducts(data);
+        if (data && Object.keys(data).some(k => Object.keys(data[k]).length > 0)) setProducts(data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
