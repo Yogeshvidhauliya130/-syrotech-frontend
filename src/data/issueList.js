@@ -323,7 +323,7 @@ export const ISSUE_LIST = {
       "Others",
     ],
 
-    "UHF CASING": [
+    "UHF Casing": [
       "Others",
     ],
   },
