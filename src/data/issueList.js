@@ -324,6 +324,7 @@ export const ISSUE_LIST = {
     ],
 
     "UHF Casing": [
+      "UHF Casing issue",
       "Others",
     ],
   },
