@@ -8,8 +8,8 @@ export default function AdminUsers() {
   const [approvedTab, setApprovedTab] = useState("user");
   const [showAddForm, setShowAddForm] = useState(false);
   const [addRole, setAddRole]         = useState("user");
-  const [addForm, setAddForm]         = useState({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: [] });
-  const [addError, setAddError]       = useState("");
+ const [addForm, setAddForm] = useState({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: [], level: 1, zone: "all" });
+ const [addError, setAddError]       = useState("");
   const [addSuccess, setAddSuccess]   = useState("");
   const [adding, setAdding]           = useState(false);
   const [showSpecDrop, setShowSpecDrop] = useState(false);
@@ -61,6 +61,8 @@ export default function AdminUsers() {
           role: addRole,
           city: addForm.city || "", country: addForm.country || "",
           specialization: Array.isArray(addForm.specialization) ? addForm.specialization : [],
+          level: addForm.level || 1,
+          zone: addForm.zone || "all",
         }),
       });
       const data = await res.json();
@@ -68,7 +70,7 @@ export default function AdminUsers() {
       await fetch(`${BASE_URL}/api/users/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: addForm.email }) });
       const roleLabel = addRole === "customer" ? "Customer" : addRole === "support" ? "Support Person" : "Sales Person";
       setAddSuccess(`✅ ${roleLabel} added and approved successfully!`);
-      setAddForm({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: [] });
+      setAddForm({ name: "", email: "", password: "", phone: "", companyName: "", city: "", country: "", specialization: [], level: 1, zone: "all" });
       fetchUsers();
       setTimeout(() => { setAddSuccess(""); setShowAddForm(false); }, 3000);
     } catch { setAddError("Cannot connect to server."); }
@@ -183,7 +185,7 @@ useEffect(() => {
           {/* Role tabs */}
           <div style={{ display: "flex", gap: 4, background: "#f0f0f2", borderRadius: 10, padding: 3, marginBottom: 20, width: "fit-content", flexWrap: "wrap" }}>
             {[["user","💼 Sales Person","#2563eb"],["customer","👥 Customer","#7c3aed"],["support","🛠️ Support Person","#059669"]].map(([r,l,c]) => (
-              <button key={r} onClick={() => { setAddRole(r); setAddError(""); setShowSpecDrop(false); setSpecSearch(""); setAddForm({ name:"", email:"", password:"", phone:"", companyName:"", city:"", country:"", specialization:[] }); }}
+              <button key={r} onClick={() => { setAddRole(r); setAddError(""); setShowSpecDrop(false); setSpecSearch(""); setAddForm({ name:"", email:"", password:"", phone:"", companyName:"", city:"", country:"", specialization:[], level: 1, zone: "all" }); }}
                 style={{ padding: "8px 16px", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600, background: addRole === r ? "white" : "transparent", color: addRole === r ? c : "#6b7280", boxShadow: addRole === r ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s" }}>
                 {l}
               </button>
@@ -221,7 +223,7 @@ useEffect(() => {
               <input type="password" value={addForm.password} onChange={e => setAddForm(p => ({...p, password: e.target.value}))} placeholder="Min 4 characters" style={inputStyle} />
             </div>
 
-            {/* Support only: City, Country, Specialization */}
+            {/* Support only: City, Country, Specialization, Level, Zone */}
             {addRole === "support" && (
               <>
                 <div>
@@ -288,6 +290,26 @@ useEffect(() => {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* ── NEW: Level and Zone fields ── */}
+                <div>
+                  <label style={labelStyle}>Level <span style={{ color: "#ef4444" }}>*</span></label>
+                  <select value={addForm.level} onChange={e => setAddForm(p => ({...p, level: parseInt(e.target.value)}))}
+                    style={inputStyle}>
+                    <option value={1}>Level 1 (L1)</option>
+                    <option value={2}>Level 2 (L2)</option>
+                    <option value={3}>Level 3 (L3)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Zone <span style={{ color: "#ef4444" }}>*</span></label>
+                  <select value={addForm.zone} onChange={e => setAddForm(p => ({...p, zone: e.target.value}))}
+                    style={inputStyle}>
+                    <option value="all">All Zones</option>
+                    <option value="all except south">All Except South</option>
+                    <option value="South Region">South Region</option>
+                  </select>
                 </div>
               </>
             )}

@@ -223,8 +223,10 @@ const [filterDate, setFilterDate]   = useState("");
   const [reassignStatusFilter, setReassignStatusFilter] = useState("all");
   const [reassignProductFilter, setReassignProductFilter] = useState("all");
   const [reassignSort, setReassignSort]           = useState("newest");
+  const [reassignLevelFilter, setReassignLevelFilter] = useState("all");
   const [reassignYear, setReassignYear]           = useState("");
   const [reassignMonth, setReassignMonth]         = useState("");
+  const [levelFilter, setLevelFilter] = useState("all");
 
   
   const saveFeedback = (ticketId, ticket) => {
@@ -286,18 +288,33 @@ const [filterDate, setFilterDate]   = useState("");
   if (sourceFilter === "sales")       return !t.source || (t.source !== "customer" && t.source !== "support");
   return true;
 })
-    .filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.customer, t.phone, t.email, t.category, t.subCategory, t.model, t.serialNo]
+    .filter(t => {
+  if (levelFilter === "all") return true;
+  const assignedPerson = supportPersons.find(p =>
+    p.name && t.assignTo &&
+    p.name.toLowerCase().trim() === t.assignTo.toLowerCase().trim()
+  );
+  return assignedPerson?.level === parseInt(levelFilter);
+})
+.filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.customer, t.phone, t.email, t.category, t.subCategory, t.model, t.serialNo]
   .some(f => (f || "").toLowerCase().includes(search.toLowerCase())))
-     
 
 
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
 );
   // All reassigned tickets
-  const allReassigned = tickets
+ const allReassigned = tickets
     .filter(t => !!t.reassignedFrom)
     .filter(t => filter === "all" || (t.status || "open").toLowerCase() === filter)
     .filter(t => reassignProductFilter === "all" || t.category === reassignProductFilter)
+    .filter(t => {
+      if (reassignLevelFilter === "all") return true;
+      const p = supportPersons.find(x =>
+        x.name && t.reassignedFrom &&
+        x.name.toLowerCase().trim() === t.reassignedFrom.toLowerCase().trim()
+      );
+      return p?.level === parseInt(reassignLevelFilter);
+    })
     .filter(t => {
       if (!reassignYear && !reassignMonth) return true;
       const d = new Date(t.createdAt || t.date);
@@ -888,6 +905,17 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
               </select>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ width: 1, height: 24, background: "#e0d8d0", flexShrink: 0 }} />
+<span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", whiteSpace: "nowrap" }}>🔧 Level:</span>
+{[["all","All"],["1","L1"],["2","L2"],["3","L3"]].map(([key, label]) => (
+  <button key={key} onClick={() => setLevelFilter(key)} style={{
+    padding: "5px 12px", borderRadius: 16, fontSize: 12, cursor: "pointer",
+    border: levelFilter === key ? "2px solid #059669" : "1px solid #d1d5db",
+    background: levelFilter === key ? "#ecfdf5" : "white",
+    color: levelFilter === key ? "#059669" : "#555",
+    fontWeight: levelFilter === key ? 700 : 400,
+  }}>{label}</button>
+))}
               <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", whiteSpace: "nowrap" }}>🗓️ Filter:</span>
               <select value={reassignYear} onChange={e => setReassignYear(e.target.value)}
                 style={{ padding: "6px 10px", borderRadius: 8, border: `1.5px solid ${reassignYear ? "#f59e0b" : "#d1d5db"}`, fontSize: 12, cursor: "pointer", background: reassignYear ? "#fffbeb" : "white", color: reassignYear ? "#d97706" : "#374151", outline: "none", fontFamily: "inherit" }}>
@@ -908,6 +936,16 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
                 <option value="newest">Newest First ↓</option>
                 <option value="oldest">Oldest First ↑</option>
               </select>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", whiteSpace: "nowrap" }}>🔧 Level:</span>
+{[["all","All"],["1","L1"],["2","L2"],["3","L3"]].map(([key, label]) => (
+  <button key={key} onClick={() => setReassignLevelFilter(key)} style={{
+    padding: "5px 12px", borderRadius: 16, fontSize: 12, cursor: "pointer",
+    border: reassignLevelFilter === key ? "2px solid #f59e0b" : "1px solid #d1d5db",
+    background: reassignLevelFilter === key ? "#fffbeb" : "white",
+    color: reassignLevelFilter === key ? "#d97706" : "#555",
+    fontWeight: reassignLevelFilter === key ? 700 : 400,
+  }}>{label}</button>
+))}
               <input placeholder="🔍 Search customer, serial, product, subcategory, item, from, to..."
                 value={reassignSearch} onChange={e => setReassignSearch(e.target.value)}
                 style={{ flex: 1, padding: "7px 12px", borderRadius: 9, border: "1.5px solid #d1d5db", fontSize: 12, background: "white", color: "#374151", outline: "none", fontFamily: "inherit" }} />
@@ -1068,6 +1106,15 @@ const [filterMonth, setFilterMonth] = useState("");
 const [filterDate, setFilterDate] = useState("");
 const [ratingFilter, setRatingFilter] = useState({});
 const [globalRating, setGlobalRating] = useState(0);
+const [supportPersons, setSupportPersons] = useState([]);
+
+useEffect(() => {
+  fetch(`${BASE_URL}/api/users`)
+    .then(r => r.json())
+    .then(users => setSupportPersons(users.filter(u => u.role === "support" && u.approved)))
+    .catch(console.error);
+}, []);
+const [levelFilter, setLevelFilter] = useState("all");
 
   useEffect(() => {
     const load = () => fetch(`${BASE_URL}/tickets`)
@@ -1107,8 +1154,15 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
   return true;
 }));
   const agents          = [...new Set(filteredTickets.map(t => t.assignTo).filter(Boolean))];
-  const filteredAgents  = agents.filter(a => a.toLowerCase().includes(agentFilter.toLowerCase()));
-
+  const filteredAgents  = agents
+  .filter(a => a.toLowerCase().includes(agentFilter.toLowerCase()))
+  .filter(a => {
+    if (levelFilter === "all") return true;
+    const person = filteredTickets
+      .map(t => t.assignTo === a ? supportPersons.find(p => p.name && p.name.toLowerCase().trim() === a.toLowerCase().trim()) : null)
+      .find(Boolean);
+    return person?.level === parseInt(levelFilter);
+  });
   const periodLabel = () => {
     if (period === "daily")   return customDate ? `Day: ${customDate}` : `Today: ${new Date().toLocaleDateString()}`;
     if (period === "weekly")  return "Last 7 Days";
@@ -1332,6 +1386,18 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
 
       {agents.length > 0 && (
         <div style={{ marginBottom: 14 }}>
+        <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10 }}>
+  <span style={{ fontSize:12, color:"#6b7280", fontWeight:600 }}>🔧 Level:</span>
+  {[["all","All Engineers"],["1","L1 Engineers"],["2","L2 Engineers"],["3","L3 Engineers"]].map(([key, label]) => (
+    <button key={key} onClick={() => setLevelFilter(key)} style={{
+      padding:"6px 14px", borderRadius:16, fontSize:12, cursor:"pointer",
+      border: levelFilter===key ? "2px solid #ff5a00" : "1px solid #d1d5db",
+      background: levelFilter===key ? "#fff4ee" : "white",
+      color: levelFilter===key ? "#ff5a00" : "#555",
+      fontWeight: levelFilter===key ? 700 : 400,
+    }}>{label}</button>
+  ))}
+</div>
           <input
             placeholder="🔍 Filter by support person name..."
             value={agentFilter}
