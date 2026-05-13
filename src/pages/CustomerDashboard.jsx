@@ -85,8 +85,10 @@ function getAutoAssign(supportPersons, category, state, tickets) {
     const specs = Array.isArray(p.specialization) ? p.specialization : [];
     return p.level === 1 && specs.map(s => s.toLowerCase()).includes(product);
   });
-  if (isSouth) {
-    matched = matched.filter(p => p.zone === "all");
+ if (isSouth) {
+    const southOnly = matched.filter(p => p.zone === "South Region");
+    const allZone   = matched.filter(p => p.zone === "all");
+    matched = southOnly.length > 0 ? southOnly : allZone;
   } else {
     matched = matched.filter(p => p.zone === "all" || p.zone === "all except south");
   }
