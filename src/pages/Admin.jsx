@@ -701,6 +701,19 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
 </div>
 
 
+        <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10, background:"white", borderRadius:10, padding:"10px 14px", border:"1.5px solid #e0d8d0" }}>
+  <span style={{ fontSize:12, fontWeight:700, color:"#6b7280" }}>🔧 Engineer Level:</span>
+  {[["all","All"],["1","L1"],["2","L2"],["3","L3"]].map(([key, label]) => (
+    <button key={key} onClick={() => setLevelFilter(key)} style={{
+      padding:"5px 12px", borderRadius:16, fontSize:12, cursor:"pointer",
+      border: levelFilter===key ? "2px solid #ff5a00" : "1px solid #d1d5db",
+      background: levelFilter===key ? "#fff4ee" : "white",
+      color: levelFilter===key ? "#ff5a00" : "#555",
+      fontWeight: levelFilter===key ? 700 : 400,
+    }}>{label}</button>
+  ))}
+</div>
+
           <div style={{ marginBottom: 12 }}>
             <input placeholder="🔍 Search by name, agent, phone, product, subcategory, item..." value={search} onChange={e => setSearch(e.target.value)}
               style={{ width: "100%", padding: "10px 16px", border: "1.5px solid #d1d5db", borderRadius: 10, fontSize: 13, outline: "none", background: "white", fontFamily: "inherit", color: "#111", boxSizing: "border-box" }} />
@@ -905,17 +918,7 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
               </select>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <div style={{ width: 1, height: 24, background: "#e0d8d0", flexShrink: 0 }} />
-<span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", whiteSpace: "nowrap" }}>🔧 Level:</span>
-{[["all","All"],["1","L1"],["2","L2"],["3","L3"]].map(([key, label]) => (
-  <button key={key} onClick={() => setLevelFilter(key)} style={{
-    padding: "5px 12px", borderRadius: 16, fontSize: 12, cursor: "pointer",
-    border: levelFilter === key ? "2px solid #059669" : "1px solid #d1d5db",
-    background: levelFilter === key ? "#ecfdf5" : "white",
-    color: levelFilter === key ? "#059669" : "#555",
-    fontWeight: levelFilter === key ? 700 : 400,
-  }}>{label}</button>
-))}
+              
               <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", whiteSpace: "nowrap" }}>🗓️ Filter:</span>
               <select value={reassignYear} onChange={e => setReassignYear(e.target.value)}
                 style={{ padding: "6px 10px", borderRadius: 8, border: `1.5px solid ${reassignYear ? "#f59e0b" : "#d1d5db"}`, fontSize: 12, cursor: "pointer", background: reassignYear ? "#fffbeb" : "white", color: reassignYear ? "#d97706" : "#374151", outline: "none", fontFamily: "inherit" }}>
