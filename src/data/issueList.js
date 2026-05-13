@@ -318,6 +318,14 @@ export const ISSUE_LIST = {
       "Reading range issue",
       "Others",
     ],
+
+    "UHF ADAPTOR": [
+      "Others",
+    ],
+
+    "UHF CASING": [
+      "Others",
+    ],
   },
 
   // ── Passive Products ────────────────────────────────────────────
