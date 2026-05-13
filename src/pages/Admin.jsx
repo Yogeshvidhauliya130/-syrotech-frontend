@@ -659,9 +659,11 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
     <option value="customer">👥 All Customers ({tickets.filter(t => t.source === "customer").length})</option>
     <option value="dealer">🏷️ Dealer ({tickets.filter(t => t.source === "customer" && (t.customerType||"").toLowerCase() === "dealer").length})</option>
     <option value="distributor">📦 Distributor ({tickets.filter(t => t.source === "customer" && (t.customerType||"").toLowerCase() === "distributor").length})</option>
-    <option value="sipartner">🤝 SI Partner ({tickets.filter(t => t.source === "customer" && (t.customerType||"").toLowerCase() === "si partner").length})</option>
+   
+  
+<option value="sipartner">🤝 SI Partner ({tickets.filter(t => t.source === "customer" && (t.customerType||"").toLowerCase() === "si partner").length})</option>
   </select>
-  {sourceFilter === "support" && (
+{sourceFilter === "support" && (
   <select value={sourceViaFilter} onChange={e => setSourceViaFilter(e.target.value)}
     style={{ padding:"6px 12px", borderRadius:8, border:`1.5px solid ${sourceViaFilter!=="all"?"#059669":"#d1d5db"}`, fontSize:12, cursor:"pointer", background:sourceViaFilter!=="all"?"#ecfdf5":"white", color:sourceViaFilter!=="all"?"#059669":"#374151", outline:"none", fontFamily:"inherit" }}>
     <option value="all">All Vias</option>
@@ -684,8 +686,10 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
       style={{ padding:"6px 10px", borderRadius:8, border:`1.5px solid ${filterYear ? "#ff5a00" : "#d1d5db"}`, fontSize:12, background: filterYear ? "#fff4ee" : "white", color: filterYear ? "#ff5a00" : "#374151", outline:"none", fontFamily:"inherit" }}>
       <option value="">All Years</option>
       {[2025,2026,2027,2028,2029,2030,2031,2032,2033,2034,2035].map(y => <option key={y} value={y}>{y}</option>)}
-    </select>
+ </select>
   </div>
+
+
 
   <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
     <label style={{ fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase" }}>🗓️ Month</label>
