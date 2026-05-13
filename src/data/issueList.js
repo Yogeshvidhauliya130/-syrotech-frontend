@@ -323,10 +323,7 @@ export const ISSUE_LIST = {
       "Others",
     ],
 
-    "UHF Casing": [
-      "UHF Casing issue",
-      "Others",
-    ],
+    
   },
 
   // ── Passive Products ────────────────────────────────────────────

@@ -310,8 +310,7 @@ export const PRODUCT_MODELS = {
     "UHF RFID TCP IP PCB-6 mtr": ["SY-U60019001 RJ (PCB)"],
     "UHF RFID W/G PCB-15 mtr": ["SY-U1500 1200-PCB"],
     "UHF RFID W/G PCB-6 mtr": ["SY-U60019001  (PCB)"],
-    "UHF ADAPTOR": ["ADAPTOR-12V-3A(UHP ADAPTOR)"],
-    "UHF Casing ": ["SY-U1500 1200-RJ-CASING"]
+    "UHF ADAPTOR": ["ADAPTOR-12V-3A(UHP ADAPTOR)"]
   },
 
   // ── Passive Products ────────────────────────
