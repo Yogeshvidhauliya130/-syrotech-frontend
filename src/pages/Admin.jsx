@@ -214,6 +214,7 @@ function Analytics() {
   const [raisedByPopup, setRaisedByPopup]   = useState(null);
   const [reassignPopup, setReassignPopup]   = useState(null);
   const [sourceFilter, setSourceFilter]     = useState("all");
+  const [sourceViaFilter, setSourceViaFilter] = useState("all");
  const [filterYear, setFilterYear]   = useState("");
 const [filterMonth, setFilterMonth] = useState("");
 const [filterDate, setFilterDate]   = useState("");
@@ -284,7 +285,7 @@ const [filterDate, setFilterDate]   = useState("");
   if (sourceFilter === "dealer")      return t.source === "customer" && (t.customerType||"").toLowerCase() === "dealer";
   if (sourceFilter === "distributor") return t.source === "customer" && (t.customerType||"").toLowerCase() === "distributor";
   if (sourceFilter === "sipartner")   return t.source === "customer" && (t.customerType||"").toLowerCase() === "si partner";
-  if (sourceFilter === "support")     return t.source === "support";
+  if (sourceFilter === "support") return t.source === "support" && (sourceViaFilter === "all" || t.raisedVia === sourceViaFilter);
   if (sourceFilter === "sales")       return !t.source || (t.source !== "customer" && t.source !== "support");
   return true;
 })
@@ -660,6 +661,18 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
     <option value="distributor">📦 Distributor ({tickets.filter(t => t.source === "customer" && (t.customerType||"").toLowerCase() === "distributor").length})</option>
     <option value="sipartner">🤝 SI Partner ({tickets.filter(t => t.source === "customer" && (t.customerType||"").toLowerCase() === "si partner").length})</option>
   </select>
+  {sourceFilter === "support" && (
+  <select value={sourceViaFilter} onChange={e => setSourceViaFilter(e.target.value)}
+    style={{ padding:"6px 12px", borderRadius:8, border:`1.5px solid ${sourceViaFilter!=="all"?"#059669":"#d1d5db"}`, fontSize:12, cursor:"pointer", background:sourceViaFilter!=="all"?"#ecfdf5":"white", color:sourceViaFilter!=="all"?"#059669":"#374151", outline:"none", fontFamily:"inherit" }}>
+    <option value="all">All Vias</option>
+    <option value="support-email">📧 Support Email</option>
+    <option value="syrocare-app">📱 Syrocare App</option>
+    <option value="website">🌐 Website</option>
+    <option value="whatsapp">💬 WhatsApp</option>
+    <option value="direct-call">📞 Direct Call</option>
+    <option value="rnd">⚙️ R&D</option>
+  </select>
+)}
 </div>
 
              <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", marginBottom:12, background:"white", borderRadius:10, padding:"12px 16px", border:"1.5px solid #e0d8d0" }}>
@@ -1118,6 +1131,8 @@ useEffect(() => {
     .catch(console.error);
 }, []);
 const [levelFilter, setLevelFilter] = useState("all");
+const [sourceViaFilter, setSourceViaFilter] = useState("all");
+const [supportOnly, setSupportOnly] = useState(false);
 
   useEffect(() => {
     const load = () => fetch(`${BASE_URL}/tickets`)
@@ -1152,10 +1167,12 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
   const d = new Date(t.createdAt || t.date);
   if (filterDate) return d.toDateString() === new Date(filterDate).toDateString();
   if (filterYear && filterMonth) return d.getFullYear() === parseInt(filterYear) && d.getMonth() + 1 === parseInt(filterMonth);
-  if (filterYear) return d.getFullYear() === parseInt(filterYear);
+  if (filterYear) return d.getFullYear() === parseInt(filterYear);~
   if (filterMonth) return d.getMonth() + 1 === parseInt(filterMonth);
-  return true;
-}));
+ return true;
+})
+.filter(t => !supportOnly || t.source === "support")
+.filter(t => sourceViaFilter === "all" || t.raisedVia === sourceViaFilter));
   const agents          = [...new Set(filteredTickets.map(t => t.assignTo).filter(Boolean))];
   const filteredAgents  = agents
   .filter(a => a.toLowerCase().includes(agentFilter.toLowerCase()))
@@ -1390,6 +1407,25 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
       {agents.length > 0 && (
         <div style={{ marginBottom: 14 }}>
         <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10 }}>
+          <button onClick={() => { setSupportOnly(p => !p); setSourceViaFilter("all"); }} style={{
+  padding:"6px 14px", borderRadius:16, fontSize:12, cursor:"pointer",
+  border: supportOnly ? "2px solid #059669" : "1px solid #d1d5db",
+  background: supportOnly ? "#ecfdf5" : "white",
+  color: supportOnly ? "#059669" : "#555",
+  fontWeight: supportOnly ? 700 : 400,
+}}>🛠️ Support Only</button>
+{supportOnly && (
+  <select value={sourceViaFilter} onChange={e => setSourceViaFilter(e.target.value)}
+    style={{ padding:"6px 12px", borderRadius:8, border:`1.5px solid ${sourceViaFilter!=="all"?"#059669":"#d1d5db"}`, fontSize:12, cursor:"pointer", background:sourceViaFilter!=="all"?"#ecfdf5":"white", color:sourceViaFilter!=="all"?"#059669":"#374151", outline:"none", fontFamily:"inherit" }}>
+    <option value="all">All Vias</option>
+    <option value="support-email">📧 Support Email</option>
+    <option value="syrocare-app">📱 Syrocare App</option>
+    <option value="website">🌐 Website</option>
+    <option value="whatsapp">💬 WhatsApp</option>
+    <option value="direct-call">📞 Direct Call</option>
+    <option value="rnd">⚙️ R&D</option>
+  </select>
+)}
   <span style={{ fontSize:12, color:"#6b7280", fontWeight:600 }}>🔧 Level:</span>
   {[["all","All Engineers"],["1","L1 Engineers"],["2","L2 Engineers"],["3","L3 Engineers"]].map(([key, label]) => (
     <button key={key} onClick={() => setLevelFilter(key)} style={{
