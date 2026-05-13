@@ -227,6 +227,8 @@ const [myReassignedSort, setMyReassignedSort]   = useState("newest");
 const [myRaisedStatusFilter, setMyRaisedStatusFilter]           = useState("all");
 
 const [myReassignedStatusFilter, setMyReassignedStatusFilter]   = useState("all");
+const [assignedViaFilter, setAssignedViaFilter] = useState("all");
+const [myRaisedViaFilter, setMyRaisedViaFilter] = useState("all");
 const [assignedProductFilter, setAssignedProductFilter]       = useState("all");
 const [assignedSubFilter, setAssignedSubFilter]               = useState("all");
 const [assignedItemFilter, setAssignedItemFilter]             = useState("all");
@@ -639,6 +641,7 @@ const resolutionPct = activeTotal === 0 ? 0 : Math.round((counts.resolved / acti
       return true;
    })
     .filter(t => !reassignFilter || !!t.reassignedFrom)
+    .filter(t => assignedViaFilter === "all" || (t.source === "support" && t.raisedVia === assignedViaFilter))
     .filter(t => assignedProductFilter === "all" || t.category === assignedProductFilter)
 .filter(t => assignedSubFilter === "all" || t.subCategory === assignedSubFilter)
 .filter(t => assignedItemFilter === "all" || t.model === assignedItemFilter)
@@ -668,6 +671,7 @@ const resolutionPct = activeTotal === 0 ? 0 : Math.round((counts.resolved / acti
       const filteredMyRaised = allTickets
   .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
   .filter(t => myRaisedStatusFilter === "all" || (t.status || "open").toLowerCase() === myRaisedStatusFilter)
+  .filter(t => myRaisedViaFilter === "all" || t.raisedVia === myRaisedViaFilter)
 .filter(t => myRaisedProductFilter === "all" || t.category === myRaisedProductFilter)
 .filter(t => myRaisedSubFilter === "all" || t.subCategory === myRaisedSubFilter)
 .filter(t => myRaisedItemFilter === "all" || t.model === myRaisedItemFilter)
@@ -1910,16 +1914,36 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
 
               <div style={{ width: 1, height: 24, background: "#e0d8d0", margin: "0 4px" }} />
 
-              {[["all","👥 All Sources"],["support","📞 Support"],["sales","🧑‍💼 Sales"]].map(([key, label]) => (
+              {[["all","👥 All Sources"],["sales","🧑‍💼 Sales"]].map(([key, label]) => (
   <button key={key} onClick={() => setSourceFilter(key)} style={{
     padding: "8px 14px", borderRadius: 20,
     border: sourceFilter === key ? "none" : "1px solid #d1d5db",
-    background: sourceFilter === key ? (key === "support" ? "#d97706" : key === "sales" ? "#e04e00" : "#374151") : "white",
+    background: sourceFilter === key ? (key === "sales" ? "#e04e00" : "#374151") : "white",
     color: sourceFilter === key ? "white" : "#555",
     fontWeight: sourceFilter === key ? 700 : 400,
     fontSize: 12, cursor: "pointer"
   }}>{label}</button>
 ))}
+<button onClick={() => { setSourceFilter("support"); setAssignedViaFilter("all"); }} style={{
+  padding: "8px 14px", borderRadius: 20,
+  border: sourceFilter === "support" ? "none" : "1px solid #d1d5db",
+  background: sourceFilter === "support" ? "#d97706" : "white",
+  color: sourceFilter === "support" ? "white" : "#555",
+  fontWeight: sourceFilter === "support" ? 700 : 400,
+  fontSize: 12, cursor: "pointer"
+}}>📞 Support</button>
+{sourceFilter === "support" && (
+  <select value={assignedViaFilter} onChange={e => setAssignedViaFilter(e.target.value)}
+    style={{ padding:"6px 12px", borderRadius:8, border:`1.5px solid ${assignedViaFilter!=="all"?"#d97706":"#d1d5db"}`, fontSize:12, cursor:"pointer", background:assignedViaFilter!=="all"?"#fffbeb":"white", color:assignedViaFilter!=="all"?"#d97706":"#374151", outline:"none", fontFamily:"inherit" }}>
+    <option value="all">All Vias</option>
+    <option value="support-email">📧 Support Email</option>
+    <option value="syrocare-app">📱 Syrocare App</option>
+    <option value="website">🌐 Website</option>
+    <option value="whatsapp">💬 WhatsApp</option>
+    <option value="direct-call">📞 Direct Call</option>
+    <option value="rnd">⚙️ R&D</option>
+  </select>
+)}
 <select
   value={["customer","dealer","distributor","sipartner"].includes(sourceFilter) ? sourceFilter : "customer"}
   onChange={e => setSourceFilter(e.target.value)}
@@ -1966,6 +1990,37 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
   <button onClick={() => { setAssignedProductFilter("all"); setAssignedSubFilter("all"); setAssignedItemFilter("all"); }}
     style={{ background:"#fee2e2", border:"none", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:11, color:"#dc2626", fontWeight:700 }}>✕ Clear</button>
 )}
+
+
+   {sourceFilter === "support" && (
+  <div style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
+    <span style={{ fontSize:12, color:"#6b7280", fontWeight:600 }}>📡 Via:</span>
+    {[
+      ["all","All"],
+      ["support-email","📧 Email"],
+      ["syrocare-app","📱 App"],
+      ["website","🌐 Web"],
+      ["whatsapp","💬 WA"],
+      ["direct-call","📞 Call"],
+      ["rnd","⚙️ R&D"],
+    ].map(([key, label]) => (
+      <button key={key} onClick={() => setAssignedViaFilter(key)} style={{
+        padding:"5px 10px", borderRadius:16, fontSize:11, cursor:"pointer",
+        border: assignedViaFilter === key ? "2px solid #d97706" : "1px solid #d1d5db",
+        background: assignedViaFilter === key ? "#d97706" : "white",
+        color: assignedViaFilter === key ? "white" : "#555",
+        fontWeight: assignedViaFilter === key ? 700 : 400
+      }}>{label}</button>
+    ))}
+    {assignedViaFilter !== "all" && (
+      <button onClick={() => setAssignedViaFilter("all")}
+        style={{ background:"#fee2e2", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontSize:11, color:"#dc2626", fontWeight:700 }}>✕ Clear</button>
+    )}
+  </div>
+)}
+
+
+
 
               <button onClick={() => setReassignFilter(p => !p)} style={{
                 padding: "8px 14px", borderRadius: 20,
