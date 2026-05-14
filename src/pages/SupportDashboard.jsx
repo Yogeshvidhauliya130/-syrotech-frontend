@@ -393,22 +393,31 @@ const sent = sendRMAWhatsApp(ticket, rf.reason);
       .catch(err => { console.error("RMA failed:", err); setSubmittingRma(null); });
   };
 
-  const handleResolveSubmit = (ticketId) => {
+const handleResolveSubmit = (ticketId) => {
     const rf = resolveForm[ticketId] || {};
     if (!rf.notes?.trim()) { alert("Please describe what issue was solved."); return; }
     const now = new Date().toISOString();
+    const currentTicket = allTickets.find(t => t.id === ticketId);
+    const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTicket.issueHistory : [];
+    const updatedHistory = existingHistory.map((entry, i) => {
+      if (i === existingHistory.length - 1) {
+        return { ...entry, resolvedNotes: rf.notes.trim(), resolvedAt: now, resolvedBy: currentUser?.name };
+      }
+      return entry;
+    });
     fetch(`${BASE_URL}/tickets/${ticketId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-  status: "resolved",
-  resolvedAt: now,
-  resolutionNotes: rf.notes.trim(),
-  resolvedBy: currentUser?.name,
-  hardwareVersion: rf.hardwareVersion?.trim() || "",
-  softwareVersion: rf.softwareVersion?.trim() || "",
-  qvcCode: rf.qvcCode?.trim() || "",
-})
+        status: "resolved",
+        resolvedAt: now,
+        resolutionNotes: rf.notes.trim(),
+        resolvedBy: currentUser?.name,
+        hardwareVersion: rf.hardwareVersion?.trim() || "",
+        softwareVersion: rf.softwareVersion?.trim() || "",
+        qvcCode: rf.qvcCode?.trim() || "",
+        issueHistory: updatedHistory,
+      })
     })
       .then(r => r.json())
       .then(updated => {
@@ -786,11 +795,37 @@ const filteredMyReassigned = allTickets
 
 {issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
   <div style={{ marginBottom:14 }}>
-    <div style={{ fontSize:11, fontWeight:700, color:"#059669", textTransform:"uppercase", marginBottom:8 }}>📋 Previous Issues ({issuePopup.issueHistory.length})</div>
+    <div style={{ fontSize:11, fontWeight:700, color:"#059669", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({issuePopup.issueHistory.length} Stages)</div>
     {issuePopup.issueHistory.map((h, i) => (
-      <div key={i} style={{ background:"#ecfdf5", border:"1px solid #6ee7b7", borderLeft:"3px solid #10b981", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
-        <div style={{ fontSize:11, fontWeight:700, color:"#059669", marginBottom:4 }}>Issue {i+1} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}</div>
-        <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
+      <div key={i} style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid #6ee7b7" }}>
+        {/* Issue */}
+        <div style={{ background:"#ecfdf5", padding:"10px 12px", borderLeft:"4px solid #10b981" }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#059669", marginBottom:4 }}>
+            🔴 Stage {i+1} — Issue Raised
+            <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:8 }}>
+              {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}
+            </span>
+          </div>
+          <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
+          {h.raisedByName && <div style={{ fontSize:10, color:"#6b7280", marginTop:4 }}>👤 {h.raisedByName}</div>}
+        </div>
+        {/* Resolution */}
+        {h.resolvedNotes ? (
+          <div style={{ background:"#f0fdf4", padding:"10px 12px", borderLeft:"4px solid #059669" }}>
+            <div style={{ fontSize:11, fontWeight:700, color:"#059669", marginBottom:4 }}>
+              ✅ Stage {i+1} — Resolved
+              <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:8 }}>
+                {h.resolvedAt ? new Date(h.resolvedAt).toLocaleString() : "—"}
+              </span>
+            </div>
+            <div style={{ fontSize:12, color:"#374151" }}>{h.resolvedNotes}</div>
+            {h.resolvedBy && <div style={{ fontSize:10, color:"#6b7280", marginTop:4 }}>🛠️ Resolved by: {h.resolvedBy}</div>}
+          </div>
+        ) : (
+          <div style={{ background:"#fffbeb", padding:"8px 12px", borderLeft:"4px solid #f59e0b" }}>
+            <div style={{ fontSize:11, color:"#92400e", fontWeight:600 }}>⏳ Pending Resolution...</div>
+          </div>
+        )}
       </div>
     ))}
   </div>

@@ -320,13 +320,39 @@ customerType: customerType,
               <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#5b21b6" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
             </div>
-            {issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+           {issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
   <div style={{ marginBottom:14 }}>
-    <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", textTransform:"uppercase", marginBottom:8 }}>📋 Previous Issues ({issuePopup.issueHistory.length})</div>
+    <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({issuePopup.issueHistory.length} Stages)</div>
     {issuePopup.issueHistory.map((h, i) => (
-      <div key={i} style={{ background:"#f5f3ff", border:"1px solid #c4b5fd", borderLeft:"3px solid #7c3aed", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
-        <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", marginBottom:4 }}>Issue {i+1} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}</div>
-        <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
+      <div key={i} style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid #c4b5fd" }}>
+        {/* Issue */}
+        <div style={{ background:"#f5f3ff", padding:"10px 12px", borderLeft:"4px solid #7c3aed" }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", marginBottom:4 }}>
+            🔴 Stage {i+1} — Issue Raised
+            <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:8 }}>
+              {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}
+            </span>
+          </div>
+          <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
+          {h.raisedByName && <div style={{ fontSize:10, color:"#6b7280", marginTop:4 }}>👤 {h.raisedByName}</div>}
+        </div>
+        {/* Resolution */}
+        {h.resolvedNotes ? (
+          <div style={{ background:"#ecfdf5", padding:"10px 12px", borderLeft:"4px solid #10b981" }}>
+            <div style={{ fontSize:11, fontWeight:700, color:"#059669", marginBottom:4 }}>
+              ✅ Stage {i+1} — Resolved
+              <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:8 }}>
+                {h.resolvedAt ? new Date(h.resolvedAt).toLocaleString() : "—"}
+              </span>
+            </div>
+            <div style={{ fontSize:12, color:"#374151" }}>{h.resolvedNotes}</div>
+            {h.resolvedBy && <div style={{ fontSize:10, color:"#6b7280", marginTop:4 }}>🛠️ Resolved by: {h.resolvedBy}</div>}
+          </div>
+        ) : (
+          <div style={{ background:"#fff4ee", padding:"8px 12px", borderLeft:"4px solid #f59e0b" }}>
+            <div style={{ fontSize:11, color:"#92400e", fontWeight:600 }}>⏳ Pending Resolution...</div>
+          </div>
+        )}
       </div>
     ))}
   </div>
@@ -787,20 +813,33 @@ customerType: customerType,
   const hrs = ticket.resolvedAt ? (Date.now() - new Date(ticket.resolvedAt).getTime()) / (1000*60*60) : 999;
   if (hrs > 48) return null;
   return (
-    <div onClick={() => {
-      if (!window.confirm("Do you want to reopen this ticket?")) return;
-      fetch(`${BASE_URL}/tickets/${ticket.id}`, {
-        method:"PATCH", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          status: "open",
-          resolvedAt: null,
-          resolutionNotes: "",
-          reopenedAt: new Date().toISOString(),
-          reopenCount: (ticket.reopenCount || 0) + 1,
-        })
-      }).then(() => fetchTickets());
-    }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
-      🔄 Reopen
+    <div>
+      <div onClick={() => {
+        const newIssue = window.prompt("Please describe the issue you are still facing:");
+        if (!newIssue || !newIssue.trim()) return;
+        const existingHistory = Array.isArray(ticket.issueHistory) ? ticket.issueHistory : [];
+        const newEntry = {
+          description: newIssue.trim(),
+          raisedBy: currentUser?.email,
+          raisedByName: currentUser?.name,
+          raisedAt: new Date().toISOString(),
+          assignTo: ticket.assignTo,
+        };
+        fetch(`${BASE_URL}/tickets/${ticket.id}`, {
+          method:"PATCH", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            status: "open",
+            resolvedAt: null,
+            resolutionNotes: "",
+            reopenedAt: new Date().toISOString(),
+            reopenCount: (ticket.reopenCount || 0) + 1,
+            issueHistory: [...existingHistory, newEntry],
+            description: newIssue.trim(),
+          })
+        }).then(() => fetchTickets());
+      }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+        🔄 Reopen
+      </div>
     </div>
   );
 })()}
