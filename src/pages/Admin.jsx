@@ -381,6 +381,20 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
               </div>
               <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
+
+          {issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+  <div style={{ marginBottom:14 }}>
+    <div style={{ fontSize:11, fontWeight:700, color:"#c94500", textTransform:"uppercase", marginBottom:8 }}>📋 Previous Issues ({issuePopup.issueHistory.length})</div>
+    {issuePopup.issueHistory.map((h, i) => (
+      <div key={i} style={{ background:"#fff8f2", border:"1px solid #fad8be", borderLeft:"3px solid #ff5a00", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"#c94500", marginBottom:4 }}>Issue {i+1} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}</div>
+        <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
+      </div>
+    ))}
+  </div>
+)}
+
+
             {issuePopup.resolutionNotes ? (
               <>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>🔧 What was solved:</div>
@@ -740,7 +754,7 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1300, background: "white" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-                  {["Ticket No","Raised From","Raised By","Product","Item Name","Customer / KYC","Issue","Status","Image","Customer Rating"].map((h, i) => (
+                  {["Ticket No","Raised From","Raised By","Product","Item Name","Customer / KYC","Issue","History","Status","Image","Customer Rating"].map((h, i) => (
                     <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -852,6 +866,27 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
                       </td>
 
                       {/* Col 8 — Status */}
+
+                        <td style={{ padding:"11px 12px", borderRight:"1px solid #e0d8d0" }}>
+  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
+    <div onClick={() => setIssuePopup({
+      description: ticket.description,
+      resolutionNotes: ticket.resolutionNotes,
+      resolutionTimeTaken: ticket.resolutionTimeTaken,
+      issueHistory: ticket.issueHistory,
+    })} style={{ fontSize:10, color:"#c94500", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+      📋 {ticket.issueHistory.length} Previous
+    </div>
+  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+  {ticket.reopenCount > 0 && (
+    <div style={{ fontSize:9, color:"#dc2626", fontWeight:700, marginTop:3, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+      🔄 Reopened {ticket.reopenCount}x
+    </div>
+  )}
+</td>
+
+
+
                       <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0" }}>
                         <span onClick={() => { if (s === "rma") setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt }); }}
                           style={{ padding: "3px 9px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", cursor: s === "rma" ? "pointer" : "default", border: s === "rma" ? "1.5px solid #c4b5fd" : "none" }}>

@@ -450,6 +450,19 @@ const validationErrors = validate();
               </div>
               <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
+
+{issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+  <div style={{ marginBottom:14 }}>
+    <div style={{ fontSize:11, fontWeight:700, color:"#ff5a00", textTransform:"uppercase", marginBottom:8 }}>📋 Previous Issues ({issuePopup.issueHistory.length})</div>
+    {issuePopup.issueHistory.map((h, i) => (
+      <div key={i} style={{ background:"#fff4ee", border:"1px solid #fad8be", borderLeft:"3px solid #ff5a00", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"#c94500", marginBottom:4 }}>Issue {i+1} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}</div>
+        <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
+      </div>
+    ))}
+  </div>
+)}
+
             {issuePopup.resolutionNotes ? (
               <>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
@@ -1092,7 +1105,7 @@ const validationErrors = validate();
                     </colgroup>
                     <thead>
                       <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-                        {["Ticket No","Date","Product","Item Name","Customer","Assigned To","Status","Image","Issue"].map((h, i) => (
+                        {["Ticket No","Date","Product","Item Name","Customer","Assigned To","Status","Image","Issue","History"].map((h, i) => (
                           <th key={i} style={{ padding: "12px 10px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                         ))}
                       </tr>
@@ -1182,6 +1195,22 @@ const validationErrors = validate();
                                   <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
                                 )}
                               </td>
+
+                                <td style={{ padding:"12px 10px", borderRight:"1px solid #e9d5ff" }}>
+  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
+    <div onClick={() => setIssuePopup({
+      description: ticket.description,
+      resolutionNotes: ticket.resolutionNotes,
+      resolutionTimeTaken: ticket.resolutionTimeTaken,
+      resolvedBy: ticket.resolvedBy,
+      resolvedAt: ticket.resolvedAt,
+      issueHistory: ticket.issueHistory,
+    })} style={{ fontSize:10, color:"#ff5a00", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+      📋 {ticket.issueHistory.length} Previous
+    </div>
+  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+</td>
+
                               <td style={{ padding: "12px 10px" }}>
                                 <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
                                   style={{ fontSize: 12, color: "#374151", lineHeight: 1.6, cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200, textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
@@ -1192,6 +1221,30 @@ const validationErrors = validate();
                                   <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
                                     style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
                                 )}
+
+                                {s === "resolved" && (() => {
+  const hrs = ticket.resolvedAt ? (Date.now() - new Date(ticket.resolvedAt).getTime()) / (1000*60*60) : 999;
+  if (hrs > 48) return null;
+  return (
+    <div onClick={() => {
+      if (!window.confirm("Do you want to reopen this ticket?")) return;
+      fetch(`${BASE_URL}/tickets/${ticket.id}`, {
+        method:"PATCH", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          status: "open",
+          resolvedAt: null,
+          resolutionNotes: "",
+          reopenedAt: new Date().toISOString(),
+          reopenCount: (ticket.reopenCount || 0) + 1,
+        })
+      }).then(() => fetchTickets());
+    }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+      🔄 Reopen
+    </div>
+  );
+})()}
+
+
                               </td>
                             </tr>
                           );

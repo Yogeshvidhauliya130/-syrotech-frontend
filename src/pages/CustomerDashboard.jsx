@@ -320,6 +320,17 @@ customerType: customerType,
               <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#5b21b6" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
             </div>
+            {issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+  <div style={{ marginBottom:14 }}>
+    <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", textTransform:"uppercase", marginBottom:8 }}>📋 Previous Issues ({issuePopup.issueHistory.length})</div>
+    {issuePopup.issueHistory.map((h, i) => (
+      <div key={i} style={{ background:"#f5f3ff", border:"1px solid #c4b5fd", borderLeft:"3px solid #7c3aed", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", marginBottom:4 }}>Issue {i+1} — {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}</div>
+        <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
+      </div>
+    ))}
+  </div>
+)}
             {issuePopup.resolutionNotes ? (
               <>
                 <div style={{ fontSize:11, fontWeight:700, color:"#065f46", textTransform:"uppercase", marginBottom:8 }}>🔧 What was solved:</div>
@@ -738,7 +749,7 @@ customerType: customerType,
                   <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:0, background:"white", minWidth:960 }}>
                     <thead>
                       <tr style={{ background:"linear-gradient(135deg,#7c3aed,#6d28d9)", position:"sticky", top:0, zIndex:2 }}>
-                        {["Ticket No","Date","Product","Item Name","Status","Image","Issue","Feedback"].map((h,i) => (
+                        {["Ticket No","Date","Product","Item Name","Status","Image","Issue","History","Feedback"].map((h,i) => (
                           <th key={i} style={{ padding:"12px 12px", fontSize:10, fontWeight:800, color:"white", textTransform:"uppercase", letterSpacing:"0.05em", textAlign:"left", borderRight:"1px solid rgba(255,255,255,0.2)", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
                       </tr>
@@ -772,6 +783,27 @@ customerType: customerType,
                                 {STATUS_ICON[s]} {s.toUpperCase()}
                               </span>
                               {s==="resolved" && ticket.resolutionNotes && <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })} style={{ fontSize:9, color:"#059669", marginTop:3, cursor:"pointer", fontWeight:600 }}>📋 View details</div>}
+                              {s==="resolved" && (() => {
+  const hrs = ticket.resolvedAt ? (Date.now() - new Date(ticket.resolvedAt).getTime()) / (1000*60*60) : 999;
+  if (hrs > 48) return null;
+  return (
+    <div onClick={() => {
+      if (!window.confirm("Do you want to reopen this ticket?")) return;
+      fetch(`${BASE_URL}/tickets/${ticket.id}`, {
+        method:"PATCH", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          status: "open",
+          resolvedAt: null,
+          resolutionNotes: "",
+          reopenedAt: new Date().toISOString(),
+          reopenCount: (ticket.reopenCount || 0) + 1,
+        })
+      }).then(() => fetchTickets());
+    }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+      🔄 Reopen
+    </div>
+  );
+})()}
                               {s==="rma" && <div onClick={() => setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt })} style={{ fontSize:9, color:"#7c3aed", marginTop:3, cursor:"pointer", fontWeight:600 }}>🔧 View RMA</div>}
                               {ticket.createdAt && ticket.resolvedAt && s === "resolved" && (() => {
                                 const diff = new Date(ticket.resolvedAt) - new Date(ticket.createdAt);
@@ -791,6 +823,18 @@ customerType: customerType,
                                 {ticket.description?.length>40?ticket.description.slice(0,40)+"…":ticket.description||"—"}
                               </div>
                             </td>
+                            <td style={tdStyle()}>
+  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
+    <div onClick={() => setIssuePopup({
+      description: ticket.description,
+      resolutionNotes: ticket.resolutionNotes,
+      resolvedAt: ticket.resolvedAt,
+      issueHistory: ticket.issueHistory,
+    })} style={{ fontSize:10, color:"#7c3aed", cursor:"pointer", fontWeight:700, background:"#f5f3ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+      📋 {ticket.issueHistory.length} Previous
+    </div>
+  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+</td>
                             <td style={{ padding:"12px 12px", borderRight:"1px solid #c4b5fd" }}>
                               {ticket.feedbackRating ? (
                                 <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700 }}>
