@@ -376,7 +376,11 @@ const validationErrors = validate();
     .filter(t => productFilter === "all" || t.category === productFilter)
 .filter(t => subCategoryFilter === "all" || t.subCategory === subCategoryFilter)
 .filter(t => itemFilter === "all" || t.model === itemFilter)
-    .filter(t => statusFilter === "all" || (t.status || "pending").toLowerCase() === statusFilter)
+    .filter(t => {
+  if (statusFilter === "all") return true;
+  if (statusFilter === "reopened") return t.reopenCount > 0;
+  return (t.status || "open").toLowerCase() === statusFilter;
+})
     .filter(t => {
       if (!filterMonth && !filterYear) return true;
       const d = new Date(t.createdAt || t.date);
@@ -417,6 +421,7 @@ const validationErrors = validate();
     open:     myTickets.filter(t => t.status === "open").length,
     resolved: myTickets.filter(t => t.status === "resolved").length,
     rma:      myTickets.filter(t => t.status === "rma").length,
+    reopened: myTickets.filter(t => t.reopenCount > 0).length,
   };
 
   const borderColor = (field) => errors[field] ? "#ef4444" : "#ddd5c8";
@@ -451,10 +456,21 @@ const validationErrors = validate();
               <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
 
-{issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+{(() => {
+  const firstIssue = issuePopup.firstDescription ? [{
+    description: issuePopup.firstDescription,
+    raisedAt: issuePopup.firstCreatedAt,
+    raisedByName: issuePopup.firstRaisedByName,
+    resolvedNotes: issuePopup.firstResolvedNotes,
+    resolvedAt: issuePopup.firstResolvedAt,
+    resolvedBy: issuePopup.firstResolvedBy,
+  }] : [];
+  const allHistory = [...firstIssue, ...(issuePopup.issueHistory || [])];
+  if (allHistory.length === 0) return null;
+  return (
   <div style={{ marginBottom:14 }}>
-    <div style={{ fontSize:11, fontWeight:700, color:"#ff5a00", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({issuePopup.issueHistory.length} Stages)</div>
-    {issuePopup.issueHistory.map((h, i) => (
+    <div style={{ fontSize:11, fontWeight:700, color:"#ff5a00", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({allHistory.length} Stages)</div>
+    {allHistory.map((h, i) => (
       <div key={i} style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid #fad8be" }}>
         {/* Issue */}
         <div style={{ background:"#fff4ee", padding:"10px 12px", borderLeft:"4px solid #ff5a00" }}>
@@ -485,9 +501,10 @@ const validationErrors = validate();
           </div>
         )}
       </div>
-    ))}
+   ))}
   </div>
-)}
+  );
+})()}
 
             {issuePopup.resolutionNotes ? (
               <>
@@ -1009,11 +1026,12 @@ const validationErrors = validate();
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>📋 Status:</span>
                     {[
-                      ["all",      "All",        "#374151", "#f3f4f6"],
-                      ["open",     "🔓 Open",     "#e04e00", "#fff4ee"],
-                      ["resolved", "✅ Resolved", "#1a7a46", "#edfaf3"],
-                      ["rma",      "🔧 RMA",      "#7c3aed", "#f5f3ff"],
-                    ].map(([key, label, col, bg]) => (
+  ["all",      "All",           "#374151", "#f3f4f6"],
+  ["open",     "🔓 Open",       "#e04e00", "#fff4ee"],
+  ["resolved", "✅ Resolved",   "#1a7a46", "#edfaf3"],
+  ["rma",      "🔧 RMA",        "#7c3aed", "#f5f3ff"],
+  ["reopened", "🔄 Reopened",   "#dc2626", "#fee2e2"],
+].map(([key, label, col, bg]) => (
                       <button key={key} onClick={() => setStatusFilter(key)} style={{
                         padding: "5px 12px", borderRadius: 16,
                         border: statusFilter === key ? `2px solid ${col}` : "1px solid #d1d5db",
@@ -1223,18 +1241,22 @@ const validationErrors = validate();
                               </td>
 
                                 <td style={{ padding:"12px 10px", borderRight:"1px solid #e9d5ff" }}>
-  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
-    <div onClick={() => setIssuePopup({
-      description: ticket.description,
-      resolutionNotes: ticket.resolutionNotes,
-      resolutionTimeTaken: ticket.resolutionTimeTaken,
-      resolvedBy: ticket.resolvedBy,
-      resolvedAt: ticket.resolvedAt,
-      issueHistory: ticket.issueHistory,
-    })} style={{ fontSize:10, color:"#ff5a00", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
-      📋 {ticket.issueHistory.length} Previous
-    </div>
-  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+  <div onClick={() => setIssuePopup({
+    description: ticket.description,
+    resolutionNotes: ticket.resolutionNotes,
+    resolutionTimeTaken: ticket.resolutionTimeTaken,
+    resolvedBy: ticket.resolvedBy,
+    resolvedAt: ticket.resolvedAt,
+    issueHistory: ticket.issueHistory,
+    firstDescription: ticket.description,
+    firstCreatedAt: ticket.createdAt,
+    firstRaisedByName: ticket.raisedByName,
+    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
+    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
+    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
+  })} style={{ fontSize:10, color:"#ff5a00", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+    📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
+  </div>
 </td>
 
                               <td style={{ padding: "12px 10px" }}>

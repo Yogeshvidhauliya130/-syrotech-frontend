@@ -630,7 +630,7 @@ const resolutionPct = activeTotal === 0 ? 0 : Math.round((counts.resolved / acti
     t.reassignedFrom.toLowerCase().trim() === (currentUser?.name || "").toLowerCase().trim()
   ).sort((a, b) => new Date(b.reassignedAt || b.createdAt) - new Date(a.reassignedAt || a.createdAt));
 
- const filtered = (filter === "all" ? tickets : tickets.filter(t => t.status === filter))
+const filtered = (filter === "all" ? tickets : filter === "reopened" ? tickets.filter(t => t.reopenCount > 0) : tickets.filter(t => t.status === filter))
     .filter(t => {
       if (sourceFilter === "all") return true;
       if (sourceFilter === "customer")    return t.source === "customer";
@@ -793,10 +793,21 @@ const filteredMyReassigned = allTickets
               <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
 
-{issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+{(() => {
+  const firstIssue = issuePopup.firstDescription ? [{
+    description: issuePopup.firstDescription,
+    raisedAt: issuePopup.firstCreatedAt,
+    raisedByName: issuePopup.firstRaisedByName,
+    resolvedNotes: issuePopup.firstResolvedNotes,
+    resolvedAt: issuePopup.firstResolvedAt,
+    resolvedBy: issuePopup.firstResolvedBy,
+  }] : [];
+  const allHistory = [...firstIssue, ...(issuePopup.issueHistory || [])];
+  if (allHistory.length === 0) return null;
+  return (
   <div style={{ marginBottom:14 }}>
-    <div style={{ fontSize:11, fontWeight:700, color:"#059669", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({issuePopup.issueHistory.length} Stages)</div>
-    {issuePopup.issueHistory.map((h, i) => (
+    <div style={{ fontSize:11, fontWeight:700, color:"#059669", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({allHistory.length} Stages)</div>
+    {allHistory.map((h, i) => (
       <div key={i} style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid #6ee7b7" }}>
         {/* Issue */}
         <div style={{ background:"#ecfdf5", padding:"10px 12px", borderLeft:"4px solid #10b981" }}>
@@ -827,9 +838,10 @@ const filteredMyReassigned = allTickets
           </div>
         )}
       </div>
-    ))}
+   ))}
   </div>
-)}
+  );
+})()}
 
             {issuePopup.resolutionNotes ? (
               <>
@@ -1526,16 +1538,20 @@ const filteredMyReassigned = allTickets
 
 
                             <td style={{ padding:"12px 14px", borderRight:"1px solid #d1fae5", textAlign:"left" }}>
-  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
-    <div onClick={() => setIssuePopup({
-      description: ticket.description,
-      resolutionNotes: ticket.resolutionNotes,
-      resolutionTimeTaken: ticket.resolutionTimeTaken,
-      issueHistory: ticket.issueHistory,
-    })} style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
-      📋 {ticket.issueHistory.length} Previous
-    </div>
-  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+  <div onClick={() => setIssuePopup({
+    description: ticket.description,
+    resolutionNotes: ticket.resolutionNotes,
+    resolutionTimeTaken: ticket.resolutionTimeTaken,
+    issueHistory: ticket.issueHistory,
+    firstDescription: ticket.description,
+    firstCreatedAt: ticket.createdAt,
+    firstRaisedByName: ticket.raisedByName,
+    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
+    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
+    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
+  })} style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+    📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
+  </div>
   {ticket.reopenCount > 0 && (
     <div style={{ fontSize:9, color:"#dc2626", fontWeight:700, marginTop:3, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
       🔄 Reopened {ticket.reopenCount}x
@@ -1968,7 +1984,7 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
           {/* Status filter + Source filter + Sort */}
           <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-              {[["all","All"],["open","🔓 Open"],["resolved","✅ Resolved"],["rma","🔧 RMA"]].map(([key, label]) => (
+              {[["all","All"],["open","🔓 Open"],["resolved","✅ Resolved"],["rma","🔧 RMA"],["reopened","🔄 Reopened"]].map(([key, label]) => (
                 <button key={key} onClick={() => setFilter(key)} style={{
                   padding: "8px 16px", borderRadius: 20,
                   border: filter === key ? "none" : "1px solid #d1d5db",
@@ -2278,16 +2294,20 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
 
                           {/* Status column */}
                             <td style={{ padding:"12px 14px", borderRight:"1px solid #d1fae5", textAlign:"left" }}>
-  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
-    <div onClick={() => setIssuePopup({
-      description: ticket.description,
-      resolutionNotes: ticket.resolutionNotes,
-      resolutionTimeTaken: ticket.resolutionTimeTaken,
-      issueHistory: ticket.issueHistory,
-    })} style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
-      📋 {ticket.issueHistory.length} Previous
-    </div>
-  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+  <div onClick={() => setIssuePopup({
+    description: ticket.description,
+    resolutionNotes: ticket.resolutionNotes,
+    resolutionTimeTaken: ticket.resolutionTimeTaken,
+    issueHistory: ticket.issueHistory,
+    firstDescription: ticket.description,
+    firstCreatedAt: ticket.createdAt,
+    firstRaisedByName: ticket.raisedByName,
+    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
+    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
+    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
+  })} style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+    📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
+  </div>
   {ticket.reopenCount > 0 && (
     <div style={{ fontSize:9, color:"#dc2626", fontWeight:700, marginTop:3, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
       🔄 Reopened {ticket.reopenCount}x

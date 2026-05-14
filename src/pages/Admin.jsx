@@ -268,11 +268,16 @@ const [filterDate, setFilterDate]   = useState("");
   open: tickets.filter(t => t.status === "open").length,
   resolved: tickets.filter(t => t.status === "resolved").length,
   rma: tickets.filter(t => t.status === "rma").length,
+  reopened: tickets.filter(t => t.reopenCount > 0).length,
 };
 
   const filtered = applyFilter(
   tickets
-    .filter(t => filter === "all" || (t.status || "open").toLowerCase() === filter)
+    .filter(t => {
+  if (filter === "all") return true;
+  if (filter === "reopened") return t.reopenCount > 0;
+  return (t.status || "open").toLowerCase() === filter;
+})
     .filter(t => {
       const d = new Date(t.createdAt || t.date);
       if (filterDate)  return d.toDateString() === new Date(filterDate).toDateString();
@@ -382,10 +387,21 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
               <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
 
-         {issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+         {(() => {
+  const firstIssue = issuePopup.firstDescription ? [{
+    description: issuePopup.firstDescription,
+    raisedAt: issuePopup.firstCreatedAt,
+    raisedByName: issuePopup.firstRaisedByName,
+    resolvedNotes: issuePopup.firstResolvedNotes,
+    resolvedAt: issuePopup.firstResolvedAt,
+    resolvedBy: issuePopup.firstResolvedBy,
+  }] : [];
+  const allHistory = [...firstIssue, ...(issuePopup.issueHistory || [])];
+  if (allHistory.length === 0) return null;
+  return (
   <div style={{ marginBottom:14 }}>
-    <div style={{ fontSize:11, fontWeight:700, color:"#c94500", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({issuePopup.issueHistory.length} Stages)</div>
-    {issuePopup.issueHistory.map((h, i) => (
+    <div style={{ fontSize:11, fontWeight:700, color:"#c94500", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({allHistory.length} Stages)</div>
+    {allHistory.map((h, i) => (
       <div key={i} style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid #fad8be" }}>
         {/* Issue */}
         <div style={{ background:"#fff8f2", padding:"10px 12px", borderLeft:"4px solid #ff5a00" }}>
@@ -418,7 +434,8 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
       </div>
     ))}
   </div>
-)}
+  );
+})()}
 
 
             {issuePopup.resolutionNotes ? (
@@ -607,16 +624,16 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
           <p style={{ fontSize: 13, color: "#6b7280", margin: "4px 0 0" }}>All tickets overview</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {[
-            ["all",      "All",         "#374151", "#f3f4f6"],
-            ["open",     "🔓 Open",     "#e04e00", "#fff4ee"],
-          
-            ["resolved", "✅ Resolved", "#1a7a46", "#edfaf3"],
-            ["rma",      "🔧 RMA",      "#7c3aed", "#f5f3ff"],
-          ].map(([key, label, col, bg]) => (
+         {[
+  ["all",      "All",           "#374151", "#f3f4f6"],
+  ["open",     "🔓 Open",       "#e04e00", "#fff4ee"],
+  ["resolved", "✅ Resolved",   "#1a7a46", "#edfaf3"],
+  ["rma",      "🔧 RMA",        "#7c3aed", "#f5f3ff"],
+  ["reopened", "🔄 Reopened",   "#dc2626", "#fee2e2"],
+].map(([key, label, col, bg]) => (
             <button key={key} onClick={() => setFilter(key)} style={{
               padding: "6px 14px", borderRadius: 16, cursor: "pointer",
-              border: filter === key ? `2px solid ${col}` : "1px solid #d1d5db",
+              border: filter === key ? `2px solid ${col}` : "1px solid #566274",
               background: filter === key ? bg : "white",
               color: filter === key ? col : "#555",
               fontWeight: filter === key ? 700 : 400,
@@ -894,16 +911,20 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
                       {/* Col 8 — Status */}
 
                         <td style={{ padding:"11px 12px", borderRight:"1px solid #e0d8d0" }}>
-  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
-    <div onClick={() => setIssuePopup({
-      description: ticket.description,
-      resolutionNotes: ticket.resolutionNotes,
-      resolutionTimeTaken: ticket.resolutionTimeTaken,
-      issueHistory: ticket.issueHistory,
-    })} style={{ fontSize:10, color:"#c94500", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
-      📋 {ticket.issueHistory.length} Previous
-    </div>
-  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+  <div onClick={() => setIssuePopup({
+    description: ticket.description,
+    resolutionNotes: ticket.resolutionNotes,
+    resolutionTimeTaken: ticket.resolutionTimeTaken,
+    issueHistory: ticket.issueHistory,
+    firstDescription: ticket.description,
+    firstCreatedAt: ticket.createdAt,
+    firstRaisedByName: ticket.raisedByName,
+    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
+    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
+    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
+  })} style={{ fontSize:10, color:"#c94500", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+    📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
+  </div>
   {ticket.reopenCount > 0 && (
     <div style={{ fontSize:9, color:"#dc2626", fontWeight:700, marginTop:3, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
       🔄 Reopened {ticket.reopenCount}x

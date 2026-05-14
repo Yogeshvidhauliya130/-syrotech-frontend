@@ -283,7 +283,11 @@ customerType: customerType,
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
   const displayTickets = myTickets
-    .filter(t => statusFilter === "all" || (t.status || "pending").toLowerCase() === statusFilter)
+    .filter(t => {
+  if (statusFilter === "all") return true;
+  if (statusFilter === "reopened") return t.reopenCount > 0;
+  return (t.status || "pending").toLowerCase() === statusFilter;
+})
     .filter(t => {
   if (!searchQuery.trim()) return true;
   const q = searchQuery.toLowerCase();
@@ -299,7 +303,7 @@ customerType: customerType,
 })
     .sort((a, b) => { const da = new Date(a.createdAt||a.date).getTime(); const db = new Date(b.createdAt||b.date).getTime(); return dateSort === "newest" ? db - da : da - db; });
 
-  const statusCounts = { all: myTickets.length, pending: myTickets.filter(t=>t.status==="pending").length, open: myTickets.filter(t=>t.status==="open").length, resolved: myTickets.filter(t=>t.status==="resolved").length, rma: myTickets.filter(t=>t.status==="rma").length };
+ const statusCounts = { all: myTickets.length, open: myTickets.filter(t=>t.status==="open").length, resolved: myTickets.filter(t=>t.status==="resolved").length, rma: myTickets.filter(t=>t.status==="rma").length, reopened: myTickets.filter(t=>t.reopenCount > 0).length };
 
   const iStyle = (field) => ({
     width:"100%", padding:"10px 13px", borderRadius:9,
@@ -320,10 +324,21 @@ customerType: customerType,
               <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#5b21b6" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
             </div>
-           {issuePopup.issueHistory && issuePopup.issueHistory.length > 0 && (
+           {(() => {
+  const firstIssue = issuePopup.firstDescription ? [{
+    description: issuePopup.firstDescription,
+    raisedAt: issuePopup.firstCreatedAt,
+    raisedByName: issuePopup.firstRaisedByName,
+    resolvedNotes: issuePopup.firstResolvedNotes,
+    resolvedAt: issuePopup.firstResolvedAt,
+    resolvedBy: issuePopup.firstResolvedBy,
+  }] : [];
+  const allHistory = [...firstIssue, ...(issuePopup.issueHistory || [])];
+  if (allHistory.length === 0) return null;
+  return (
   <div style={{ marginBottom:14 }}>
-    <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({issuePopup.issueHistory.length} Stages)</div>
-    {issuePopup.issueHistory.map((h, i) => (
+    <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({allHistory.length} Stages)</div>
+    {allHistory.map((h, i) => (
       <div key={i} style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid #c4b5fd" }}>
         {/* Issue */}
         <div style={{ background:"#f5f3ff", padding:"10px 12px", borderLeft:"4px solid #7c3aed" }}>
@@ -356,7 +371,8 @@ customerType: customerType,
       </div>
     ))}
   </div>
-)}
+  );
+})()}
             {issuePopup.resolutionNotes ? (
               <>
                 <div style={{ fontSize:11, fontWeight:700, color:"#065f46", textTransform:"uppercase", marginBottom:8 }}>🔧 What was solved:</div>
@@ -759,7 +775,7 @@ customerType: customerType,
 
                 <div style={{ background:"white", borderRadius:12, border:"1.5px solid #e9d5ff", padding:"12px 16px", marginBottom:14, display:"flex", gap:8, flexWrap:"wrap", alignItems:"center", justifyContent:"space-between" }}>
                   <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                    {[["all","All","#374151","#f3f4f6"],["open","🔓 Open","#e04e00","#fff4ee"],["resolved","✅ Resolved","#1a7a46","#edfaf3"],["rma","🔧 RMA","#7c3aed","#f5f3ff"]].map(([key,label,col,bg]) => (
+                    {[["all","All","#374151","#f3f4f6"],["open","🔓 Open","#e04e00","#fff4ee"],["resolved","✅ Resolved","#1a7a46","#edfaf3"],["rma","🔧 RMA","#7c3aed","#f5f3ff"],["reopened","🔄 Reopened","#dc2626","#fee2e2"]].map(([key,label,col,bg]) => (
                       <button key={key} onClick={() => setStatusFilter(key)} style={{ padding:"5px 12px", borderRadius:16, border:statusFilter===key?`2px solid ${col}`:"1px solid #d1d5db", background:statusFilter===key?bg:"white", color:statusFilter===key?col:"#555", fontWeight:statusFilter===key?700:400, fontSize:12, cursor:"pointer" }}>
                         {label} <span style={{ marginLeft:4, background:statusFilter===key?col:"#e5e7eb", color:statusFilter===key?"white":"#555", borderRadius:10, padding:"1px 6px", fontSize:10, fontWeight:700 }}>{statusCounts[key]??0}</span>
                       </button>
@@ -863,16 +879,20 @@ customerType: customerType,
                               </div>
                             </td>
                             <td style={tdStyle()}>
-  {Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (
-    <div onClick={() => setIssuePopup({
-      description: ticket.description,
-      resolutionNotes: ticket.resolutionNotes,
-      resolvedAt: ticket.resolvedAt,
-      issueHistory: ticket.issueHistory,
-    })} style={{ fontSize:10, color:"#7c3aed", cursor:"pointer", fontWeight:700, background:"#f5f3ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
-      📋 {ticket.issueHistory.length} Previous
-    </div>
-  ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
+  <div onClick={() => setIssuePopup({
+    description: ticket.description,
+    resolutionNotes: ticket.resolutionNotes,
+    resolvedAt: ticket.resolvedAt,
+    issueHistory: ticket.issueHistory,
+    firstDescription: ticket.description,
+    firstCreatedAt: ticket.createdAt,
+    firstRaisedByName: ticket.raisedByName,
+    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
+    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
+    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
+  })} style={{ fontSize:10, color:"#7c3aed", cursor:"pointer", fontWeight:700, background:"#f5f3ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+    📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
+  </div>
 </td>
                             <td style={{ padding:"12px 12px", borderRight:"1px solid #c4b5fd" }}>
                               {ticket.feedbackRating ? (
