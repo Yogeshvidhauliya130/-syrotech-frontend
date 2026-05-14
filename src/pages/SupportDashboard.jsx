@@ -6,8 +6,8 @@ import { getIssues } from "../data/issueList";
 
 
 const BASE_URL = "https://syrotech-backend.onrender.com";
-const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed" };
-const STATUS_BG    = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff" };
+const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed", reopened: "#dc2626" };
+const STATUS_BG    = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff", reopened: "#fee2e2" };
 
 const RMA_REASONS = [
   "Damaged Product","Hardware Fault","Physical Damage",
@@ -269,7 +269,7 @@ const [myReassignedItemFilter, setMyReassignedItemFilter]       = useState("all"
           t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim()
         );
         setTickets(mine);
-        mine.filter(t => t.status === "pending" && !autoAcceptingRef.current.has(t.id))
+        mine.filter(t => (t.status === "pending" || t.status === "reopened") && !autoAcceptingRef.current.has(t.id))
           .forEach(ticket => {
             autoAcceptingRef.current.add(ticket.id);
             fetch(`${BASE_URL}/tickets/${ticket.id}`, {
@@ -381,6 +381,11 @@ const sent = sendRMAWhatsApp(ticket, rf.reason);
      body: JSON.stringify({
   status: "rma", rmaStatus: true, rmaReason: rf.reason,
   rmaSentAt: new Date().toISOString(), rmaSentBy: currentUser?.name, resolvedAt: null,
+  issueHistory: (() => {
+    const h = Array.isArray(ticket?.issueHistory) ? ticket.issueHistory : [];
+    if (h.length === 0) return h;
+    return h.map((e, i) => i === h.length - 1 ? { ...e, isRma: true } : e);
+  })(),
 })
     })
       .then(r => r.json())
@@ -614,6 +619,7 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
     open:     tickets.filter(t => t.status === "open").length,
     resolved: tickets.filter(t => t.status === "resolved").length,
     rma:      tickets.filter(t => t.status === "rma").length,
+    reopened: tickets.filter(t => t.status === "reopened").length,
   };
   const activeTotal = counts.resolved + counts.open;
 const resolutionPct = activeTotal === 0 ? 0 : Math.round((counts.resolved / activeTotal) * 100);
@@ -630,7 +636,7 @@ const resolutionPct = activeTotal === 0 ? 0 : Math.round((counts.resolved / acti
     t.reassignedFrom.toLowerCase().trim() === (currentUser?.name || "").toLowerCase().trim()
   ).sort((a, b) => new Date(b.reassignedAt || b.createdAt) - new Date(a.reassignedAt || a.createdAt));
 
-const filtered = (filter === "all" ? tickets : filter === "reopened" ? tickets.filter(t => t.reopenCount > 0) : tickets.filter(t => t.status === filter))
+const filtered = (filter === "all" ? tickets : tickets.filter(t => filter === "reopened" ? t.status === "reopened" : t.status === filter))
     .filter(t => {
       if (sourceFilter === "all") return true;
       if (sourceFilter === "customer")    return t.source === "customer";
@@ -794,52 +800,80 @@ const filteredMyReassigned = allTickets
             </div>
 
 {(() => {
-  const firstIssue = issuePopup.firstDescription ? [{
-    description: issuePopup.firstDescription,
+  const allHistory = [];
+  // Stage 1: the original ticket
+  allHistory.push({
+    description: issuePopup.firstDescription || issuePopup.description,
     raisedAt: issuePopup.firstCreatedAt,
     raisedByName: issuePopup.firstRaisedByName,
-    resolvedNotes: issuePopup.firstResolvedNotes,
-    resolvedAt: issuePopup.firstResolvedAt,
-    resolvedBy: issuePopup.firstResolvedBy,
-  }] : [];
-  const allHistory = [...firstIssue, ...(issuePopup.issueHistory || [])];
+    resolvedNotes: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
+      ? (issuePopup.issueHistory[0]?.resolvedNotes || null)
+      : issuePopup.resolutionNotes,
+    resolvedAt: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
+      ? (issuePopup.issueHistory[0]?.resolvedAt || null)
+      : issuePopup.resolvedAt,
+    resolvedBy: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
+      ? (issuePopup.issueHistory[0]?.resolvedBy || null)
+      : issuePopup.resolvedBy,
+    isRma: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
+      ? (issuePopup.issueHistory[0]?.isRma || false)
+      : (issuePopup.rmaStatus || false),
+  });
+  // Stages 2+: from issueHistory (reopens)
+  if (Array.isArray(issuePopup.issueHistory)) {
+    issuePopup.issueHistory.forEach((h, i) => {
+      allHistory.push({
+        description: h.description,
+        raisedAt: h.raisedAt,
+        raisedByName: h.raisedByName,
+        resolvedNotes: h.resolvedNotes || null,
+        resolvedAt: h.resolvedAt || null,
+        resolvedBy: h.resolvedBy || null,
+        isRma: h.isRma || false,
+      });
+    });
+  }
   if (allHistory.length === 0) return null;
   return (
-  <div style={{ marginBottom:14 }}>
-    <div style={{ fontSize:11, fontWeight:700, color:"#059669", textTransform:"uppercase", marginBottom:8 }}>📋 Full Ticket History ({allHistory.length} Stages)</div>
-    {allHistory.map((h, i) => (
-      <div key={i} style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid #6ee7b7" }}>
-        {/* Issue */}
-        <div style={{ background:"#ecfdf5", padding:"10px 12px", borderLeft:"4px solid #10b981" }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"#059669", marginBottom:4 }}>
-            🔴 Stage {i+1} — Issue Raised
-            <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:8 }}>
-              {h.raisedAt ? new Date(h.raisedAt).toLocaleString() : "—"}
-            </span>
-          </div>
-          <div style={{ fontSize:12, color:"#374151" }}>{h.description || "—"}</div>
-          {h.raisedByName && <div style={{ fontSize:10, color:"#6b7280", marginTop:4 }}>👤 {h.raisedByName}</div>}
-        </div>
-        {/* Resolution */}
-        {h.resolvedNotes ? (
-          <div style={{ background:"#f0fdf4", padding:"10px 12px", borderLeft:"4px solid #059669" }}>
-            <div style={{ fontSize:11, fontWeight:700, color:"#059669", marginBottom:4 }}>
-              ✅ Stage {i+1} — Resolved
-              <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:8 }}>
-                {h.resolvedAt ? new Date(h.resolvedAt).toLocaleString() : "—"}
-              </span>
-            </div>
-            <div style={{ fontSize:12, color:"#374151" }}>{h.resolvedNotes}</div>
-            {h.resolvedBy && <div style={{ fontSize:10, color:"#6b7280", marginTop:4 }}>🛠️ Resolved by: {h.resolvedBy}</div>}
-          </div>
-        ) : (
-          <div style={{ background:"#fffbeb", padding:"8px 12px", borderLeft:"4px solid #f59e0b" }}>
-            <div style={{ fontSize:11, color:"#92400e", fontWeight:600 }}>⏳ Pending Resolution...</div>
-          </div>
-        )}
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
+        📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-   ))}
-  </div>
+      <div style={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4 }}>
+        {allHistory.map((h, i) => (
+          <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
+            {/* Issue row */}
+            <div style={{ background: "#f9fafb", padding: "7px 10px", borderLeft: "3px solid #6b7280" }}>
+              <div style={{ fontWeight: 700, color: "#374151", marginBottom: 2 }}>
+                🔴 Stage {i + 1}
+                {h.raisedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{new Date(h.raisedAt).toLocaleString()}</span>}
+                {h.raisedByName && <span style={{ fontSize: 10, color: "#6b7280", marginLeft: 6 }}>· {h.raisedByName}</span>}
+              </div>
+              <div style={{ color: "#374151" }}>{h.description || "—"}</div>
+            </div>
+            {/* Resolution row */}
+            {h.isRma ? (
+              <div style={{ background: "#f5f3ff", padding: "6px 10px", borderLeft: "3px solid #7c3aed" }}>
+                <div style={{ fontWeight: 700, color: "#7c3aed", fontSize: 11 }}>🔧 Sent to RMA</div>
+              </div>
+            ) : h.resolvedNotes ? (
+              <div style={{ background: "#f0fdf4", padding: "6px 10px", borderLeft: "3px solid #10b981" }}>
+                <div style={{ fontWeight: 700, color: "#059669", fontSize: 11, marginBottom: 2 }}>
+                  ✅ Resolved
+                  {h.resolvedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{new Date(h.resolvedAt).toLocaleString()}</span>}
+                  {h.resolvedBy && <span style={{ fontSize: 10, color: "#6b7280", marginLeft: 6 }}>· {h.resolvedBy}</span>}
+                </div>
+                <div style={{ color: "#374151" }}>{h.resolvedNotes}</div>
+              </div>
+            ) : (
+              <div style={{ background: "#fffbeb", padding: "5px 10px", borderLeft: "3px solid #f59e0b" }}>
+                <div style={{ color: "#92400e", fontSize: 11 }}>⏳ Pending...</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 })()}
 
@@ -1541,7 +1575,8 @@ const filteredMyReassigned = allTickets
   <div onClick={() => setIssuePopup({
     description: ticket.description,
     resolutionNotes: ticket.resolutionNotes,
-    resolutionTimeTaken: ticket.resolutionTimeTaken,
+    resolvedAt: ticket.resolvedAt,
+    rmaStatus: ticket.rmaStatus,
     issueHistory: ticket.issueHistory,
     firstDescription: ticket.description,
     firstCreatedAt: ticket.createdAt,
@@ -1549,7 +1584,7 @@ const filteredMyReassigned = allTickets
     firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
     firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
     firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
-  })} style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+  })}style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>
   {ticket.reopenCount > 0 && (
