@@ -282,10 +282,9 @@ customerType: customerType,
     .filter(t => t.raisedBy === currentUser?.email)
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
-  const displayTickets = myTickets
+ const displayTickets = myTickets
     .filter(t => {
   if (statusFilter === "all") return true;
-  if (statusFilter === "reopened") return t.reopenCount > 0;
   return (t.status || "pending").toLowerCase() === statusFilter;
 })
     .filter(t => {
@@ -303,7 +302,7 @@ customerType: customerType,
 })
     .sort((a, b) => { const da = new Date(a.createdAt||a.date).getTime(); const db = new Date(b.createdAt||b.date).getTime(); return dateSort === "newest" ? db - da : da - db; });
 
- const statusCounts = { all: myTickets.length, open: myTickets.filter(t=>t.status==="open").length, resolved: myTickets.filter(t=>t.status==="resolved").length, rma: myTickets.filter(t=>t.status==="rma").length, reopened: myTickets.filter(t=>t.reopenCount > 0).length };
+ const statusCounts = { all: myTickets.length, open: myTickets.filter(t=>t.status==="open").length, resolved: myTickets.filter(t=>t.status==="resolved").length, rma: myTickets.filter(t=>t.status==="rma").length, reopened: myTickets.filter(t=>t.status==="reopened").length };
 
   const iStyle = (field) => ({
     width:"100%", padding:"10px 13px", borderRadius:9,
@@ -324,29 +323,23 @@ customerType: customerType,
               <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#5b21b6" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
             </div>
-    {(() => {
+   {(() => {
   const allHistory = [];
-  // Stage 1: the original ticket
+
+  // Stage 1 — original issue (before any reopen)
   allHistory.push({
-    description: issuePopup.firstDescription || issuePopup.description,
+    description: issuePopup.firstDescription,
     raisedAt: issuePopup.firstCreatedAt,
     raisedByName: issuePopup.firstRaisedByName,
-    resolvedNotes: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.resolvedNotes || null)
-      : issuePopup.resolutionNotes,
-    resolvedAt: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.resolvedAt || null)
-      : issuePopup.resolvedAt,
-    resolvedBy: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.resolvedBy || null)
-      : issuePopup.resolvedBy,
-    isRma: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.isRma || false)
-      : (issuePopup.rmaStatus || false),
+    resolvedNotes: issuePopup.firstResolvedNotes || null,
+    resolvedAt: issuePopup.firstResolvedAt || null,
+    resolvedBy: issuePopup.firstResolvedBy || null,
+    isRma: issuePopup.firstIsRma || false,
   });
-  // Stages 2+: from issueHistory (reopens)
-  if (Array.isArray(issuePopup.issueHistory)) {
-    issuePopup.issueHistory.forEach((h, i) => {
+
+  // Stage 2, 3... — from issueHistory (each reopen)
+  if (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0) {
+    issuePopup.issueHistory.forEach((h) => {
       allHistory.push({
         description: h.description,
         raisedAt: h.raisedAt,
@@ -358,41 +351,43 @@ customerType: customerType,
       });
     });
   }
+
   if (allHistory.length === 0) return null;
+
   return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.05em" }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-      <div style={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4 }}>
+      <div style={{ maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 2 }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
-            {/* Issue row */}
-            <div style={{ background: "#f9fafb", padding: "7px 10px", borderLeft: "3px solid #6b7280" }}>
-              <div style={{ fontWeight: 700, color: "#374151", marginBottom: 2 }}>
-                🔴 Stage {i + 1}
-                {h.raisedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{new Date(h.raisedAt).toLocaleString()}</span>}
-                {h.raisedByName && <span style={{ fontSize: 10, color: "#6b7280", marginLeft: 6 }}>· {h.raisedByName}</span>}
+            {/* Issue */}
+            <div style={{ background: "#f5f3ff", padding: "8px 12px", borderLeft: "3px solid #7c3aed" }}>
+              <div style={{ fontWeight: 700, color: "#5b21b6", marginBottom: 3, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <span>🔴 Stage {i + 1}</span>
+                {h.raisedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400 }}>{new Date(h.raisedAt).toLocaleString()}</span>}
+                {h.raisedByName && <span style={{ fontSize: 10, color: "#6b7280" }}>· {h.raisedByName}</span>}
               </div>
-              <div style={{ color: "#374151" }}>{h.description || "—"}</div>
+              <div style={{ color: "#374151", lineHeight: 1.5 }}>{h.description || "—"}</div>
             </div>
-            {/* Resolution row */}
+            {/* Resolution */}
             {h.isRma ? (
-              <div style={{ background: "#f5f3ff", padding: "6px 10px", borderLeft: "3px solid #7c3aed" }}>
+              <div style={{ background: "#f5f3ff", padding: "6px 12px", borderLeft: "3px solid #7c3aed" }}>
                 <div style={{ fontWeight: 700, color: "#7c3aed", fontSize: 11 }}>🔧 Sent to RMA</div>
               </div>
             ) : h.resolvedNotes ? (
-              <div style={{ background: "#f0fdf4", padding: "6px 10px", borderLeft: "3px solid #10b981" }}>
-                <div style={{ fontWeight: 700, color: "#059669", fontSize: 11, marginBottom: 2 }}>
-                  ✅ Resolved
-                  {h.resolvedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{new Date(h.resolvedAt).toLocaleString()}</span>}
-                  {h.resolvedBy && <span style={{ fontSize: 10, color: "#6b7280", marginLeft: 6 }}>· {h.resolvedBy}</span>}
+              <div style={{ background: "#f0fdf4", padding: "7px 12px", borderLeft: "3px solid #10b981" }}>
+                <div style={{ fontWeight: 700, color: "#059669", fontSize: 11, marginBottom: 2, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span>✅ Resolved</span>
+                  {h.resolvedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400 }}>{new Date(h.resolvedAt).toLocaleString()}</span>}
+                  {h.resolvedBy && <span style={{ fontSize: 10, color: "#6b7280" }}>· {h.resolvedBy}</span>}
                 </div>
-                <div style={{ color: "#374151" }}>{h.resolvedNotes}</div>
+                <div style={{ color: "#374151", lineHeight: 1.5 }}>{h.resolvedNotes}</div>
               </div>
             ) : (
-              <div style={{ background: "#fffbeb", padding: "5px 10px", borderLeft: "3px solid #f59e0b" }}>
-                <div style={{ color: "#92400e", fontSize: 11 }}>⏳ Pending...</div>
+              <div style={{ background: "#fffbeb", padding: "5px 12px", borderLeft: "3px solid #f59e0b" }}>
+                <div style={{ color: "#92400e", fontSize: 11 }}>⏳ Pending resolution...</div>
               </div>
             )}
           </div>
@@ -401,17 +396,8 @@ customerType: customerType,
     </div>
   );
 })()}
-            {issuePopup.resolutionNotes ? (
-              <>
-                <div style={{ fontSize:11, fontWeight:700, color:"#065f46", textTransform:"uppercase", marginBottom:8 }}>🔧 What was solved:</div>
-                <div style={{ fontSize:13, color:"#374151", lineHeight:1.7, background:"#ecfdf5", padding:"14px 16px", borderRadius:10, border:"1px solid #6ee7b7", borderLeft:"4px solid #10b981", marginBottom:14 }}>{issuePopup.resolutionNotes}</div>
-                {issuePopup.resolvedAt && <div style={{ fontSize:12, color:"#6b7280", marginBottom:14 }}>📅 Resolved on: <strong>{new Date(issuePopup.resolvedAt).toLocaleString()}</strong></div>}
-                <div style={{ fontSize:11, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", marginBottom:8 }}>📋 Original Issue:</div>
-                <div style={{ fontSize:12, color:"#6b7280", lineHeight:1.6, background:"#f9fafb", padding:"12px 14px", borderRadius:8, border:"1px solid #e5e7eb", borderLeft:"3px solid #7c3aed" }}>{issuePopup.description}</div>
-              </>
-            ) : (
-              <div style={{ fontSize:13, color:"#374151", lineHeight:1.7, background:"#f5f3ff", padding:"14px 16px", borderRadius:10, border:"1px solid #c4b5fd", borderLeft:"4px solid #7c3aed" }}>{issuePopup.description}</div>
-            )}
+           {null}
+
           </div>
         </div>
       )}
@@ -879,6 +865,7 @@ customerType: customerType,
   reopenCount: (ticket.reopenCount || 0) + 1,
   issueHistory: [...existingHistory, newEntry],
   description: newIssue.trim(),
+  originalDescription: ticket.originalDescription || ticket.description,
 })
         }).then(() => fetchTickets());
       }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
@@ -908,16 +895,15 @@ customerType: customerType,
                             </td>
                             <td style={tdStyle()}>
   <div onClick={() => setIssuePopup({
-    description: ticket.description,
-    resolutionNotes: ticket.resolutionNotes,
-    resolvedAt: ticket.resolvedAt,
     issueHistory: ticket.issueHistory,
-    firstDescription: ticket.description,
+    rmaStatus: ticket.rmaStatus,
+    firstDescription: ticket.originalDescription || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? ticket.issueHistory[0]?.description : ticket.description),
     firstCreatedAt: ticket.createdAt,
     firstRaisedByName: ticket.raisedByName,
-    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
-    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
-    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
+    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.resolvedNotes || null) : ticket.resolutionNotes,
+    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.resolvedAt || null) : ticket.resolvedAt,
+    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.resolvedBy || null) : ticket.resolvedBy,
+    firstIsRma: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.isRma || false) : (ticket.rmaStatus || false),
   })} style={{ fontSize:10, color:"#7c3aed", cursor:"pointer", fontWeight:700, background:"#f5f3ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>

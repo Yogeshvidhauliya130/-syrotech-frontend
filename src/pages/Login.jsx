@@ -467,7 +467,8 @@ const handleResetPassword = async () => {
   </div>
 )}
 
-        {/* <p className="footer">© 2026 Syrotech Networks Pvt. Ltd.</p> */}
+ {/* <p className="footer">© 2026 Syrotech Networks Pvt. Ltd.</p> */}
+    
       </div>
     </div>
   );
