@@ -415,10 +415,11 @@ const handleResolveSubmit = (ticketId) => {
     fetch(`${BASE_URL}/tickets/${ticketId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: "resolved",
-        resolvedAt: now,
-        resolutionNotes: rf.notes.trim(),
+     body: JSON.stringify({
+  status: "resolved",
+  resolvedAt: now,
+  resolutionNotes: rf.notes.trim(),
+  previousStatus: currentTicket?.status === "reopened" ? "reopened" : "",
         resolvedBy: currentUser?.name,
         hardwareVersion: rf.hardwareVersion?.trim() || "",
         softwareVersion: rf.softwareVersion?.trim() || "",
@@ -643,7 +644,11 @@ const resolutionPct = activeTotal === 0 ? 0 : Math.round((counts.resolved / acti
     t.reassignedFrom.toLowerCase().trim() === (currentUser?.name || "").toLowerCase().trim()
   ).sort((a, b) => new Date(b.reassignedAt || b.createdAt) - new Date(a.reassignedAt || a.createdAt));
 
-const filtered = (filter === "all" ? tickets : tickets.filter(t => filter === "reopened" ? t.status === "reopened" : t.status === filter))
+const filtered = (filter === "all" ? tickets : tickets.filter(t =>
+  filter === "reopened"
+    ? (t.status === "reopened" || t.previousStatus === "reopened")
+    : t.status === filter
+))
     .filter(t => {
       if (sourceFilter === "all") return true;
       if (sourceFilter === "customer")    return t.source === "customer";
@@ -2420,7 +2425,7 @@ firstIsRma: ticket.firstIsRma || false,
                           {/* Actions column */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap", textAlign: "left" }}>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                              {s === "open" && (
+                              {(s === "open" || s === "reopened") && (
                                <button onClick={() => {
                                   const newShow = !resolveForm[ticket.id]?.show;
                                   setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: newShow } }));
@@ -2453,7 +2458,7 @@ firstIsRma: ticket.firstIsRma || false,
                           </tr>
                         )}
 
-                     {showResolve && s === "open" && (
+                     {showResolve && (s === "open" || s === "reopened") && (
   <tr key={`resolveform-${ticket.id}`} id={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
     <td colSpan={10} style={{ padding: "16px 20px" }}>
   <div style={{ maxWidth: 750, width: "100%" }}>
