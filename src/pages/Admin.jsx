@@ -917,7 +917,19 @@ isRma: issuePopup.firstIsRma || false,
 
                       {/* Col 7 — Issue */}
                       <td style={{ padding: "11px 12px", maxWidth: 160, borderRight: "1px solid #e0d8d0" }}>
-                        <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                        <div onClick={() => setIssuePopup({
+  description: ticket.firstDescription || ticket.description,
+  resolutionNotes: ticket.resolutionNotes,
+  resolutionTimeTaken: ticket.resolutionTimeTaken,
+  issueHistory: ticket.issueHistory,
+  firstDescription: ticket.firstDescription || ticket.description,
+  firstCreatedAt: ticket.createdAt,
+  firstRaisedByName: ticket.raisedByName,
+  firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+  firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+  firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+  firstIsRma: ticket.firstIsRma || false,
+})}
                           style={{ fontSize: 12, color: "#374151", cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140, textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
                           title="Click to view full issue">
                           {(ticket.description || "—").slice(0, 30)}{(ticket.description || "").length > 30 ? "…" : ""}

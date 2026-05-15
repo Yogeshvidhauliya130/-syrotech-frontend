@@ -275,7 +275,7 @@ const [myReassignedItemFilter, setMyReassignedItemFilter]       = useState("all"
             fetch(`${BASE_URL}/tickets/${ticket.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "open", acceptedAt: new Date().toISOString() })
+              body: JSON.stringify({ status: "reopened", acceptedAt: new Date().toISOString() })
             })
               .then(r => r.json())
               .then(updated => {
@@ -2315,7 +2315,19 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
 
                           {/* Issue column */}
                           <td style={{ padding: "12px 14px", maxWidth: 130, borderRight: "1px solid #d1fae5", textAlign: "left" }}>
-                            <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
+                            <div onClick={() => setIssuePopup({
+  description: ticket.firstDescription || ticket.description,
+  resolutionNotes: ticket.resolutionNotes,
+  resolutionTimeTaken: ticket.resolutionTimeTaken,
+  issueHistory: ticket.issueHistory,
+  firstDescription: ticket.firstDescription || ticket.description,
+  firstCreatedAt: ticket.createdAt,
+  firstRaisedByName: ticket.raisedByName,
+  firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+  firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+  firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+  firstIsRma: ticket.firstIsRma || false,
+})}
                               style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 110, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
                               title="Click to view full issue">
                               {ticket.description?.length > 35 ? ticket.description.slice(0, 35) + "…" : ticket.description || "—"}

@@ -897,7 +897,19 @@ firstIsRma: ticket.firstIsRma || false,
                               ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
                             </td>
                             <td style={tdStyle()}>
-                              <div onClick={() => setIssuePopup({ description:ticket.firstDescription || ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })}
+                              <div onClick={() => setIssuePopup({ 
+  description: ticket.firstDescription || ticket.description,
+  resolutionNotes: ticket.resolutionNotes,
+  resolvedAt: ticket.resolvedAt,
+  issueHistory: ticket.issueHistory,
+  firstDescription: ticket.firstDescription || ticket.description,
+  firstCreatedAt: ticket.createdAt,
+  firstRaisedByName: ticket.raisedByName,
+  firstResolvedNotes: ticket.firstResolvedNotes,
+  firstResolvedAt: ticket.firstResolvedAt,
+  firstResolvedBy: ticket.firstResolvedBy,
+  firstIsRma: ticket.firstIsRma || false,
+})}
   style={{ fontSize:12, color:"#374151", cursor:"pointer", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160, textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#9ca3af" }}>
   {(ticket.firstDescription || ticket.description)?.length>40?(ticket.firstDescription || ticket.description).slice(0,40)+"…":(ticket.firstDescription || ticket.description)||"—"}
 </div>
