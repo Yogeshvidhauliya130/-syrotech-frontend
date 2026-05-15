@@ -270,7 +270,7 @@ const validationErrors = validate();
   createdAt:    new Date().toISOString(),
   source:       "customer",
   customerType: customerType,
-  firstDescription: form.description,
+  firstDescription: `${form.issuePrefix} | ${form.issueSuffix}`,
   firstCreatedAt: new Date().toISOString(),
   firstRaisedByName: currentUser?.name || "",
 };
@@ -362,7 +362,7 @@ const validationErrors = validate();
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.05em" }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-     <div style={{ maxHeight: 380, overflowY: "auto", paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#c4b5fd #f5f3ff", display: "flex", flexDirection: "column", gap: 8 }}>
+     <div style={{ maxHeight: "55vh", overflowY: "auto", paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#c4b5fd #f5f3ff", display: "flex", flexDirection: "column", gap: 8 }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue */}
@@ -372,7 +372,7 @@ const validationErrors = validate();
                 {h.raisedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400 }}>{new Date(h.raisedAt).toLocaleString()}</span>}
                 {h.raisedByName && <span style={{ fontSize: 10, color: "#6b7280" }}>· {h.raisedByName}</span>}
               </div>
-              <div style={{ color: "#374151", lineHeight: 1.5 }}>{h.description || "—"}</div>
+              <div style={{ color: "#374151", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{h.description || "—"}</div>
             </div>
             {/* Resolution */}
             {h.isRma ? (
@@ -386,7 +386,7 @@ const validationErrors = validate();
                   {h.resolvedAt && <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400 }}>{new Date(h.resolvedAt).toLocaleString()}</span>}
                   {h.resolvedBy && <span style={{ fontSize: 10, color: "#6b7280" }}>· {h.resolvedBy}</span>}
                 </div>
-                <div style={{ color: "#374151", lineHeight: 1.5 }}>{h.resolvedNotes}</div>
+                <div style={{ color: "#374151", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{h.resolvedNotes}</div>
               </div>
             ) : (
               <div style={{ background: "#fffbeb", padding: "5px 12px", borderLeft: "3px solid #f59e0b" }}>
