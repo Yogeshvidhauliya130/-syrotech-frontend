@@ -411,6 +411,7 @@ const handleResolveSubmit = (ticketId) => {
       }
       return entry;
     });
+    const isFirstResolution = existingHistory.length === 0;
     fetch(`${BASE_URL}/tickets/${ticketId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -423,6 +424,11 @@ const handleResolveSubmit = (ticketId) => {
         softwareVersion: rf.softwareVersion?.trim() || "",
         qvcCode: rf.qvcCode?.trim() || "",
         issueHistory: updatedHistory,
+        ...(isFirstResolution ? {
+          firstResolvedNotes: rf.notes.trim(),
+          firstResolvedAt: now,
+          firstResolvedBy: currentUser?.name,
+        } : {}),
       })
     })
       .then(r => r.json())
@@ -807,10 +813,10 @@ const filteredMyReassigned = allTickets
     description: issuePopup.firstDescription || issuePopup.description,
     raisedAt: issuePopup.firstCreatedAt,
     raisedByName: issuePopup.firstRaisedByName,
-    resolvedNotes: issuePopup.firstResolvedNotes || issuePopup.resolutionNotes || null,
-resolvedAt: issuePopup.firstResolvedAt || issuePopup.resolvedAt || null,
-resolvedBy: issuePopup.firstResolvedBy || issuePopup.resolvedBy || null,
-isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
+    resolvedNotes: issuePopup.firstResolvedNotes || (issuePopup.issueHistory?.length === 0 ? issuePopup.resolutionNotes : null) || null,
+    resolvedAt: issuePopup.firstResolvedAt || (issuePopup.issueHistory?.length === 0 ? issuePopup.resolvedAt : null) || null,
+    resolvedBy: issuePopup.firstResolvedBy || (issuePopup.issueHistory?.length === 0 ? issuePopup.resolvedBy : null) || null,
+    isRma: issuePopup.firstIsRma || false,
   });
   // Stages 2+: from issueHistory (reopens)
   if (Array.isArray(issuePopup.issueHistory)) {
@@ -832,7 +838,7 @@ isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-      <div style={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4 }}>
+      <div style={{ maxHeight: "55vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4, scrollbarWidth: "thin", scrollbarColor: "#10b981 #f0fdf4" }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue row */}
@@ -1574,10 +1580,10 @@ isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
     firstDescription: ticket.description,
     firstCreatedAt: ticket.createdAt,
     firstRaisedByName: ticket.raisedByName,
-    firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
-firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
-firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
-firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
+    firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+firstIsRma: ticket.firstIsRma || false,
   })}style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>
@@ -2331,10 +2337,10 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
     firstDescription: ticket.description,
     firstCreatedAt: ticket.createdAt,
     firstRaisedByName: ticket.raisedByName,
-firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
-firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
-firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
-firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
+firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+firstIsRma: ticket.firstIsRma || false,
   })} style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>

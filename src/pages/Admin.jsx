@@ -268,14 +268,14 @@ const [filterDate, setFilterDate]   = useState("");
   open: tickets.filter(t => t.status === "open").length,
   resolved: tickets.filter(t => t.status === "resolved").length,
   rma: tickets.filter(t => t.status === "rma").length,
-  reopened: tickets.filter(t => t.reopenCount > 0).length,
+ reopened: tickets.filter(t => (t.status || "").toLowerCase() === "reopened").length,
 };
 
   const filtered = applyFilter(
   tickets
     .filter(t => {
   if (filter === "all") return true;
-  if (filter === "reopened") return t.reopenCount > 0;
+  if (filter === "reopened") return (t.status || "").toLowerCase() === "reopened";
   return (t.status || "open").toLowerCase() === filter;
 })
     .filter(t => {
@@ -394,10 +394,10 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
     description: issuePopup.firstDescription || issuePopup.description,
     raisedAt: issuePopup.firstCreatedAt,
     raisedByName: issuePopup.firstRaisedByName,
-    resolvedNotes: issuePopup.firstResolvedNotes || issuePopup.resolutionNotes || null,
-resolvedAt: issuePopup.firstResolvedAt || issuePopup.resolvedAt || null,
-resolvedBy: issuePopup.firstResolvedBy || issuePopup.resolvedBy || null,
-isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
+    resolvedNotes: issuePopup.firstResolvedNotes || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolutionNotes : null) || null,
+resolvedAt: issuePopup.firstResolvedAt || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolvedAt : null) || null,
+resolvedBy: issuePopup.firstResolvedBy || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolvedBy : null) || null,
+isRma: issuePopup.firstIsRma || false,
   });
   // Stages 2+: from issueHistory (reopens)
   if (Array.isArray(issuePopup.issueHistory)) {
@@ -419,7 +419,7 @@ isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-      <div style={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4 }}>
+      <div style={{ maxHeight: "55vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4, scrollbarWidth: "thin", scrollbarColor: "#ff5a00 #fff4ee" }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue row */}
@@ -940,10 +940,10 @@ isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
     firstDescription: ticket.description,
     firstCreatedAt: ticket.createdAt,
     firstRaisedByName: ticket.raisedByName,
-    firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
-firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
-firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
-firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
+    firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+firstIsRma: ticket.firstIsRma || false,
   })} style={{ fontSize:10, color:"#c94500", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>

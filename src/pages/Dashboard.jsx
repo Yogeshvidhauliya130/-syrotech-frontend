@@ -376,9 +376,9 @@ const validationErrors = validate();
     .filter(t => productFilter === "all" || t.category === productFilter)
 .filter(t => subCategoryFilter === "all" || t.subCategory === subCategoryFilter)
 .filter(t => itemFilter === "all" || t.model === itemFilter)
-    .filter(t => {
+   .filter(t => {
   if (statusFilter === "all") return true;
-  if (statusFilter === "reopened") return t.reopenCount > 0;
+  if (statusFilter === "reopened") return (t.status || "").toLowerCase() === "reopened";
   return (t.status || "open").toLowerCase() === statusFilter;
 })
     .filter(t => {
@@ -421,7 +421,7 @@ const validationErrors = validate();
     open:     myTickets.filter(t => t.status === "open").length,
     resolved: myTickets.filter(t => t.status === "resolved").length,
     rma:      myTickets.filter(t => t.status === "rma").length,
-    reopened: myTickets.filter(t => t.reopenCount > 0).length,
+    reopened: myTickets.filter(t => (t.status || "").toLowerCase() === "reopened").length,
   };
 
   const borderColor = (field) => errors[field] ? "#ef4444" : "#ddd5c8";
@@ -463,10 +463,10 @@ const validationErrors = validate();
     description: issuePopup.firstDescription || issuePopup.description,
     raisedAt: issuePopup.firstCreatedAt,
     raisedByName: issuePopup.firstRaisedByName,
-   resolvedNotes: issuePopup.firstResolvedNotes || issuePopup.resolutionNotes || null,
-resolvedAt: issuePopup.firstResolvedAt || issuePopup.resolvedAt || null,
-resolvedBy: issuePopup.firstResolvedBy || issuePopup.resolvedBy || null,
-isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
+   resolvedNotes: issuePopup.firstResolvedNotes || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolutionNotes : null) || null,
+resolvedAt: issuePopup.firstResolvedAt || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolvedAt : null) || null,
+resolvedBy: issuePopup.firstResolvedBy || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolvedBy : null) || null,
+isRma: issuePopup.firstIsRma || false,
   });
   // Stages 2+: from issueHistory (reopens)
   if (Array.isArray(issuePopup.issueHistory)) {
@@ -488,7 +488,7 @@ isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-      <div style={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4 }}>
+     <div style={{ maxHeight: "55vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4, scrollbarWidth: "thin", scrollbarColor: "#ff5a00 #fff4ee" }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue row */}
@@ -1240,6 +1240,50 @@ isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
                                 }} style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap", cursor: s === "resolved" || s === "rma" ? "pointer" : "default", border: s === "resolved" ? "1.5px solid #6ee7b7" : "none" }}>
                                   {STATUS_ICON[s]} {s.toUpperCase()}
                                 </span>
+                                {s === "resolved" && (() => {
+  const hrs = ticket.resolvedAt
+    ? (Date.now() - new Date(ticket.resolvedAt).getTime()) / (1000*60*60)
+    : 999;
+  if (hrs > 48) return null;
+  return (
+    <div>
+      <div onClick={() => {
+        const newIssue = window.prompt("Please describe the issue you are still facing:");
+        if (!newIssue || !newIssue.trim()) return;
+        const existingHistory = Array.isArray(ticket.issueHistory) ? ticket.issueHistory : [];
+        const newEntry = {
+          description: newIssue.trim(),
+          raisedBy: currentUser?.email,
+          raisedByName: currentUser?.name,
+          raisedAt: new Date().toISOString(),
+          assignTo: ticket.assignTo,
+        };
+        fetch(`${BASE_URL}/tickets/${ticket.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "reopened",
+            resolvedAt: null,
+            resolutionNotes: "",
+            reopenedAt: new Date().toISOString(),
+            reopenCount: (ticket.reopenCount || 0) + 1,
+            issueHistory: [...existingHistory, newEntry],
+            description: newIssue.trim(),
+            firstDescription: ticket.firstDescription || ticket.description,
+            firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+            firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
+            firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+firstIsRma: ticket.firstIsRma || false,
+          })
+        }).then(() => fetchTickets());
+      }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+        🔄 Reopen
+      </div>
+    </div>
+  );
+})()}
                                 {s === "resolved" && ticket.resolutionNotes && (
                                   <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
                                     style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
@@ -1272,10 +1316,10 @@ isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
     firstDescription: ticket.description,
     firstCreatedAt: ticket.createdAt,
     firstRaisedByName: ticket.raisedByName,
-    firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
-firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
-firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
-firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
+    firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+firstIsRma: ticket.firstIsRma || false,
   })}style={{ fontSize:10, color:"#ff5a00", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>
@@ -1309,10 +1353,10 @@ firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
   firstDescription: ticket.firstDescription || ticket.description,
   firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
   firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
-  firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
-  firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
-  firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
-  firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
+  firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+firstIsRma: ticket.firstIsRma || false,
 })
       }).then(() => fetchTickets());
     }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
