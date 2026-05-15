@@ -394,18 +394,10 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
     description: issuePopup.firstDescription || issuePopup.description,
     raisedAt: issuePopup.firstCreatedAt,
     raisedByName: issuePopup.firstRaisedByName,
-    resolvedNotes: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.resolvedNotes || null)
-      : issuePopup.resolutionNotes,
-    resolvedAt: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.resolvedAt || null)
-      : issuePopup.resolvedAt,
-    resolvedBy: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.resolvedBy || null)
-      : issuePopup.resolvedBy,
-    isRma: Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length > 0
-      ? (issuePopup.issueHistory[0]?.isRma || false)
-      : (issuePopup.rmaStatus || false),
+    resolvedNotes: issuePopup.firstResolvedNotes || issuePopup.resolutionNotes || null,
+resolvedAt: issuePopup.firstResolvedAt || issuePopup.resolvedAt || null,
+resolvedBy: issuePopup.firstResolvedBy || issuePopup.resolvedBy || null,
+isRma: issuePopup.firstIsRma || issuePopup.rmaStatus || false,
   });
   // Stages 2+: from issueHistory (reopens)
   if (Array.isArray(issuePopup.issueHistory)) {
@@ -948,9 +940,10 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
     firstDescription: ticket.description,
     firstCreatedAt: ticket.createdAt,
     firstRaisedByName: ticket.raisedByName,
-    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolutionNotes,
-    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedAt,
-    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? null : ticket.resolvedBy,
+    firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
+firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
+firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
+firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
   })} style={{ fontSize:10, color:"#c94500", cursor:"pointer", fontWeight:700, background:"#fff4ee", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>

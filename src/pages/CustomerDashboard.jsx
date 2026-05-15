@@ -318,7 +318,7 @@ customerType: customerType,
       {/* Issue Popup */}
       {issuePopup && (
         <div onClick={() => setIssuePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:520, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #c4b5fd" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:560, width:"100%", maxHeight:"85vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #c4b5fd" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
               <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#5b21b6" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
@@ -359,7 +359,7 @@ customerType: customerType,
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.05em" }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-      <div style={{ maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 2 }}>
+      <div style={{ maxHeight: 400, overflowY: "auto", paddingRight: 4, scrollbarWidth: "thin", display: "flex", flexDirection: "column", gap: 8, paddingRight: 2 }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue */}
@@ -865,7 +865,13 @@ customerType: customerType,
   reopenCount: (ticket.reopenCount || 0) + 1,
   issueHistory: [...existingHistory, newEntry],
   description: newIssue.trim(),
-  originalDescription: ticket.originalDescription || ticket.description,
+  firstDescription: ticket.firstDescription || ticket.description,
+firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
+firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
+firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
+firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
+firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
 })
         }).then(() => fetchTickets());
       }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
@@ -897,14 +903,14 @@ customerType: customerType,
   <div onClick={() => setIssuePopup({
     issueHistory: ticket.issueHistory,
     rmaStatus: ticket.rmaStatus,
-    firstDescription: ticket.originalDescription || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? ticket.issueHistory[0]?.description : ticket.description),
+    firstDescription: ticket.firstDescription || ticket.description,
     firstCreatedAt: ticket.createdAt,
     firstRaisedByName: ticket.raisedByName,
-    firstResolvedNotes: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.resolvedNotes || null) : ticket.resolutionNotes,
-    firstResolvedAt: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.resolvedAt || null) : ticket.resolvedAt,
-    firstResolvedBy: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.resolvedBy || null) : ticket.resolvedBy,
-    firstIsRma: Array.isArray(ticket.issueHistory) && ticket.issueHistory.length > 0 ? (ticket.issueHistory[0]?.isRma || false) : (ticket.rmaStatus || false),
-  })} style={{ fontSize:10, color:"#7c3aed", cursor:"pointer", fontWeight:700, background:"#f5f3ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+    firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
+firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
+firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
+firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
+})} style={{ fontSize:10, color:"#7c3aed", cursor:"pointer", fontWeight:700, background:"#f5f3ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
     📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
   </div>
 </td>
