@@ -1285,7 +1285,21 @@ firstIsRma: ticket.firstIsRma || false,
   );
 })()}
                                 {s === "resolved" && ticket.resolutionNotes && (
-                                  <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
+                          <div onClick={() => setIssuePopup({
+  description: ticket.firstDescription || ticket.description,
+  resolutionNotes: ticket.resolutionNotes,
+  resolutionTimeTaken: ticket.resolutionTimeTaken,
+  resolvedBy: ticket.resolvedBy,
+  resolvedAt: ticket.resolvedAt,
+  issueHistory: ticket.issueHistory,
+  firstDescription: ticket.firstDescription || ticket.description,
+  firstCreatedAt: ticket.createdAt,
+  firstRaisedByName: ticket.raisedByName,
+  firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+  firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+  firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+  firstIsRma: ticket.firstIsRma || false,
+})}
                                     style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
                                 )}
                                 {s === "rma" && (
@@ -1336,34 +1350,7 @@ firstIsRma: ticket.firstIsRma || false,
                                     style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
                                 )}
 
-                                {s === "resolved" && (() => {
-  const hrs = ticket.resolvedAt ? (Date.now() - new Date(ticket.resolvedAt).getTime()) / (1000*60*60) : 999;
-  if (hrs > 48) return null;
-  return (
-    <div onClick={() => {
-      if (!window.confirm("Do you want to reopen this ticket?")) return;
-      fetch(`${BASE_URL}/tickets/${ticket.id}`, {
-        method:"PATCH", headers:{"Content-Type":"application/json"},
-       body: JSON.stringify({
-  status: "reopened",
-  resolvedAt: null,
-  resolutionNotes: "",
-  reopenedAt: new Date().toISOString(),
-  reopenCount: (ticket.reopenCount || 0) + 1,
-  firstDescription: ticket.firstDescription || ticket.description,
-  firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
-  firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
-  firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
-firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
-firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
-firstIsRma: ticket.firstIsRma || false,
-})
-      }).then(() => fetchTickets());
-    }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
-      🔄 Reopen
-    </div>
-  );
-})()}
+              
 
 
                               </td>

@@ -1602,8 +1602,8 @@ firstIsRma: ticket.firstIsRma || false,
 
                          <td style={{ padding: "12px 14px", whiteSpace: "nowrap", textAlign: "left" }}>
   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-    {(ticket.status || "open") === "open" && (
-      <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
+   {(["open","reopened"].includes(ticket.status || "open")) && (
+  <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
         style={{ background: resolveForm[ticket.id]?.show ? "#ecfdf5" : "#10b981", color: resolveForm[ticket.id]?.show ? "#065f46" : "white", border: resolveForm[ticket.id]?.show ? "1.5px solid #6ee7b7" : "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
         ✅ {resolveForm[ticket.id]?.show ? "Cancel" : "Resolve"}
       </button>
@@ -1619,7 +1619,7 @@ firstIsRma: ticket.firstIsRma || false,
 </td>
                         </tr>
 
-{resolveForm[ticket.id]?.show && (ticket.status === "open") && (
+{resolveForm[ticket.id]?.show && (ticket.status === "open" || ticket.status === "reopened") && (
   <tr key={`resolveform-mr-${ticket.id}`} style={{ background: "#f0fdf4" }}>
     <td colSpan={9} style={{ padding: "16px 20px" }}>
       <div style={{ background: "linear-gradient(135deg, #ecfdf5, #d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
@@ -1713,7 +1713,7 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
     </td>
   </tr>
 )}
-{rmaForm[ticket.id]?.show && ["open","pending"].includes(ticket.status) && (
+{rmaForm[ticket.id]?.show && ["open","pending","reopened"].includes(ticket.status) && (
   <tr key={`rmaform-mr-${ticket.id}`} style={{ background: "#faf5ff" }}>
     <td colSpan={9} style={{ padding: "16px 20px" }}>
       <div style={{ background: "linear-gradient(135deg,#f5f3ff,#ede9fe)", border: "2px solid #7c3aed", borderRadius: 12, padding: "16px 20px" }}>
