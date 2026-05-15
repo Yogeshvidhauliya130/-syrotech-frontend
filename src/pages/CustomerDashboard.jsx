@@ -258,19 +258,22 @@ const validationErrors = validate();
     }
 
     const newTicket = {
-      ...form,
-      customer:     form.customer || currentUser?.name  || "",
-      email:        form.email    || currentUser?.email || "",
-      phone:        form.phone    || currentUser?.phone || "",
-      status:       "open",
-      acceptedAt:   new Date().toISOString(),
-      raisedBy:     currentUser?.email || "unknown",
-      raisedByName: currentUser?.name  || "Unknown",
-      date:         new Date().toISOString().slice(0, 10),
-      createdAt:    new Date().toISOString(),
-      source:       "customer",
-customerType: customerType,
-    };
+  ...form,
+  customer:     form.customer || currentUser?.name  || "",
+  email:        form.email    || currentUser?.email || "",
+  phone:        form.phone    || currentUser?.phone || "",
+  status:       "open",
+  acceptedAt:   new Date().toISOString(),
+  raisedBy:     currentUser?.email || "unknown",
+  raisedByName: currentUser?.name  || "Unknown",
+  date:         new Date().toISOString().slice(0, 10),
+  createdAt:    new Date().toISOString(),
+  source:       "customer",
+  customerType: customerType,
+  firstDescription: form.description,
+  firstCreatedAt: new Date().toISOString(),
+  firstRaisedByName: currentUser?.name || "",
+};
     fetch(`${BASE_URL}/tickets`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTicket) })
       .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
       .then(() => { setForm({ category:"", subCategory:"", model:"", serialNo:"", mac:"", macPrefix:"", macSuffix:"", customer:currentUser?.name||"", email:currentUser?.email||"", phone:currentUser?.phone||"", city:"", state:"", country:"", pincode:"", companyName:"", description:"", assignTo:"", productImage:"", issuePrefix:"", issueSuffix:""}); setImagePreview(""); setErrors({}); setSuccessMsg("✅ Ticket submitted successfully! Status: OPEN"); setActiveTab("mytickets"); fetchTickets(); setTimeout(() => setSuccessMsg(""), 4000); })
@@ -318,7 +321,7 @@ customerType: customerType,
       {/* Issue Popup */}
       {issuePopup && (
         <div onClick={() => setIssuePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:560, width:"100%", maxHeight:"85vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #c4b5fd" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:560, width:"100%", maxHeight:"88vh", overflowY:"hidden", display:"flex", flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #c4b5fd" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
               <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#5b21b6" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
@@ -359,7 +362,7 @@ customerType: customerType,
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.05em" }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-      <div style={{ maxHeight: 400, overflowY: "auto", paddingRight: 4, scrollbarWidth: "thin", display: "flex", flexDirection: "column", gap: 8, paddingRight: 2 }}>
+     <div style={{ maxHeight: 380, overflowY: "auto", paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#c4b5fd #f5f3ff", display: "flex", flexDirection: "column", gap: 8 }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue */}
@@ -894,10 +897,10 @@ firstIsRma: ticket.firstIsRma || ticket.rmaStatus || false,
                               ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
                             </td>
                             <td style={tdStyle()}>
-                              <div onClick={() => setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })}
-                                style={{ fontSize:12, color:"#374151", cursor:"pointer", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160, textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#9ca3af" }}>
-                                {ticket.description?.length>40?ticket.description.slice(0,40)+"…":ticket.description||"—"}
-                              </div>
+                              <div onClick={() => setIssuePopup({ description:ticket.firstDescription || ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt })}
+  style={{ fontSize:12, color:"#374151", cursor:"pointer", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160, textDecoration:"underline", textDecorationStyle:"dotted", textDecorationColor:"#9ca3af" }}>
+  {(ticket.firstDescription || ticket.description)?.length>40?(ticket.firstDescription || ticket.description).slice(0,40)+"…":(ticket.firstDescription || ticket.description)||"—"}
+</div>
                             </td>
                             <td style={tdStyle()}>
   <div onClick={() => setIssuePopup({
