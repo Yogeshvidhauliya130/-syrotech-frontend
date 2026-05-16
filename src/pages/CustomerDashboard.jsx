@@ -321,7 +321,7 @@ const validationErrors = validate();
       {/* Issue Popup */}
       {issuePopup && (
         <div onClick={() => setIssuePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:560, width:"100%", maxHeight:"88vh", overflowY:"auto", display:"flex", flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #c4b5fd" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:560, width:"100%", maxHeight:"88vh", overflowY:"hidden", display:"flex", flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #c4b5fd" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
               <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#5b21b6" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
@@ -362,7 +362,7 @@ const validationErrors = validate();
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.05em" }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-     <div style={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#c4b5fd #f5f3ff", display: "flex", flexDirection: "column", gap: 8, overflowX: "hidden" }}>
+     <div style={{ maxHeight: "55vh", overflowY: "auto", paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#c4b5fd #f5f3ff", display: "flex", flexDirection: "column", gap: 8, overflowX: "hidden" }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue */}
