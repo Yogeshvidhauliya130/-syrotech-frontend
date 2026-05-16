@@ -362,7 +362,7 @@ const validationErrors = validate();
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.05em" }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-     <div style={{ maxHeight: "55vh", overflowY: "auto", paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#c4b5fd #f5f3ff", display: "flex", flexDirection: "column", gap: 8, overflowX: "hidden" }}>
+     <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#c4b5fd #f5f3ff", display: "flex", flexDirection: "column", gap: 8, overflowX: "hidden" }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue */}
