@@ -2344,13 +2344,13 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
                           {/* Status column */}
                             <td style={{ padding:"12px 14px", borderRight:"1px solid #d1fae5", textAlign:"left" }}>
   <div onClick={() => setIssuePopup({
-    description: ticket.description,
+    description: ticket.firstDescription || ticket.description,
     resolutionNotes: ticket.resolutionNotes,
     resolutionTimeTaken: ticket.resolutionTimeTaken,
     issueHistory: ticket.issueHistory,
-    firstDescription: ticket.description,
-    firstCreatedAt: ticket.createdAt,
-    firstRaisedByName: ticket.raisedByName,
+    firstDescription: ticket.firstDescription || ticket.description,
+    firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+    firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
 firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
 firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
 firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
