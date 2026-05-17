@@ -1284,24 +1284,7 @@ firstIsRma: ticket.firstIsRma || false,
     </div>
   );
 })()}
-                                {s === "resolved" && ticket.resolutionNotes && (
-                          <div onClick={() => setIssuePopup({
-  description: ticket.firstDescription || ticket.description,
-  resolutionNotes: ticket.resolutionNotes,
-  resolutionTimeTaken: ticket.resolutionTimeTaken,
-  resolvedBy: ticket.resolvedBy,
-  resolvedAt: ticket.resolvedAt,
-  issueHistory: ticket.issueHistory,
-  firstDescription: ticket.firstDescription || ticket.description,
-  firstCreatedAt: ticket.createdAt,
-  firstRaisedByName: ticket.raisedByName,
-  firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
-  firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
-  firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
-  firstIsRma: ticket.firstIsRma || false,
-})}
-                                    style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
-                                )}
+                               
                                 {s === "rma" && (
                                   <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt })}
                                     style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
@@ -1327,9 +1310,9 @@ firstIsRma: ticket.firstIsRma || false,
     resolvedAt: ticket.resolvedAt,
     rmaStatus: ticket.rmaStatus,
     issueHistory: ticket.issueHistory,
-    firstDescription: ticket.description,
-    firstCreatedAt: ticket.createdAt,
-    firstRaisedByName: ticket.raisedByName,
+    firstDescription: ticket.firstDescription || ticket.description,
+    firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+    firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
     firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
 firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
 firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
@@ -1345,10 +1328,7 @@ firstIsRma: ticket.firstIsRma || false,
                                   title="Click to view full issue">
                                   {ticket.description?.length > 40 ? ticket.description.slice(0, 40) + "…" : ticket.description || "—"}
                                 </div>
-                                {s === "resolved" && ticket.resolutionNotes && (
-                                  <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt })}
-                                    style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
-                                )}
+                                
 
               
 
