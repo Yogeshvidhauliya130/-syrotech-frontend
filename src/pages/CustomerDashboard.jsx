@@ -836,9 +836,8 @@ const validationErrors = validate();
 </td>
                             <td style={tdStyle()}>
                               <span onClick={() => {
-                                if (s==="resolved" && ticket.resolutionNotes) setIssuePopup({ description:ticket.description, resolutionNotes:ticket.resolutionNotes, resolvedAt:ticket.resolvedAt });
-                                else if (s==="rma") setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt });
-                              }} style={{ padding:"3px 8px", borderRadius:10, fontSize:9, fontWeight:700, color:STATUS_COLOR[s], background:STATUS_BG[s], display:"inline-block", whiteSpace:"nowrap", cursor:(s==="resolved"||s==="rma")?"pointer":"default" }}>
+                                if (s==="rma") setRmaPopup({ rmaReason:ticket.rmaReason, rmaCenterName:ticket.rmaCenterName, rmaCenterCity:ticket.rmaCenterCity, rmaCenterAddress:ticket.rmaCenterAddress, rmaCenterPhone:ticket.rmaCenterPhone, rmaSentAt:ticket.rmaSentAt });
+                              }}style={{ padding:"3px 8px", borderRadius:10, fontSize:9, fontWeight:700, color:STATUS_COLOR[s], background:STATUS_BG[s], display:"inline-block", whiteSpace:"nowrap", cursor:(s==="resolved"||s==="rma")?"pointer":"default" }}>
                                 {STATUS_ICON[s]} {s.toUpperCase()}
                               </span>
                               

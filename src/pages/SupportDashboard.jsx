@@ -1568,10 +1568,7 @@ const filteredMyReassigned = allTickets
                               title="Click to view full issue">
                               {ticket.description?.length > 35 ? ticket.description.slice(0, 35) + "…" : ticket.description || "—"}
                             </div>
-                            {s === "resolved" && ticket.resolutionNotes && (
-                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
-                            )}
+                          
                           </td>
 
 
