@@ -2365,8 +2365,7 @@ firstIsRma: ticket.firstIsRma || false,
 
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap", borderRight: "1px solid #d1fae5", textAlign: "left" }}>
                             <span onClick={() => {
-                              if (s === "resolved" && ticket.resolutionNotes) setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken });
-                              else if (s === "rma") setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
+                              if (s === "rma") setRmaPopup({rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
                             }} style={{
                               padding: "3px 8px", borderRadius: 12, fontSize: 9, fontWeight: 700,
                               color: STATUS_COLOR[s], background: STATUS_BG[s],
