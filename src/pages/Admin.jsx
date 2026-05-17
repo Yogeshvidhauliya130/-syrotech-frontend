@@ -1307,7 +1307,7 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
     return "All Time";
   };
 
-  const getAgentStats = (agent) => {
+  const getAgentStats = (agent, allTickets = []) => {
     const agentTickets    = filteredTickets.filter(t => t.assignTo === agent);
     const resolvedList    = agentTickets.filter(t => t.status === "resolved" && t.createdAt && t.resolvedAt);
     const rmaList         = agentTickets.filter(t => t.status === "rma");
@@ -1317,12 +1317,14 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
     const overdueCount    = agentTickets.filter(t => t.status !== "resolved" && t.status !== "rma" && t.createdAt && new Date(t.createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now() <= 0).length;
     const feedbackTickets = resolvedList.filter(t => t.feedbackRating && parseInt(t.feedbackRating) > 0);
     const avgFeedback     = feedbackTickets.length ? (feedbackTickets.reduce((s, t) => s + parseInt(t.feedbackRating), 0) / feedbackTickets.length).toFixed(1) : "—";
-    return {
+   return {
       total: agentTickets.length,
       
       open:     agentTickets.filter(t => t.status === "open").length,
       resolved: resolvedList.length,
       rma:      rmaList.length,
+      reopened: agentTickets.filter(t => (t.status || "").toLowerCase() === "reopened").length,
+      reassigned: allTickets.filter(t => t.reassignedFrom && t.reassignedFrom.toLowerCase().trim() === agent.toLowerCase().trim()).length,
       within24, avgScore, avgHours, overdueCount, avgFeedback,
       feedbackCount: feedbackTickets.length,
       compliance: resolvedList.length ? Math.round((within24 / resolvedList.length) * 100) : 0,
@@ -1373,7 +1375,7 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
   };
 
   const exportAgentExcel = (agent) => {
-    const stats = getAgentStats(agent);
+    const stats = getAgentStats(agent, tickets);
     const wb    = XLSX.utils.book_new();
     const summaryData = [
       ["AGENT PERFORMANCE REPORT — " + agent.toUpperCase()], [""],
@@ -1410,7 +1412,7 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
       ["Total Tickets", filteredTickets.length], [""],
       ["Agent","Total","Open","Resolved","RMA","Within 24hr","SLA%","Avg Hrs","Avg Score","Overdue","Feedback","Avg Rating"],
       ...agents.map(agent => {
-        const s = getAgentStats(agent);
+        const s = getAgentStats(agent, tickets);
         return [agent, s.total,  s.open, s.resolved, s.rma, s.within24,
           `${s.compliance}%`, s.avgHours==="—"?"—":`${s.avgHours}`,
           s.avgScore!=="—"?`${s.avgScore}/10`:"—",
@@ -1425,7 +1427,7 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
     const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...filteredTickets.map(buildTicketRow)]);
     ws2["!cols"] = cw; XLSX.utils.book_append_sheet(wb, ws2, "All Tickets Combined");
     agents.forEach(agent => {
-      const stats = getAgentStats(agent);
+      const stats = getAgentStats(agent, tickets);
       const ws = XLSX.utils.aoa_to_sheet([
         [`AGENT: ${agent}`], [`Period: ${periodLabel()}`],
         [`Resolved: ${stats.resolved} | RMA: ${stats.rma} | Score: ${stats.avgScore}/10 | SLA: ${stats.compliance}%`],
@@ -1593,14 +1595,14 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700, background: "white" }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
                 <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)" }}>
-              {["Support Person","Total","Resolved","Open","RMA","Resolution Rate","Within 24hr","Avg Time","Avg Rating","Rating Breakdown","Export"].map((h, i) => (
+             {["Support Person","Total","Resolved","Open","RMA","Reopened","Reassigned","Resolution Rate","Within 24hr","Avg Time","Avg Rating","Rating Breakdown","Export"].map((h, i) => (
                     <th key={i} style={{ padding: "12px 18px", fontSize: 11, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredAgents.map((agent, idx) => {
-                 const stats = getAgentStats(agent);
+                 const stats = getAgentStats(agent, tickets);
 console.log(agent, stats.total, stats.resolved, stats.open, stats.rma);
 const colors = ["#ff5a00","#3b82f6","#10b981","#f59e0b","#8b5cf6"];
                   const col = colors[idx % colors.length];
@@ -1635,6 +1637,17 @@ const resolutionRate = activeTotal > 0
   <div style={{ fontSize: 20, fontWeight: 800, color: "#7c3aed" }}>{stats.rma}</div>
   <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>tickets</div>
 </td>
+<td style={{ padding: "12px 18px", textAlign: "center" }}>
+  <div style={{ fontSize: 20, fontWeight: 800, color: "#dc2626" }}>{stats.reopened}</div>
+  <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>reopened</div>
+</td>
+
+<td style={{ padding: "12px 18px", textAlign: "center" }}>
+  <div style={{ fontSize: 20, fontWeight: 800, color: "#f59e0b" }}>{stats.reassigned}</div>
+  <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>reassigned</div>
+</td>
+
+
                       <td style={{ padding: "12px 18px", textAlign: "center" }}>
                         <div style={{ fontSize: 20, fontWeight: 800, color: activeTotal > 0 ? (parseInt(resolutionRate) >= 70 ? "#10b981" : parseInt(resolutionRate) >= 40 ? "#f59e0b" : "#ef4444") : "#9ca3af" }}>{resolutionRate}</div>
                         <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{stats.resolved}/{activeTotal}</div>
