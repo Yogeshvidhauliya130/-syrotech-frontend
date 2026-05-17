@@ -1268,6 +1268,8 @@ const {
  const [filterYear, setFilterYear] = useState("");
 const [filterMonth, setFilterMonth] = useState("");
 const [filterDate, setFilterDate] = useState("");
+const [filterFromDate, setFilterFromDate] = useState("");
+const [filterToDate, setFilterToDate] = useState("");
 const [ratingFilter, setRatingFilter] = useState({});
 const [globalRating, setGlobalRating] = useState(0);
 const [supportPersons, setSupportPersons] = useState([]);
@@ -1314,11 +1316,16 @@ const [supportOnly, setSupportOnly] = useState(false);
 
 const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
   const d = new Date(t.createdAt || t.date);
-  if (filterDate) return d.toDateString() === new Date(filterDate).toDateString();
-  if (filterYear && filterMonth) return d.getFullYear() === parseInt(filterYear) && d.getMonth() + 1 === parseInt(filterMonth);
-  if (filterYear) return d.getFullYear() === parseInt(filterYear);
-  if (filterMonth) return d.getMonth() + 1 === parseInt(filterMonth);
- return true;
+ if (filterDate) return d.toDateString() === new Date(filterDate).toDateString();
+if (filterFromDate && filterToDate) {
+  const from = new Date(filterFromDate); from.setHours(0,0,0,0);
+  const to = new Date(filterToDate); to.setHours(23,59,59,999);
+  return d >= from && d <= to;
+}
+if (filterYear && filterMonth) return d.getFullYear() === parseInt(filterYear) && d.getMonth() + 1 === parseInt(filterMonth);
+if (filterYear) return d.getFullYear() === parseInt(filterYear);
+if (filterMonth) return d.getMonth() + 1 === parseInt(filterMonth);
+return true;
 })
 .filter(t => !supportOnly || t.source === "support")
 .filter(t => sourceViaFilter === "all" || t.raisedVia === sourceViaFilter));
@@ -1553,6 +1560,26 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
   <div style={{ marginTop:14, fontSize:12, color:"#6b7280" }}>
     Showing <strong style={{ color:"#ff5a00" }}>{filteredTickets.length}</strong> tickets
   </div>
+</div>
+
+<div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", marginBottom:12, background:"white", borderRadius:10, padding:"12px 16px", border:"1.5px solid #e0d8d0" }}>
+  <span style={{ fontSize:12, fontWeight:700, color:"#6b7280" }}>📅 Date Range:</span>
+  <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+    <label style={{ fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase" }}>From</label>
+    <input type="date" value={filterFromDate}
+      onChange={e => { setFilterFromDate(e.target.value); setFilterDate(""); setFilterYear(""); setFilterMonth(""); }}
+      style={{ padding:"6px 10px", borderRadius:8, border:`1.5px solid ${filterFromDate ? "#ff5a00" : "#d1d5db"}`, fontSize:12, background: filterFromDate ? "#fff4ee" : "white", color: filterFromDate ? "#ff5a00" : "#374151", outline:"none", fontFamily:"inherit" }} />
+  </div>
+  <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+    <label style={{ fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase" }}>To</label>
+    <input type="date" value={filterToDate}
+      onChange={e => { setFilterToDate(e.target.value); setFilterDate(""); setFilterYear(""); setFilterMonth(""); }}
+      style={{ padding:"6px 10px", borderRadius:8, border:`1.5px solid ${filterToDate ? "#ff5a00" : "#d1d5db"}`, fontSize:12, background: filterToDate ? "#fff4ee" : "white", color: filterToDate ? "#ff5a00" : "#374151", outline:"none", fontFamily:"inherit" }} />
+  </div>
+  {(filterFromDate || filterToDate) && (
+    <button onClick={() => { setFilterFromDate(""); setFilterToDate(""); }}
+      style={{ marginTop:16, background:"#fee2e2", border:"none", borderRadius:6, padding:"6px 12px", cursor:"pointer", fontSize:11, color:"#dc2626", fontWeight:700, fontFamily:"inherit" }}>✕ Clear</button>
+  )}
 </div>
 
       {agents.length > 0 && (
