@@ -811,3 +811,31 @@ export const SALES_PRODUCT_MODELS = {
   // ✅ To ADD more for sales — copy a line above and uncomment
 };
 export const SALES_CATEGORIES = Object.keys(SALES_PRODUCT_MODELS);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

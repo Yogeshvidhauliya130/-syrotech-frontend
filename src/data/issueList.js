@@ -13,149 +13,40 @@
 
 export const ISSUE_LIST = {
 
-//  // ── OLT ──────────────────────────────────────────────────
-// "OLT": {
+ // ── OLT ──────────────────────────────────────────────────
+"OLT": {
 
-//   // Common issues for all OLT subcategories
-//   "_common": [
-//     "Olt Configuration",
-//     "User Fluctuation Issue",
-//     "Gpon Plug&Play Configuration",
-//     "Epon to Gpon Migration",
-//     "Olt Cascading Configuration",
-//     "Olt Firmware Upgrade",
-//     "Olt Pon Port Issue",
-//     "Olt Uplink Port Issue",
-//     "Olt Speed Issue",
-//     "Multiple ISP Configuration",
-//     "Olt Rebooting Issue",
-//     "Olt Fan not Working",
-//     "Lease Line Configuration",
-//     "Vlan Configuration",
-//     "Brand New Olt DOA Case",
-//     "Olt Booting Issue",
-//     "Line & Service Profile Configuration",
-//     "Others",
-//   ],
+  // Common issues for all OLT subcategories
+  "_common": [
+    "Olt Configuration",
+    "User Fluctuation Issue",
+    "Gpon Plug&Play Configuration",
+    "Epon to Gpon Migration",
+    "Olt Cascading Configuration",
+    "Olt Firmware Upgrade",
+    "Olt Pon Port Issue",
+    "Olt Uplink Port Issue",
+    "Olt Speed Issue",
+    "Multiple ISP Configuration",
+    "Olt Rebooting Issue",
+    "Olt Fan not Working",
+    "Lease Line Configuration",
+    "Vlan Configuration",
+    "Brand New Olt DOA Case",
+    "Olt Booting Issue",
+    "Line & Service Profile Configuration",
+    "Others",
+  ],
 
-//   // OLT subcategories
-//   "EPON OLT": [],
-//   "GPON OLT": [],
-//   "EPON OLT PS": [],
-//   "GPON OLT PS": [],
-// },
+  // OLT subcategories
+  "EPON OLT": [],
+  "GPON OLT": [],
+  "EPON OLT PS": [],
+  "GPON OLT PS": [],
+},
 
 // ── ONT ──────────────────────────────────────────────────
-// "ONT": {
-
-//   "XPON ONT": [
-//     "Ont Configuration",
-//     "Voice Configuration",
-//     "Port Forwarding",
-//     "Ont not Register",
-//     "Ont Login Issue",
-//     "Ont Firmware Upgrade",
-//     "Customized Ont",
-//     "Ont WiFi Issue",
-//     "Only Power Led Light",
-//     "Ont Query",
-//     "Ont Adaptor Issue",
-//     "Ont Speed Issue",
-//     "Wifi Extender/ Repeater via LAN",
-//     "Lan Port Issue",
-//     "Ont Led Issue",
-//     "Others",
-//   ],
-// },
-
-
-
-"GPON/EPON": {
-  "_common": [],
-
-  "EPON OLT": [
-    "Olt Configuration",
-    "User Fluctuation Issue",
-    "Gpon Plug&Play Configuration",
-    "Epon to Gpon Migration",
-    "Olt Cascading Configuration",
-    "Olt Firmware Upgrade",
-    "Olt Pon Port Issue",
-    "Olt Uplink Port Issue",
-    "Olt Speed Issue",
-    "Multiple ISP Configuration",
-    "Olt Rebooting Issue",
-    "Olt Fan not Working",
-    "Lease Line Configuration",
-    "Vlan Configuration",
-    "Brand New Olt DOA Case",
-    "Olt Booting Issue",
-    "Line & Service Profile Configuration",
-    "Others",
-  ],
-
-  "GPON OLT": [
-    "Olt Configuration",
-    "User Fluctuation Issue",
-    "Gpon Plug&Play Configuration",
-    "Epon to Gpon Migration",
-    "Olt Cascading Configuration",
-    "Olt Firmware Upgrade",
-    "Olt Pon Port Issue",
-    "Olt Uplink Port Issue",
-    "Olt Speed Issue",
-    "Multiple ISP Configuration",
-    "Olt Rebooting Issue",
-    "Olt Fan not Working",
-    "Lease Line Configuration",
-    "Vlan Configuration",
-    "Brand New Olt DOA Case",
-    "Olt Booting Issue",
-    "Line & Service Profile Configuration",
-    "Others",
-  ],
-
-  "EPON OLT PS": [
-    "Olt Configuration",
-    "User Fluctuation Issue",
-    "Gpon Plug&Play Configuration",
-    "Epon to Gpon Migration",
-    "Olt Cascading Configuration",
-    "Olt Firmware Upgrade",
-    "Olt Pon Port Issue",
-    "Olt Uplink Port Issue",
-    "Olt Speed Issue",
-    "Multiple ISP Configuration",
-    "Olt Rebooting Issue",
-    "Olt Fan not Working",
-    "Lease Line Configuration",
-    "Vlan Configuration",
-    "Brand New Olt DOA Case",
-    "Olt Booting Issue",
-    "Line & Service Profile Configuration",
-    "Others",
-  ],
-
-  "GPON OLT PS": [
-    "Olt Configuration",
-    "User Fluctuation Issue",
-    "Gpon Plug&Play Configuration",
-    "Epon to Gpon Migration",
-    "Olt Cascading Configuration",
-    "Olt Firmware Upgrade",
-    "Olt Pon Port Issue",
-    "Olt Uplink Port Issue",
-    "Olt Speed Issue",
-    "Multiple ISP Configuration",
-    "Olt Rebooting Issue",
-    "Olt Fan not Working",
-    "Lease Line Configuration",
-    "Vlan Configuration",
-    "Brand New Olt DOA Case",
-    "Olt Booting Issue",
-    "Line & Service Profile Configuration",
-    "Others",
-  ],
+"ONT": {
 
   "XPON ONT": [
     "Ont Configuration",
@@ -176,10 +67,6 @@ export const ISSUE_LIST = {
     "Others",
   ],
 },
-
-
-
-
 
   // ── Media Converter ─────────────────────────────────────────────
   "Media Converter": {
