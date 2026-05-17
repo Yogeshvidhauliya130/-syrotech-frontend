@@ -1582,9 +1582,9 @@ const filteredMyReassigned = allTickets
     resolvedAt: ticket.resolvedAt,
     rmaStatus: ticket.rmaStatus,
     issueHistory: ticket.issueHistory,
-    firstDescription: ticket.description,
-    firstCreatedAt: ticket.createdAt,
-    firstRaisedByName: ticket.raisedByName,
+    firstDescription: ticket.firstDescription || ticket.description,
+    firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+    firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
     firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
 firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
 firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
@@ -2338,10 +2338,7 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
                               {ticket.description?.length > 35 ? ticket.description.slice(0, 35) + "…" : ticket.description || "—"}
                             </div>
                             {isReassigned && <div style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginTop: 2 }}>🔄 from {ticket.reassignedFrom}</div>}
-                            {s === "resolved" && ticket.resolutionNotes && (
-                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                                style={{ fontSize: 10, color: "#059669", fontWeight: 600, marginTop: 3, cursor: "pointer" }}>✅ Resolved — click to view</div>
-                            )}
+                            
                           </td>
 
                           {/* Status column */}
