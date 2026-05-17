@@ -105,6 +105,8 @@ function StarDisplay({ value }) {
 export default function Admin() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("analytics");
+  const [showPerfMenu, setShowPerfMenu] = useState(false);
+const [perfLevel, setPerfLevel] = useState("all");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -114,7 +116,7 @@ export default function Admin() {
 
   const NAV = [
     { key: "analytics",   icon: "📊", label: "Analytics"        },
-    { key: "performance", icon: "🏆", label: "Performance"      },
+    { key: "performance", icon: "🏆", label: "Performance"},
     { key: "users",       icon: "👥", label: "User Permissions" },
     { key: "sla",         icon: "📈", label: "SLA Report"       },
     { key: "products", icon: "📦", label: "Product Category" },
@@ -148,23 +150,52 @@ export default function Admin() {
         {/* Nav */}
         <nav style={{ flex: 1, padding: "12px 10px" }}>
           {NAV.map(n => (
-            <button key={n.key}
-              onClick={() => setTab(n.key)}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                width: "100%", padding: "10px 12px", marginBottom: 4,
-                borderRadius: 8, border: "none", cursor: "pointer",
-                background: tab === n.key ? "rgba(255,90,0,0.22)" : "transparent",
-                color: tab === n.key ? "#ff7a30" : "rgba(255,255,255,0.6)",
-                fontWeight: tab === n.key ? 700 : 500,
-                fontSize: 13, textAlign: "left",
-                borderLeft: tab === n.key ? "3px solid #ff5a00" : "3px solid transparent",
-                transition: "all 0.15s",
-                fontFamily: "inherit",
-              }}>
-              <span style={{ fontSize: 16 }}>{n.icon}</span>{n.label}
-            </button>
-          ))}
+  <div key={n.key} style={{ position: "relative" }}
+    onMouseEnter={() => n.key === "performance" && setShowPerfMenu(true)}
+    onMouseLeave={() => n.key === "performance" && setShowPerfMenu(false)}>
+    <button
+      onClick={() => { setTab(n.key); if(n.key !== "performance") setShowPerfMenu(false); }}
+      style={{
+        display: "flex", alignItems: "center", gap: 10,
+        width: "100%", padding: "10px 12px", marginBottom: 4,
+        borderRadius: 8, border: "none", cursor: "pointer",
+        background: tab === n.key ? "rgba(255,90,0,0.22)" : "transparent",
+        color: tab === n.key ? "#ff7a30" : "rgba(255,255,255,0.6)",
+        fontWeight: tab === n.key ? 700 : 500,
+        fontSize: 13, textAlign: "left",
+        borderLeft: tab === n.key ? "3px solid #ff5a00" : "3px solid transparent",
+        transition: "all 0.15s",
+        fontFamily: "inherit",
+      }}>
+      <span style={{ fontSize: 16 }}>{n.icon}</span>{n.label}
+      {n.key === "performance" && <span style={{ marginLeft: "auto", fontSize: 10 }}>▶</span>}
+    </button>
+
+    {n.key === "performance" && showPerfMenu && (
+      <div style={{
+        position: "absolute", left: "100%", top: 0,
+        background: "#1a0a00", border: "1px solid rgba(255,90,0,0.3)",
+        borderRadius: 8, padding: "6px", minWidth: 160, zIndex: 100,
+        boxShadow: "4px 4px 16px rgba(0,0,0,0.4)"
+      }}>
+        {[["all","All Engineers"],["1","L1 Engineer"],["2","L2 Engineer"],["3","L3 Engineer"]].map(([level, label]) => (
+          <button key={level}
+            onClick={() => { setTab("performance"); setPerfLevel(level); setShowPerfMenu(false); }}
+            style={{
+              display: "block", width: "100%", padding: "8px 12px",
+              background: perfLevel === level && tab === "performance" ? "rgba(255,90,0,0.22)" : "transparent",
+              color: perfLevel === level && tab === "performance" ? "#ff7a30" : "rgba(255,255,255,0.7)",
+              border: "none", borderRadius: 6, cursor: "pointer",
+              fontSize: 12, fontWeight: perfLevel === level ? 700 : 400,
+              textAlign: "left", fontFamily: "inherit",
+            }}>
+            {label}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+))}
         </nav>
         <button onClick={handleLogout} style={{
           margin: "0 10px", padding: "10px 12px", borderRadius: 8,
@@ -177,7 +208,7 @@ export default function Admin() {
       {/* ── Main Content ── */}
       <main style={{ flex: 1, minWidth: 0, padding: "24px 28px", overflowX: "hidden" }}>
         {tab === "analytics"   && <Analytics />}
-        {tab === "performance" && <Performance />}
+        {tab === "performance" && <Performance levelFilter={perfLevel} />}
         {tab === "users"       && <AdminUsers />}
         {tab === "sla"         && <SLAReport />}
         {tab === "products" && <ProductManager />}
@@ -1220,7 +1251,7 @@ function Analytics_OLD() {
 /* ═══════════════════════════════════════════════════
    PERFORMANCE TAB  (unchanged)
 ═══════════════════════════════════════════════════ */
-function Performance() {
+function Performance({ levelFilter: initialLevel = "all" }) {
   const [tickets,     setTickets]     = useState([]);
 const {
   filterCat, filterSub, filterItem,
@@ -1247,7 +1278,7 @@ useEffect(() => {
     .then(users => setSupportPersons(users.filter(u => u.role === "support" && u.approved)))
     .catch(console.error);
 }, []);
-const [levelFilter, setLevelFilter] = useState("all");
+const [levelFilter, setLevelFilter] = useState(initialLevel);
 const [sourceViaFilter, setSourceViaFilter] = useState("all");
 const [supportOnly, setSupportOnly] = useState(false);
 
@@ -1545,16 +1576,7 @@ const filteredTickets = applyFilter(filterByPeriod(tickets).filter(t => {
     <option value="rnd">⚙️ R&D</option>
   </select>
 )}
-  <span style={{ fontSize:12, color:"#6b7280", fontWeight:600 }}>🔧 Level:</span>
-  {[["all","All Engineers"],["1","L1 Engineers"],["2","L2 Engineers"],["3","L3 Engineers"]].map(([key, label]) => (
-    <button key={key} onClick={() => setLevelFilter(key)} style={{
-      padding:"6px 14px", borderRadius:16, fontSize:12, cursor:"pointer",
-      border: levelFilter===key ? "2px solid #ff5a00" : "1px solid #d1d5db",
-      background: levelFilter===key ? "#fff4ee" : "white",
-      color: levelFilter===key ? "#ff5a00" : "#555",
-      fontWeight: levelFilter===key ? 700 : 400,
-    }}>{label}</button>
-  ))}
+  
 </div>
           <input
             placeholder="🔍 Filter by support person name..."
