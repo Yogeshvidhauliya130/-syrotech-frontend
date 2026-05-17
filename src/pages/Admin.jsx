@@ -1279,6 +1279,7 @@ useEffect(() => {
     .catch(console.error);
 }, []);
 const [levelFilter, setLevelFilter] = useState(initialLevel);
+useEffect(() => { setLevelFilter(initialLevel); }, [initialLevel]);
 const [sourceViaFilter, setSourceViaFilter] = useState("all");
 const [supportOnly, setSupportOnly] = useState(false);
 
