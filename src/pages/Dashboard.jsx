@@ -1231,13 +1231,11 @@ isRma: issuePopup.firstIsRma || false,
                                 )}
                               </td>
                               <td style={tdStyle({ padding: "12px 10px" })}>
-                                <span onClick={() => {
-                                  if (s === "resolved") {
-                                    setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken, resolvedBy: ticket.resolvedBy, resolvedAt: ticket.resolvedAt });
-                                  } else if (s === "rma") {
+                               <span onClick={() => {
+                                  if (s === "rma") {
                                     setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt });
                                   }
-                                }} style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap", cursor: s === "resolved" || s === "rma" ? "pointer" : "default", border: s === "resolved" ? "1.5px solid #6ee7b7" : "none" }}>
+                                }}style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap", cursor: s === "resolved" || s === "rma" ? "pointer" : "default", border: s === "resolved" ? "1.5px solid #6ee7b7" : "none" }}>
                                   {STATUS_ICON[s]} {s.toUpperCase()}
                                 </span>
                                 {s === "resolved" && (() => {
