@@ -805,7 +805,7 @@ const filteredMyReassigned = allTickets
 
       {issuePopup && (
         <div onClick={() => setIssuePopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 520, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#e5e7eb"}` }}>
+         <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 520, width: "100%", maxHeight: "88vh", overflowY: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: `2px solid ${issuePopup.resolutionNotes ? "#d1fae5" : "#e5e7eb"}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#059669" }}>{issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Issue Description"}</div>
               <button onClick={() => setIssuePopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
@@ -843,7 +843,7 @@ const filteredMyReassigned = allTickets
       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>
         📋 Ticket History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
       </div>
-      <div style={{ maxHeight: "55vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 4, scrollbarWidth: "thin", scrollbarColor: "#10b981 #f0fdf4" }}>
+     <div style={{ maxHeight: "60vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 6, scrollbarWidth: "thin", scrollbarColor: "#10b981 #f0fdf4", overflowX: "hidden" }}>
         {allHistory.map((h, i) => (
           <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", fontSize: 12 }}>
             {/* Issue row */}
@@ -2382,10 +2382,7 @@ firstIsRma: ticket.firstIsRma || false,
                             }}>
                               {s.toUpperCase()}
                             </span>
-                            {s === "resolved" && ticket.resolutionNotes && (
-                              <div onClick={() => setIssuePopup({ description: ticket.description, resolutionNotes: ticket.resolutionNotes, resolutionTimeTaken: ticket.resolutionTimeTaken })}
-                                style={{ fontSize: 9, color: "#059669", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>📋 View details</div>
-                            )}
+                            
                             {s === "rma" && (
                               <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt })}
                                 style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA details</div>
@@ -2558,7 +2555,7 @@ firstIsRma: ticket.firstIsRma || false,
     </td>
   </tr>
 )}
-                        {showRma && (s === "open" || s === "pending") && (
+                        {showRma && (s === "open" || s === "pending" || s === "reopened") && (
                           <tr key={`rmaform-${ticket.id}`} style={{ background: "#faf5ff" }}>
                             <td colSpan={9} style={{ padding: "16px 20px" }}>
   <div style={{ maxWidth: 750, width: "100%" }}>
