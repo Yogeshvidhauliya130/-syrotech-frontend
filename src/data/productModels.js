@@ -47,7 +47,8 @@ export const PRODUCT_MODELS = {
     "Locking-Unlocking",
     "Calibration",
     "Service",
-    "Arc Correction"
+    "Arc Correction",
+    "others"
   ]
 },
 
