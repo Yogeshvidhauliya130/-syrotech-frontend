@@ -342,7 +342,7 @@ export const PRODUCT_MODELS = {
   // ── Passive Products ────────────────────────
   "Passive Products": {
     "Unarmoured Fiber Cable": ["SY-CATV-2F-UNARM-GYP( Coil)", "SY-CATV-4F-UNARM-GYP ( Coil)", "SY-CATV-6F-UNARM-GYP( Coil)", "SY-CATV-12F-UNARM-GYP( Coil)"],
-    "Armoured Fiber Cable": ["SY-CATV-6F-ARM-OM2", "SY-CATV-12F-ARM-OM2", "SY-CATV-6F-ARM-OM3", "SY-CATV-12F-ARM-OM3"],
+    "Armoured Fiber Cable": ["SY-CATV-6F-ARM-OM2", "SY-CATV-12F-ARM-OM2", "SY-CATV-6F-ARM-OM3", "SY-CATV-12F-ARM-OM3","other"],
     "Drop Cable": ["Syrotech-DROP2FR-A1-IND", "SY-DROP2FF-A1-IND", "SY-DROP1FF-A1-IND"],
     "CAT6 Cable": ["SY-CAT6-UTP-305M(0.48)", "SY-CAT6-SFTP-305M (0.51)", "SY-CAT6-SFTP-305M (0.55)"],
     "Adaptor": [
