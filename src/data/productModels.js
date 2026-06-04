@@ -317,7 +317,7 @@ export const PRODUCT_MODELS = {
 
   "CCTV": {
     "XVR": ["Other"],
-    "XVR": ["Other"],
+    "NVR": ["Other"],
     "IP-Camera": ["Other"]
   },
 
