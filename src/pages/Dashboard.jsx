@@ -74,23 +74,27 @@ function getAutoAssignByLeastTickets(supportPersons, category, state, tickets) {
   if (!supportPersons || supportPersons.length === 0) return "";
   const isSouth = SOUTH_STATES.includes((state || "").toLowerCase().trim());
   const product = (category || "").toLowerCase();
- const countOpen = (name) =>
+  const countOpen = (name) =>
     tickets.filter(t => t.assignTo === name).length;
-  let matched = supportPersons.filter(p => {
-    const specs = Array.isArray(p.specialization) ? p.specialization : [];
-    return p.level === 1 && specs.map(s => s.toLowerCase()).includes(product);
-  });
-  if (isSouth) {
-    const southOnly = matched.filter(p => p.zone === "South Region");
-    const allZone   = matched.filter(p => p.zone === "all");
-    matched = southOnly.length > 0 ? southOnly : allZone;
-  } else {
-    matched = matched.filter(p => p.zone === "all" || p.zone === "all except south");
+  for (let level = 1; level <= 4; level++) {
+    let matched = supportPersons.filter(p => {
+      const specs = Array.isArray(p.specialization) ? p.specialization : [];
+      return p.level === level && specs.map(s => s.toLowerCase()).includes(product);
+    });
+    if (isSouth) {
+      const southOnly = matched.filter(p => p.zone === "South Region");
+      const allZone   = matched.filter(p => p.zone === "all");
+      matched = southOnly.length > 0 ? southOnly : allZone;
+    } else {
+      matched = matched.filter(p => p.zone === "all" || p.zone === "all except south");
+    }
+    if (matched.length > 0) {
+      return matched.reduce((best, p) =>
+        countOpen(p.name) < countOpen(best.name) ? p : best, matched[0]
+      ).name;
+    }
   }
-  if (matched.length === 0) return "";
-  return matched.reduce((best, p) =>
-    countOpen(p.name) < countOpen(best.name) ? p : best, matched[0]
-  ).name;
+  return "";
 }
 
 export default function Dashboard() {
