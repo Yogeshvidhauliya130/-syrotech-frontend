@@ -344,8 +344,8 @@ export const PRODUCT_MODELS = {
   "Passive Products": {
     "Unarmoured Fiber Cable": ["SY-CATV-2F-UNARM-GYP( Coil)", "SY-CATV-4F-UNARM-GYP ( Coil)", "SY-CATV-6F-UNARM-GYP( Coil)", "SY-CATV-12F-UNARM-GYP( Coil)"],
     "Armoured Fiber Cable": ["SY-CATV-6F-ARM-OM2", "SY-CATV-12F-ARM-OM2", "SY-CATV-6F-ARM-OM3", "SY-CATV-12F-ARM-OM3","SY-CATV-2F-ARM-GYP", "SY-CATV-4F-ARM-GYP","SY-CATV-6F-ARM-GYP", "SY-CATV-12F-ARM-GYP","SY-CATV-24F-ARM-GYP"],
-    "Drop Cable": ["Syrotech-DROP2FR-A1-IND", "SY-DROP2FF-A1-IND", "SY-DROP1FF-A1-IND"],
-    "CAT6 Cable": ["SY-CAT6-UTP-305M(0.48)", "SY-CAT6-SFTP-305M (0.51)", "SY-CAT6-SFTP-305M (0.55)"],
+    "Drop Cable": ["SY-DROP2FR-A1-IND", "SY-DROP2FF-A1-IND", "SY-DROP1FF-A1-IND"],
+    "CAT6 Cable": ["SY-CAT6-UTP-305M-23A  ", "SY-CAT6-UTP-305M-24A", "SY-CAT6-SFTP-305M-24A", " SY-CAT6-SFTP-305M-23A"],
     "Adaptor": [
       "SY-FA-SCPC",
       "SY-FA-SCAPC",
@@ -463,6 +463,15 @@ export const PRODUCT_MODELS = {
       "SY-LIU-48F-RS-XXXX",
       "SY-LIU-96F-RS-XXXX"
     ],
+    "RackMount Non-Sliding Type-Single Mode Simplex- SC/PC or SC/APC LIU/FMS":[
+    "SY-LIU-6F-NS-XXXX",
+    "SY-LIU-12F-NS-XXXX",
+    "SY-LIU-24F-NS-XXXX",
+    "SY-LIU-48F-NS-XXXX",
+
+    ]
+    ,
+    
     "RackMount -Sliding Type-MultiMode Simplex- SC/PC  LIU/FMS": [
       "SY-LIU-6F-RS-XXXX-MM",
       "SY-LIU-12F-RS-XXXX-MM",
