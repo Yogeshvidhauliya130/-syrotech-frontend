@@ -34,6 +34,20 @@ export const PRODUCT_MODELS = {
     "SY-GPON-4OLT-AC-PS",
     "SY-GPON-8OLT-AC-PS",
     "SY-GPON-16OLT-AC-PS"
+  ],
+
+  "PON EDFA": [
+    "Locking-Unlocking",
+    "Pump Module",
+    "SMPS",
+    "Parameter"
+  ],
+
+  "Splicing Machine": [
+    "Locking-Unlocking",
+    "Calibration",
+    "Service",
+    "Arc Correction"
   ]
 },
 
