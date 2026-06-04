@@ -313,6 +313,18 @@ export const PRODUCT_MODELS = {
     "UHF ADAPTOR": ["ADAPTOR-12V-3A(UHP ADAPTOR)"]
   },
 
+  // CCTV
+
+  "CCTV": {
+    "DVR": ["Other"],
+    "XVR": ["Other"],
+    "IP-Camera": ["Other"]
+  },
+
+
+
+  
+
   // ── Passive Products ────────────────────────
   "Passive Products": {
     "Unarmoured Fiber Cable": ["SY-CATV-2F-UNARM-GYP( Coil)", "SY-CATV-4F-UNARM-GYP ( Coil)", "SY-CATV-6F-UNARM-GYP( Coil)", "SY-CATV-12F-UNARM-GYP( Coil)"],
@@ -807,8 +819,8 @@ export const SALES_PRODUCT_MODELS = {
   "Entrance Product":                           PRODUCT_MODELS["Entrance Product"],
   "Passive Products":                           PRODUCT_MODELS["Passive Products"],
   "Grandstream UC":                             PRODUCT_MODELS["Grandstream UC"],
-  "Grandstream Networking":                     PRODUCT_MODELS["Grandstream Networking"]
-  // ✅ To ADD more for sales — copy a line above and uncomment
+  "Grandstream Networking":                     PRODUCT_MODELS["Grandstream Networking"],
+  "CCTV":                                         PRODUCT_MODELS["CCTV"]
 };
 export const SALES_CATEGORIES = Object.keys(SALES_PRODUCT_MODELS);
 

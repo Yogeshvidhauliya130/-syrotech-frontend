@@ -343,6 +343,14 @@ export const ISSUE_LIST = {
     ],
   },
 
+
+  // CCTV 
+  "Passive Products": {
+    "_common": [
+      "Others",
+    ],
+  },
+
 };
 
 
