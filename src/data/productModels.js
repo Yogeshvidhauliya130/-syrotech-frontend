@@ -316,7 +316,7 @@ export const PRODUCT_MODELS = {
   // CCTV
 
   "CCTV": {
-    "DVR": ["Other"],
+    "XVR": ["Other"],
     "XVR": ["Other"],
     "IP-Camera": ["Other"]
   },
