@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import RaiseLockinTicket from "./raiselockinticket";
 import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "https://api.syrotech.com";
@@ -71,6 +72,7 @@ export default function LockinSupport() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
+const [activeTab, setActiveTab] = useState("tickets");
   const [dateSort, setDateSort]       = useState("newest");
 
   const fetchTickets = () => {
@@ -451,8 +453,29 @@ const handleResolve = async (ticketId) => {
           Logout
         </button>
       </div>
+<div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
+  {[
+    ["tickets", "🔒 My Lockin Tickets"],
+    ["raise",   "➕ Raise Lockin Ticket"],
+  ].map(([key, label]) => (
+    <button key={key} onClick={() => setActiveTab(key)} style={{
+      padding: "14px 22px", fontSize: 13,
+      fontWeight: activeTab === key ? 800 : 500,
+      color: activeTab === key ? "#1d4ed8" : "#6b7280",
+      background: "none", border: "none",
+      borderBottom: activeTab === key ? "3px solid #1d4ed8" : "3px solid transparent",
+      cursor: "pointer", whiteSpace: "nowrap", marginBottom: -2,
+    }}>{label}</button>
+  ))}
+</div>
+    {activeTab === "raise" && (
+  <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
+    <RaiseLockinTicket onSuccess={() => setActiveTab("tickets")} />
+  </div>
+)}
 
-      <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
+{activeTab === "tickets" && (
+<div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 24 }}>
@@ -811,7 +834,8 @@ const handleResolve = async (ticketId) => {
             </table>
           </div>
         )}
-      </div>
+     </div>
+)}
     </div>
   );
 }
