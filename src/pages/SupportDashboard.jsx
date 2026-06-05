@@ -294,6 +294,7 @@ description: "", assignTo: currentUser?.name || "",
   const [submitting, setSubmitting]   = useState(false);
   const [successMsg, setSuccessMsg]   = useState("");
   const [imagePreview, setImagePreview] = useState("");
+const [lookupPhone, setLookupPhone] = useState("");
 
 
   const fetchTickets = () => {
@@ -596,7 +597,7 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
           .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
           .then(() => {
             setForm({ category: "", subCategory: "", model: "", serialNo: "", mac: "", macPrefix: "", macSuffix: "", customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "", description: "", assignTo: currentUser?.name || "", productImage: "", raisedVia: "call", issuePrefix: "", issueSuffix: "" });
-            setImagePreview(""); setFormErrors({});
+           setImagePreview(""); setFormErrors({}); setLookupPhone("");
            
            setSuccessMsg("✅ Ticket submitted successfully! Status: OPEN");
 fetchTickets();
@@ -1205,9 +1206,42 @@ const filteredMyReassigned = allTickets
 
       {/* ══ RAISE TICKET TAB ══ */}
       {activeTab === "raise" && (
-        <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
-          <div className="form-card">
-            <div className="form-card-header">
+  <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
+
+    {/* Quick Lookup Box */}
+    <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:10 }}>
+      <div style={{ background:"#fffbeb", border:"1.5px solid #f59e0b", borderRadius:10, padding:"10px 16px", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontSize:13, fontWeight:700, color:"#92400e" }}>🔍 Quick Lookup</span>
+       <input
+          placeholder="Type customer phone no..."
+          maxLength={10}
+          value={lookupPhone}
+          onChange={e => {
+            const val = e.target.value.replace(/\D/g, "");
+            setLookupPhone(val);
+            if (val.length === 10) {
+              const found = allTickets.find(t => t.phone && t.phone.replace(/\s+/g, "") === val);
+              if (found) {
+                setForm(prev => ({
+                  ...prev,
+                  customer: found.customer || "",
+                  email: found.email || "",
+                  phone: val,
+                  city: found.city || "",
+                  state: found.state || "",
+                  country: found.country || "",
+                  pincode: found.pincode || "",
+                }));
+              }
+            }
+          }}
+          style={{ padding:"8px 12px", borderRadius:8, border:"1.5px solid #fcd34d", fontSize:13, outline:"none", fontFamily:"inherit", width:200 }}
+        />
+      </div>
+    </div>
+
+    <div className="form-card">
+      <div className="form-card-header">
               <div className="form-card-icon">🎫</div>
               <div>
                 <h2 className="form-card-title">Raise New Support Ticket</h2>
