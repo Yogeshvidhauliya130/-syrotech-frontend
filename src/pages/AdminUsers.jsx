@@ -48,6 +48,10 @@ const [addForm, setAddForm] = useState({ name: "", email: "", password: "", phon
   const [custStateFilter, setCustStateFilter] = useState("all");
   const [custSalesFilter, setCustSalesFilter] = useState("all");
   const [custSort, setCustSort]             = useState("newest");
+  const [suppSearch, setSuppSearch] = useState("");
+const [suppLevelFilter, setSuppLevelFilter] = useState("all");
+const [suppZoneFilter, setSuppZoneFilter] = useState("all");
+const [suppSpecFilter, setSuppSpecFilter] = useState("all");
 
   const fetchUsers = () => {
     fetch(`${BASE_URL}/api/users`)
@@ -658,6 +662,82 @@ const PRODUCTS = Object.keys(PRODUCT_MODELS);
 
       {/* ── SUPPORT PERSONS TABLE ── */}
       <h3 className="section-label" style={{ marginTop: 28 }}>🛠️ Support Persons ({supportPersons.length})</h3>
+      <div style={{ background:"white", borderRadius:12, border:"1.5px solid #d1fae5", padding:"14px 16px", marginBottom:14, display:"flex", flexDirection:"column", gap:10 }}>
+  
+  {/* Row 1 — Level + Zone + Spec filters */}
+  <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+    
+    <span style={{ fontSize:12, fontWeight:700, color:"#6b7280" }}>🎯 Level:</span>
+    {[["all","All"],["1","L1"],["2","L2"],["3","L3"],["4","L4"]].map(([key,label]) => (
+      <button key={key} onClick={() => setSuppLevelFilter(key)} style={{
+        padding:"5px 12px", borderRadius:16, fontSize:12, cursor:"pointer",
+        border: suppLevelFilter===key ? "2px solid #10b981" : "1px solid #d1d5db",
+        background: suppLevelFilter===key ? "#ecfdf5" : "white",
+        color: suppLevelFilter===key ? "#065f46" : "#555",
+        fontWeight: suppLevelFilter===key ? 700 : 400,
+      }}>{label}</button>
+    ))}
+
+    <div style={{ width:1, height:20, background:"#e0d8d0" }} />
+
+    <span style={{ fontSize:12, fontWeight:700, color:"#6b7280" }}>🌐 Zone:</span>
+    {[["all","All"],["all","All Zones"],["all except south","Except South"],["South Region","South"]].map(([key,label], i) => {
+      if (i === 0) return null; // skip duplicate "all"
+      return (
+        <button key={key+label} onClick={() => setSuppZoneFilter(key)} style={{
+          padding:"5px 12px", borderRadius:16, fontSize:12, cursor:"pointer",
+          border: suppZoneFilter===key ? "2px solid #10b981" : "1px solid #d1d5db",
+          background: suppZoneFilter===key ? "#ecfdf5" : "white",
+          color: suppZoneFilter===key ? "#065f46" : "#555",
+          fontWeight: suppZoneFilter===key ? 700 : 400,
+        }}>{label}</button>
+      );
+    })}
+  </div>
+
+  {/* Row 2 — Specialization filter */}
+  <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+    <span style={{ fontSize:12, fontWeight:700, color:"#6b7280" }}>🔧 Spec:</span>
+    <select value={suppSpecFilter} onChange={e => setSuppSpecFilter(e.target.value)}
+      style={{ padding:"6px 10px", borderRadius:8, border:`1.5px solid ${suppSpecFilter!=="all"?"#10b981":"#d1d5db"}`, fontSize:12, cursor:"pointer", background: suppSpecFilter!=="all"?"#ecfdf5":"white", color: suppSpecFilter!=="all"?"#065f46":"#374151", outline:"none", fontFamily:"inherit" }}>
+      <option value="all">All Specializations</option>
+      {[...new Set(supportPersons.flatMap(u => u.specialization || []))].sort().map(s => (
+        <option key={s} value={s}>{s}</option>
+      ))}
+    </select>
+
+    {(suppSearch || suppLevelFilter!=="all" || suppZoneFilter!=="all" || suppSpecFilter!=="all") && (
+      <button onClick={() => { setSuppSearch(""); setSuppLevelFilter("all"); setSuppZoneFilter("all"); setSuppSpecFilter("all"); }}
+        style={{ background:"#fee2e2", border:"none", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:11, color:"#dc2626", fontWeight:700 }}>
+        ✕ Clear All
+      </button>
+    )}
+  </div>
+
+  {/* Row 3 — Search box */}
+  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+    <input
+      placeholder="🔍 Search by name, email, city..."
+      value={suppSearch}
+      onChange={e => setSuppSearch(e.target.value)}
+      style={{ flex:1, padding:"8px 14px", borderRadius:9, border:"1.5px solid #d1d5db", fontSize:12, outline:"none", fontFamily:"inherit", color:"#111", background:"white" }}
+    />
+    {suppSearch && (
+      <button onClick={() => setSuppSearch("")}
+        style={{ background:"#f3f4f6", border:"1px solid #d1d5db", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, color:"#6b7280", fontWeight:600 }}>✕</button>
+    )}
+    <span style={{ fontSize:12, color:"#9ca3af", whiteSpace:"nowrap" }}>
+      Showing <strong style={{ color:"#059669" }}>
+        {supportPersons
+          .filter(u => suppLevelFilter==="all" || String(u.level||1)===suppLevelFilter)
+          .filter(u => suppZoneFilter==="all" || (u.zone||"all")===suppZoneFilter)
+          .filter(u => suppSpecFilter==="all" || (u.specialization||[]).includes(suppSpecFilter))
+          .filter(u => !suppSearch.trim() || [u.name,u.email,u.city].some(f=>(f||"").toLowerCase().includes(suppSearch.toLowerCase())))
+          .length}
+      </strong> of <strong style={{ color:"#059669" }}>{supportPersons.length}</strong> support persons
+    </span>
+  </div>
+</div>
       {supportPersons.length === 0 ? <div className="empty-state">No support persons found.</div> : (
         <div style={tableWrap}>
           <table style={{ width: "100%", borderCollapse: "collapse", background: "white", minWidth: 900 }}>
@@ -666,7 +746,12 @@ const PRODUCTS = Object.keys(PRODUCT_MODELS);
             <tr>{["S.No","Name","Email","Phone","City","Country","Specialization","Level","Zone","Added On","Status","Action"].map((h,i) => <th key={i} style={thStyle("#10b981")}>{h}</th>)}</tr>
             </thead>
             <tbody>
-              {supportPersons.map((u, idx) => (
+              {supportPersons
+  .filter(u => suppLevelFilter==="all" || String(u.level||1)===suppLevelFilter)
+  .filter(u => suppZoneFilter==="all" || (u.zone||"all")===suppZoneFilter)
+  .filter(u => suppSpecFilter==="all" || (u.specialization||[]).includes(suppSpecFilter))
+  .filter(u => !suppSearch.trim() || [u.name,u.email,u.city].some(f=>(f||"").toLowerCase().includes(suppSearch.toLowerCase())))
+  .map((u, idx) => (
                 <tr key={u.email} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf4" : "white" }}>
                   <td style={{ ...tdStyle, fontWeight:700, color:"#6b7280", width:48 }}>{idx+1}</td>
                   <td style={tdStyle}>
