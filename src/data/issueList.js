@@ -346,7 +346,7 @@ export const ISSUE_LIST = {
 
 
   // CCTV 
-  "Passive Products": {
+  "CCTV ": {
     "_common": [
       "Others",
     ],
