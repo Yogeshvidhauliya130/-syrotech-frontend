@@ -346,7 +346,7 @@ export const ISSUE_LIST = {
 
 
   // CCTV 
-  "CCTV ": {
+  "CCTV": {
     "_common": [
       "Others",
     ],
