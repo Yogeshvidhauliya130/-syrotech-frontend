@@ -553,7 +553,7 @@ if (!form.model)       e.model       = "Please select an item.";
     else if (form.customer.trim().length < 2) e.customer = "Enter a valid full name.";
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
     if (!form.phone.trim())    e.phone       = "Contact number is required.";
-    else if (!/^\d{10}$/.test(form.phone.replace(/\s+/g, ""))) e.phone = "Enter a valid 10-digit phone number.";
+    else if (!/^\d+$/.test(form.phone.replace(/\s+/g, ""))) e.phone = "Enter a valid phone number (digits only).";
     if (!form.city.trim())     e.city        = "City is required.";
     if (!form.state.trim())    e.state       = "State is required.";
     if (!form.country)         e.country     = "Please select a country.";
@@ -1380,9 +1380,9 @@ const filteredMyReassigned = allTickets
               </div>
 
               <div className="form-field">
-                <label className="form-label">Contact Number <span className="req">*</span><span className="form-hint"> (10 digits)</span></label>
-                <input name="phone" placeholder="e.g. 9876543210" value={form.phone} onChange={handleChange} maxLength={10} style={inputStyle("phone")} />
-                {formErrors.phone ? <span className="field-error">{formErrors.phone}</span> : <span className="field-hint">{form.phone.replace(/\s+/g, "").length}/10 digits</span>}
+                <label className="form-label">Contact Number <span className="req">*</span></label>
+                <input name="phone" placeholder="e.g. 9876543210" value={form.phone} onChange={handleChange}  style={inputStyle("phone")} />
+                {formErrors.phone ? <span className="field-error">{formErrors.phone}</span> : <span className="field-hint">{form.phone.replace(/\s+/g, "").length} digits entered</span>}
               </div>
 
               <div className="form-field">
