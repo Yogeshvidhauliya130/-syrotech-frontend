@@ -229,8 +229,7 @@ else if (!/^\d{10}$/.test(form.phone)) e.phone = "Enter valid 10-digit phone.";
       e.email = "Enter a valid email.";
     if (!form.state) e.state = "State is required.";
     if (!form.city)  e.city  = "City is required.";
-    if (!form.pincode.trim()) e.pincode = "Pincode is required.";
-    else if (!/^\d{6}$/.test(form.pincode)) e.pincode = "Enter valid 6-digit pincode.";
+    if (form.pincode.trim() && !/^\d{6}$/.test(form.pincode)) e.pincode = "Enter valid 6-digit pincode.";
     return e;
   };
 
@@ -488,7 +487,7 @@ setLogoPreview("");
 
         {/* Pincode */}
         <div className="form-field">
-          <label className="form-label">Pincode <span className="req">*</span> <span className="form-hint">(6 digits)</span></label>
+          <label className="form-label">Pincode <span style={{ fontSize:11, color:"#6b7280" }}>(optional)</span> <span className="form-hint">(6 digits)</span></label>
           <input
             name="pincode"
             placeholder="e.g. 110001"
