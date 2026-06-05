@@ -325,6 +325,7 @@ export const PRODUCT_MODELS = {
     "Safety Sensor": ["SY-PC01"],
     "Single Lane  Radar": ["SY-RADAR"],
     "UHF Reader": ["SY-U9006001", "SY-U9006001-RJ", "SY-U15001200", "SY-U15001200-RJ"],
+    "Access Controller": ["SY-AC1", "SY-AC2", "SY-AC4"],
     "UHF RFID TCP IP PCB-15 mtr": ["SY-U1500 1200-RJ-PCB"],
     "UHF RFID TCP IP PCB-6 mtr": ["SY-U60019001 RJ (PCB)"],
     "UHF RFID W/G PCB-15 mtr": ["SY-U1500 1200-PCB"],
