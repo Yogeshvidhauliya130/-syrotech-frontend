@@ -233,7 +233,7 @@ if (!file) e.file = "File upload is required.";
     if (!form.subCategory) e.subCategory = "Please select a sub category.";
     if (!form.model)       e.model       = "Please select a model.";
     if (!form.phone.trim()) e.phone = "Phone number is required.";
-else if (!/^\d{10}$/.test(form.phone)) e.phone = "Enter valid 10-digit phone.";
+else if (!/^\d+$/.test(form.phone.replace(/\s+/g, ""))) e.phone = "Enter a valid phone number (digits only).";
     if (!form.customer.trim()) e.customer = "Customer name is required.";
    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       e.email = "Enter a valid email.";
@@ -520,10 +520,10 @@ setLogoPreview("");
   <label className="form-label">Phone Number <span className="req">*</span></label>
   <input
     name="phone"
-    placeholder="10-digit number"
+    placeholder="e.g. 9876543210"
     value={form.phone}
     onChange={handleChange}
-    maxLength={10}
+   
    style={inputStyle("phone")}
   />
   {errors.phone && <span className="field-error">{errors.phone}</span>}
