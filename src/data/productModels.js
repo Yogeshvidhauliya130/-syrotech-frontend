@@ -350,6 +350,8 @@ export const PRODUCT_MODELS = {
     "Armoured Fiber Cable": ["SY-CATV-6F-ARM-OM2", "SY-CATV-12F-ARM-OM2", "SY-CATV-6F-ARM-OM3", "SY-CATV-12F-ARM-OM3","SY-CATV-2F-ARM-GYP", "SY-CATV-4F-ARM-GYP","SY-CATV-6F-ARM-GYP", "SY-CATV-12F-ARM-GYP","SY-CATV-24F-ARM-GYP","other"],
     "Drop Cable": ["SY-DROP2FR-A1-IND", "SY-DROP2FF-A1-IND", "SY-DROP1FF-A1-IND"],
     "CAT6 Cable": ["SY-CAT6-UTP-305M-23A  ", "SY-CAT6-UTP-305M-24A", "SY-CAT6-SFTP-305M-24A", " SY-CAT6-SFTP-305M-23A"],
+
+    "Accessories": ["SY-SPS-60", "SY-FTTH-M-015-FP"],
     "Adaptor": [
       "SY-FA-SCPC",
       "SY-FA-SCAPC",
@@ -431,7 +433,7 @@ export const PRODUCT_MODELS = {
       "SY-PLC-LGX-1X32-SCP/SCA",
       "SY-PLC-LGX-1X64-SCP/SCA"
     ],
-    "Triple Windo Coupler": [
+    "Triple Window Coupler": [
       "STWC-1x2-99-01-WC",
       "STWC-1x2-95-5-WC",
       "STWC-1x2-90-10-WC",
@@ -457,8 +459,8 @@ export const PRODUCT_MODELS = {
       "SY-FTTH-BOX-2F-XXX"
     ],
     "Fast Connector": ["SY-FFC-SCPC", "SY-FFC-SCAPC"],
-    "Rack Mount Non-Sliding  LIU Unloaded ": ["SY-LIU-6R-FMS-1U", "SY-LIU-12R-FMS-1U", "SY-LIU-24R-FMS-1U", "SY-LIU-48R-FMS-2U"],
-    "Rack Mount Non-Sliding  LIU Loaded ": ["SY-LIU-6R-FMS-XXX-1U", "SY-LIU-12R-FMS-XXX-1U", "SY-LIU-24R-FMS-XXX-1U", "SY-LIU-48R-FMS-XXX-1U"],
+    "Rack Mount Non-Sliding  LIU Unloaded ": ["SY-LIU-6F-NS-FMS", "SY-LIU-12F-NS-FMS", "SY-LIU-24F-NS-FMS", "SY-LIU-48F-NS-FMS"],
+    // "Rack Mount Non-Sliding  LIU Loaded ": ["SY-LIU-6R-FMS-XXX-1U", "SY-LIU-12R-FMS-XXX-1U", "SY-LIU-24R-FMS-XXX-1U", "SY-LIU-48R-FMS-XXX-1U"],
     "RackMount -Sliding Type-Unloaded": ["SY-LIU-24F-RS"],
     "RackMount -Sliding Type-Single Mode Simplex- SC/PC or SC/APC LIU/FMS": [
       "SY-LIU-6F-RS-XXXX",
