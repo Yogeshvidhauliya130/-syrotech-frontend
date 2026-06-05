@@ -159,6 +159,10 @@ export default function RaiseLockinTicket({ onSuccess }) {
 const [logoPreview, setLogoPreview] = useState("");
 const [logoType, setLogoType] = useState("");
   const [errors, setErrors] = useState({});
+  const [lookupQuery, setLookupQuery] = useState("");
+const [lookupSuggestions, setLookupSuggestions] = useState([]);
+const [showLookupDropdown, setShowLookupDropdown] = useState(false);
+const [allTickets, setAllTickets] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -172,6 +176,12 @@ const [logoType, setLogoType] = useState("");
       : [];
 
   const cities = STATE_CITY_MAP[form.state] || [];
+  useEffect(() => {
+  fetch("https://api.syrotech.com/tickets")
+    .then(r => r.json())
+    .then(data => { if (Array.isArray(data)) setAllTickets(data); })
+    .catch(console.error);
+}, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -281,6 +291,9 @@ logoType:     logoType,
       });
       setFile(null);
       setFileName("");
+      setLookupQuery("");
+setLookupSuggestions([]);
+setShowLookupDropdown(false);
       setLogoFile(null);
 setLogoPreview("");
       setTimeout(() => {
@@ -310,6 +323,75 @@ setLogoPreview("");
 
   return (
     <div className="form-card">
+
+      <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:10 }}>
+  <div style={{ background:"#fffbeb", border:"1.5px solid #f59e0b", borderRadius:10, padding:"10px 16px", display:"flex", alignItems:"center", gap:10, position:"relative" }}>
+    <span style={{ fontSize:13, fontWeight:700, color:"#92400e" }}>🔍 Quick Lookup</span>
+    <div style={{ position:"relative" }}>
+      <input
+        placeholder="Search by name, phone, email, company..."
+        value={lookupQuery}
+        onChange={e => {
+          const val = e.target.value;
+          setLookupQuery(val);
+          if (val.trim().length < 2) {
+            setLookupSuggestions([]);
+            setShowLookupDropdown(false);
+            return;
+          }
+          const q = val.toLowerCase();
+          const seen = new Set();
+          const results = allTickets.filter(t => {
+            const key = `${t.phone}-${t.customer}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return (
+              (t.customer || "").toLowerCase().includes(q) ||
+              (t.phone || "").includes(q) ||
+              (t.email || "").toLowerCase().includes(q) ||
+              (t.companyName || "").toLowerCase().includes(q)
+            );
+          }).slice(0, 6);
+          setLookupSuggestions(results);
+          setShowLookupDropdown(results.length > 0);
+        }}
+        onBlur={() => setTimeout(() => setShowLookupDropdown(false), 200)}
+        style={{ padding:"8px 12px", borderRadius:8, border:"1.5px solid #fcd34d", fontSize:13, outline:"none", fontFamily:"inherit", width:280 }}
+      />
+      {showLookupDropdown && (
+        <div style={{ position:"absolute", top:"110%", left:0, right:0, background:"white", border:"1.5px solid #fcd34d", borderRadius:10, boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:999, overflow:"hidden" }}>
+          {lookupSuggestions.map((t, i) => (
+            <div key={i}
+              onMouseDown={() => {
+                setForm(prev => ({
+                  ...prev,
+                  customer: t.customer || "",
+                  email: t.email || "",
+                  phone: t.phone || "",
+                  city: t.city || "",
+                  state: t.state || "",
+                  pincode: t.pincode || "",
+                  companyName: t.companyName || "",
+                }));
+                setLookupQuery(t.customer || "");
+                setShowLookupDropdown(false);
+              }}
+              style={{ padding:"10px 14px", cursor:"pointer", borderBottom:"1px solid #fef9c3", background:"white" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#fffbeb"}
+              onMouseLeave={e => e.currentTarget.style.background = "white"}
+            >
+              <div style={{ fontSize:13, fontWeight:700, color:"#111" }}>{t.customer || "—"}</div>
+              <div style={{ fontSize:11, color:"#6b7280", marginTop:2 }}>
+                📞 {t.phone || "—"} · 🏙️ {t.city || "—"}
+                {t.companyName && ` · 🏢 ${t.companyName}`}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</div>
       <div className="form-card-header">
         <div className="form-card-icon">🔒</div>
         <div>
