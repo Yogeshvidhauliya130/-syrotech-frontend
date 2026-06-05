@@ -5,7 +5,7 @@ import "./hr.css";
 const BASE_URL = "https://api.syrotech.com";
 
 const OLD_EMPLOYEE_ISSUES = [
-  "Desktop", "Laptop", "Email ID", "Mouse", "LAN Cable", "Keyboard", "Internet","other"
+  "Desktop", "Laptop", "Email ID", "Mouse", "LAN Cable", "Keyboard", "Internet","Printer Connectivity","other"
 ];
 
 const NEW_EMPLOYEE_ISSUES = [
@@ -391,6 +391,12 @@ export default function HR() {
   <option value="Marketing">Marketing</option>
   <option value="Accounts">Accounts</option>
   <option value="Sales">Sales</option>
+  <option value="Logistics">Logistics</option>
+  <option value="RMA">RMA</option>
+  <option value="Production">Production-Passive</option>
+  <option value="Production">Production-SFP</option>
+  <option value="Production">Production-Factory</option>
+  
 </select>
                 {errors.empDept && <span className="hr-field__error">{errors.empDept}</span>}
               </div>
