@@ -456,7 +456,7 @@ const handleResolve = async (ticketId) => {
 <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
   {[
     ["tickets", "🔒 My Lockin Tickets"],
-    ["raise",   "➕ Raise Lockin Ticket"],
+    ["raise",   "Raise Lockin Ticket"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)} style={{
       padding: "14px 22px", fontSize: 13,
