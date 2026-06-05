@@ -35,6 +35,7 @@ export const ISSUE_LIST = {
     "Brand New Olt DOA Case",
     "Olt Booting Issue",
     "Line & Service Profile Configuration",
+    "Pon Optical issue",
     "Others",
   ],
 
