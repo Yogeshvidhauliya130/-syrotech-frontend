@@ -336,7 +336,7 @@ setTickets(mine);
 
   useEffect(() => {
     fetchTickets();
-    const poll = setInterval(fetchTickets, 8000);
+    const poll = setInterval(fetchTickets, 30000);
     return () => clearInterval(poll);
   }, []);
 

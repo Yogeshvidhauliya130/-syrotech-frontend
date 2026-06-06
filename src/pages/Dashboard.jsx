@@ -154,7 +154,7 @@ const [itemFilter, setItemFilter]               = useState("all");
 
   useEffect(() => {
     fetchTickets();
-    const id = setInterval(fetchTickets, 10000);
+    const id = setInterval(fetchTickets, 30000);
     return () => clearInterval(id);
   }, []);
 
