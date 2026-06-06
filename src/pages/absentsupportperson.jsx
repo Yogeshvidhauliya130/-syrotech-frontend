@@ -7,8 +7,8 @@ export default function AbsentSupportPerson() {
   const [loading, setLoading]               = useState(true);
   const [search, setSearch]                 = useState("");
   const [updating, setUpdating]             = useState(null);
-  const [successMsg, setSuccessMsg]         = useState("");
-
+ const [successMsg, setSuccessMsg]          = useState("");
+const [leaveFilter, setLeaveFilter]         = useState("all");
   const fetchPersons = () => {
     setLoading(true);
     fetch(`${BASE_URL}/api/users`)
@@ -42,10 +42,16 @@ export default function AbsentSupportPerson() {
       .catch(() => setUpdating(null));
   };
 
-  const filtered = supportPersons.filter(p =>
-    (p.name || "").toLowerCase().includes(search.toLowerCase()) ||
-    (Array.isArray(p.specialization) ? p.specialization.join(", ") : "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = supportPersons
+    .filter(p => {
+      if (leaveFilter === "active")   return !p.isOnLeave;
+      if (leaveFilter === "onleave")  return p.isOnLeave;
+      return true;
+    })
+    .filter(p =>
+      (p.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (Array.isArray(p.specialization) ? p.specialization.join(", ") : "").toLowerCase().includes(search.toLowerCase())
+    );
 
   const onLeaveCount  = supportPersons.filter(p => p.isOnLeave).length;
   const activeCount   = supportPersons.filter(p => !p.isOnLeave).length;
@@ -70,14 +76,16 @@ export default function AbsentSupportPerson() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ background: "#ecfdf5", border: "1.5px solid #6ee7b7", borderRadius: 10, padding: "8px 16px", textAlign: "center" }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#059669" }}>{activeCount}</div>
-            <div style={{ fontSize: 11, color: "#6b7280" }}>Active</div>
-          </div>
-          <div style={{ background: "#fef2f2", border: "1.5px solid #fca5a5", borderRadius: 10, padding: "8px 16px", textAlign: "center" }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#dc2626" }}>{onLeaveCount}</div>
-            <div style={{ fontSize: 11, color: "#6b7280" }}>On Leave</div>
-          </div>
+         <div onClick={() => setLeaveFilter(leaveFilter === "active" ? "all" : "active")}
+  style={{ background: leaveFilter === "active" ? "#059669" : "#ecfdf5", border: "1.5px solid #6ee7b7", borderRadius: 10, padding: "8px 16px", textAlign: "center", cursor: "pointer" }}>
+  <div style={{ fontSize: 20, fontWeight: 800, color: leaveFilter === "active" ? "white" : "#059669" }}>{activeCount}</div>
+  <div style={{ fontSize: 11, color: leaveFilter === "active" ? "white" : "#6b7280" }}>Active</div>
+</div>
+<div onClick={() => setLeaveFilter(leaveFilter === "onleave" ? "all" : "onleave")}
+  style={{ background: leaveFilter === "onleave" ? "#dc2626" : "#fef2f2", border: "1.5px solid #fca5a5", borderRadius: 10, padding: "8px 16px", textAlign: "center", cursor: "pointer" }}>
+  <div style={{ fontSize: 20, fontWeight: 800, color: leaveFilter === "onleave" ? "white" : "#dc2626" }}>{onLeaveCount}</div>
+  <div style={{ fontSize: 11, color: leaveFilter === "onleave" ? "white" : "#6b7280" }}>On Leave</div>
+</div>
         </div>
       </div>
 
