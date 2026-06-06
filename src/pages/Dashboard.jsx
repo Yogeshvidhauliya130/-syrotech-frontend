@@ -79,7 +79,7 @@ function getAutoAssignByLeastTickets(supportPersons, category, state, tickets) {
   for (let level = 1; level <= 4; level++) {
     let matched = supportPersons.filter(p => {
       const specs = Array.isArray(p.specialization) ? p.specialization : [];
-      return p.level === level && specs.map(s => s.toLowerCase()).includes(product);
+      return p.level === level && !p.isOnLeave && specs.map(s => s.toLowerCase()).includes(product);
     });
     if (isSouth) {
       const southOnly = matched.filter(p => p.zone === "South Region");

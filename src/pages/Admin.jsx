@@ -9,6 +9,7 @@ import AdminUsers from "./AdminUsers";
 import SLAReport from "./SLAReport";
 import ProductManager from "./ProductManager";
 import ReassignTicket from "./reassignTicket";
+import AbsentSupportPerson from "./absentsupportperson";
 import "./Admin.css";
 
 
@@ -126,6 +127,7 @@ const [analyticsType, setAnalyticsType] = useState("all");
     { key: "sla",         icon: "📈", label: "SLA Report"       },
     { key: "products", icon: "📦", label: "Product Category" },
     { key: "reassign", icon: "🔄", label: "Ticket Reassign" },
+{ key: "absent",   icon: "🏖️", label: "Absent Support" },
   ];
 
   return (
@@ -255,6 +257,7 @@ const [analyticsType, setAnalyticsType] = useState("all");
         {tab === "sla"         && <SLAReport />}
         {tab === "products" && <ProductManager />}
         {tab === "reassign" && <ReassignTicket />}
+{tab === "absent"   && <AbsentSupportPerson />}
       </main>
     </div>
   );
