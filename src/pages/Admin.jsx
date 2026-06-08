@@ -392,7 +392,7 @@ useEffect(() => {
     .filter(t => {
       if (typeFilter === "product") return t.source !== "hr" && t.ticketType !== "lockin";
       if (typeFilter === "lockin")  return t.ticketType === "lockin";
-      if (typeFilter === "hr")      return t.source === "hr";
+      if (typeFilter === "hr")      return t.source === "hr" || t.source === "hradmin";
       return true;
     })
     .filter(t => {
@@ -413,8 +413,8 @@ useEffect(() => {
   if (sourceFilter === "Service Provider") return t.source === "customer" && (t.customerType||"").toLowerCase() === "Service Provider";
   if (sourceFilter === "sipartner")   return t.source === "customer" && (t.customerType||"").toLowerCase() === "si partner";
   if (sourceFilter === "support") return t.source === "support" && (sourceViaFilter === "all" || t.raisedVia === sourceViaFilter);
-  if (sourceFilter === "hr")      return t.source === "hr";
-  if (sourceFilter === "sales")   return !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr");
+  if (sourceFilter === "hr")      return t.source === "hr" || t.source === "hradmin";
+  if (sourceFilter === "sales")   return !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr" && t.source !== "hradmin");
   return true;
 })
     .filter(t => {
@@ -491,7 +491,8 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
   const getRaisedFromLabel = (ticket) => {
     if (ticket.source === "customer") return { label: "Customer", customerType: ticket.customerType || "", bg: "#ede9fe", color: "#5b21b6", icon: "👥" };
     if (ticket.source === "support")  return { label: `Support · ${raisedViaLabel(ticket.raisedVia)}`, bg: "#fde68a", color: "#92400e", icon: "📞", border: "1px solid #d97706" };
-    if (ticket.source === "hr")       return { label: "HR", bg: "#dbeafe", color: "#1d4ed8", icon: "🧑‍💼" };
+    if (ticket.source === "hr")       return { label: "Internal IT", bg: "#dbeafe", color: "#1d4ed8", icon: "🧑‍💼" };
+    if (ticket.source === "hradmin")  return { label: "Internal IT", bg: "#dbeafe", color: "#1d4ed8", icon: "🧑‍💼" };
     return { label: "Sales", bg: "#fff4ee", color: "#e04e00", icon: "🧑‍💼" };
   };
 
@@ -869,7 +870,7 @@ isRma: issuePopup.firstIsRma || false,
     ["customer", "👥 Customer",        "#7c3aed", "#f5f3ff", tickets.filter(t => t.source === "customer").length],
     ["sales",    "🧑‍💼 Sales Person",   "#ff5a00", "#fff4ee", tickets.filter(t => !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr")).length],
     ["support",  "🛠️ Support Person",  "#059669", "#ecfdf5", tickets.filter(t => t.source === "support").length],
-    ["hr",       "🧑‍💼 HR",              "#1d4ed8", "#dbeafe", tickets.filter(t => t.source === "hr").length],
+    ["hr",       "🧑‍💼 Internal IT",     "#1d4ed8", "#dbeafe", tickets.filter(t => t.source === "hr" || t.source === "hradmin").length],
   ].map(([key, label, col, bg, cnt]) => (
     <button key={key} onClick={() => setSourceFilter(key)} style={{
       padding: "5px 14px", borderRadius: 16, cursor: "pointer",
