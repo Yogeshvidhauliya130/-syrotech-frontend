@@ -50,15 +50,18 @@ export default function SLAReport() {
   const [filterDate,  setFilterDate]  = useState("");
   const [activeSection, setActiveSection] = useState("overview");
 
-  useEffect(() => {
+ useEffect(() => {
     setLoading(true);
-    fetch(`${BASE_URL}/tickets`)
+    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
       .then(r => r.json())
-      .then(data => { setTickets(Array.isArray(data) ? data : []); setLoading(false); })
+      .then(data => { setTickets(data.tickets || []); setLoading(false); })
       .catch(() => setLoading(false));
     const id = setInterval(() => {
-      fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(data => { if (Array.isArray(data)) setTickets(data); }).catch(() => {});
-    }, 15000);
+      fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+        .then(r => r.json())
+        .then(data => { setTickets(data.tickets || []); })
+        .catch(() => {});
+    }, 30000);
     return () => clearInterval(id);
   }, []);
 
