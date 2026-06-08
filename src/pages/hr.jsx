@@ -48,13 +48,11 @@ export default function HR() {
 
   // ── fetch all HR tickets ──
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setTickets(data.filter(t => t.source === "hr"));
-        }
-      })
+   fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+  .then(r => r.json())
+  .then(data => {
+    setTickets((data.tickets || []).filter(t => t.source === "hr"));
+  })
       .catch(console.error);
   };
 
