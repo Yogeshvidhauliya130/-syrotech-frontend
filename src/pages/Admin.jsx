@@ -494,8 +494,8 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
   const getRaisedFromLabel = (ticket) => {
     if (ticket.source === "customer") return { label: "Customer", customerType: ticket.customerType || "", bg: "#ede9fe", color: "#5b21b6", icon: "👥" };
     if (ticket.source === "support")  return { label: `Support · ${raisedViaLabel(ticket.raisedVia)}`, bg: "#fde68a", color: "#92400e", icon: "📞", border: "1px solid #d97706" };
-    if (ticket.source === "hr")       return { label: "Internal IT", bg: "#dbeafe", color: "#1d4ed8", icon: "🧑‍💼" };
-    if (ticket.source === "hradmin")  return { label: "Internal IT", bg: "#dbeafe", color: "#1d4ed8", icon: "🧑‍💼" };
+   if (ticket.source === "hr")       return { label: "HR", bg: "#fce7f3", color: "#9d174d", icon: "🧑‍💼" };
+if (ticket.source === "hradmin")  return { label: "IT Team", bg: "#dbeafe", color: "#1d4ed8", icon: "💻" };
     return { label: "Sales", bg: "#fff4ee", color: "#e04e00", icon: "🧑‍💼" };
   };
 
@@ -873,7 +873,7 @@ isRma: issuePopup.firstIsRma || false,
     ["customer", "👥 Customer",        "#7c3aed", "#f5f3ff", tickets.filter(t => t.source === "customer").length],
     ["sales",    "🧑‍💼 Sales Person",   "#ff5a00", "#fff4ee", tickets.filter(t => !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr")).length],
     ["support",  "🛠️ Support Person",  "#059669", "#ecfdf5", tickets.filter(t => t.source === "support").length],
-    ["hr",       "🧑‍💼 Internal IT",     "#1d4ed8", "#dbeafe", tickets.filter(t => t.source === "hr" || t.source === "hradmin").length],
+["hr", "🧑‍💼 HR / IT Team", "#1d4ed8", "#dbeafe", tickets.filter(t => t.source === "hr" || t.source === "hradmin").length],
   ].map(([key, label, col, bg, cnt]) => (
     <button key={key} onClick={() => setSourceFilter(key)} style={{
       padding: "5px 14px", borderRadius: 16, cursor: "pointer",
