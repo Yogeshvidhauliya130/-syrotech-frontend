@@ -31,6 +31,8 @@ const [customerPopup, setCustomerPopup]         = useState(null);
 const [priorityCompanies, setPriorityCompanies] = useState([]);
 const [companyFilter, setCompanyFilter]       = useState("all");
 const [showPriorityList, setShowPriorityList] = useState(false);
+const [currentPage, setCurrentPage] = useState(1);
+const PAGE_SIZE = 500;
 
  const fetchAll = () => {
   fetch(`${BASE_URL}/tickets`)
@@ -52,6 +54,8 @@ const [showPriorityList, setShowPriorityList] = useState(false);
     const id = setInterval(fetchAll, 10000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => { setCurrentPage(1); }, [statusFilter, sourceFilter, customerTypeFilter, levelFilter, filterYear, filterMonth, dateSort, companyFilter, searchQuery]);
 
   const getPersonLevel = (name) => {
     const p = supportPersons.find(x => x.name && name && x.name.toLowerCase().trim() === name.toLowerCase().trim());
@@ -115,6 +119,9 @@ const [showPriorityList, setShowPriorityList] = useState(false);
       const db = new Date(b.createdAt || b.date).getTime();
       return dateSort === "newest" ? db - da : da - db;
     });
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+const paginatedTickets = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const counts = {
     all:      tickets.length,
@@ -531,12 +538,12 @@ const [showPriorityList, setShowPriorityList] = useState(false);
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+           {paginatedTickets.length === 0 ? (
               <tr>
                 <td colSpan={10} className="rt-empty">No tickets found for the selected filters.</td>
               </tr>
             ) : (
-              filtered.map((ticket, idx) => {
+              paginatedTickets.map((ticket, idx) => {
                 const s = (ticket.status || "open").toLowerCase();
                 const srcLabel = getSourceLabel(ticket);
                 const assignedLevel = getPersonLevel(ticket.assignTo);
@@ -657,9 +664,23 @@ const [showPriorityList, setShowPriorityList] = useState(false);
         </table>
       </div>
 
-      <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
-        Showing <strong style={{ color: "#374151" }}>{filtered.length}</strong> of <strong style={{ color: "#374151" }}>{tickets.length}</strong> tickets
-      </div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
+  <button
+    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+    disabled={currentPage === 1}
+    style={{ padding:"7px 18px", borderRadius:8, border:"1.5px solid #d1d5db", background: currentPage===1 ? "#f3f4f6" : "white", color: currentPage===1 ? "#9ca3af" : "#374151", fontWeight:600, fontSize:13, cursor: currentPage===1 ? "not-allowed" : "pointer" }}>
+    ← Previous
+  </button>
+  <span style={{ fontSize:13, color:"#6b7280" }}>
+    Showing <strong style={{ color:"#374151" }}>{(currentPage-1)*PAGE_SIZE+1}</strong> - <strong style={{ color:"#374151" }}>{Math.min(currentPage*PAGE_SIZE, filtered.length)}</strong> of <strong style={{ color:"#ff5a00" }}>{filtered.length}</strong> filtered tickets
+  </span>
+  <button
+    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+    disabled={currentPage === totalPages || totalPages === 0}
+    style={{ padding:"7px 18px", borderRadius:8, border:"1.5px solid #d1d5db", background: currentPage===totalPages||totalPages===0 ? "#f3f4f6" : "white", color: currentPage===totalPages||totalPages===0 ? "#9ca3af" : "#374151", fontWeight:600, fontSize:13, cursor: currentPage===totalPages||totalPages===0 ? "not-allowed" : "pointer" }}>
+    Next →
+  </button>
+</div>
     </div>
   );
 }

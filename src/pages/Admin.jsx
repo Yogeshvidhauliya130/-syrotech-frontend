@@ -9,7 +9,6 @@ import AdminUsers from "./AdminUsers";
 import SLAReport from "./SLAReport";
 import ProductManager from "./ProductManager";
 import ReassignTicket from "./reassignTicket";
-import AbsentSupportPerson from "./absentsupportperson";
 import "./Admin.css";
 
 
@@ -127,7 +126,6 @@ const [analyticsType, setAnalyticsType] = useState("all");
     { key: "sla",         icon: "📈", label: "SLA Report"       },
     { key: "products", icon: "📦", label: "Product Category" },
     { key: "reassign", icon: "🔄", label: "Ticket Reassign" },
-{ key: "absent",   icon: "🏖️", label: "Absent Support" },
   ];
 
   return (
@@ -257,7 +255,6 @@ const [analyticsType, setAnalyticsType] = useState("all");
         {tab === "sla"         && <SLAReport />}
         {tab === "products" && <ProductManager />}
         {tab === "reassign" && <ReassignTicket />}
-{tab === "absent"   && <AbsentSupportPerson />}
       </main>
     </div>
   );
@@ -278,7 +275,30 @@ function Analytics({ typeFilter = "all" }) {
 
 
   
-  const [filter, setFilter]             = useState("all");
+  const [filter, setFilter] = useState("all");
+
+  const handleFilterChange = async (newFilter) => {
+    setFilter(newFilter);
+    setIsLoading(true);
+    try {
+      let url = `${BASE_URL}/tickets?page=1&limit=5000`;
+      if (newFilter !== "all" && newFilter !== "reopened") {
+        url = `${BASE_URL}/tickets?status=${newFilter}&limit=5000`;
+      } else {
+        url = `${BASE_URL}/tickets?page=1&limit=500`;
+      }
+      const res = await fetch(url);
+      const data = await res.json();
+      setTickets(data.tickets || []);
+      setTotalPages(data.totalPages || 1);
+      setTotalCount(data.totalCount || 0);
+      setPage(1);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const [search, setSearch]             = useState("");
   const [issuePopup, setIssuePopup]     = useState(null);
   const [feedbackData, setFeedbackData] = useState({});
@@ -327,12 +347,30 @@ const [filterDate, setFilterDate]   = useState("");
       .catch(err => { console.error("Failed:", err); setSavingId(null); });
   };
 
-  useEffect(() => {
-    const load = () => fetch(`${BASE_URL}/tickets`).then(r => r.json()).then(setTickets).catch(console.error);
-    load();
-    const id = setInterval(load, 5000);
-    return () => clearInterval(id);
-  }, []);
+  const [page, setPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [totalCount, setTotalCount] = useState(0);
+const [isLoading, setIsLoading] = useState(false);
+
+const loadTickets = async (pageNum = 1) => {
+  setIsLoading(true);
+  try {
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=500`);
+    const data = await res.json();
+    setTickets(data.tickets || []);
+    setTotalPages(data.totalPages || 1);
+    setTotalCount(data.totalCount || 0);
+    setPage(pageNum);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+useEffect(() => {
+  loadTickets(1);
+}, []);
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -772,7 +810,7 @@ isRma: issuePopup.firstIsRma || false,
   ["rma",      "🔧 RMA",        "#7c3aed", "#f5f3ff"],
   ["reopened", "🔄 Reopened",   "#dc2626", "#fee2e2"],
 ].map(([key, label, col, bg]) => (
-            <button key={key} onClick={() => setFilter(key)} style={{
+            <button key={key} onClick={() => handleFilterChange(key)} style={{
               padding: "6px 14px", borderRadius: 16, cursor: "pointer",
               border: filter === key ? `2px solid ${col}` : "1px solid #566274",
               background: filter === key ? bg : "white",
@@ -1156,8 +1194,40 @@ firstIsRma: ticket.firstIsRma || false,
               </tbody>
             </table>
           </div>
-          <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
-            Showing <strong style={{ color: "#374151" }}>{filtered.length}</strong> of <strong style={{ color: "#374151" }}>{tickets.length}</strong> tickets
+         <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>
+              Showing <strong style={{ color: "#374151" }}>{filtered.length}</strong> of <strong style={{ color: "#374151" }}>{totalCount}</strong> total tickets
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                onClick={() => loadTickets(page - 1)}
+                disabled={page <= 1 || isLoading}
+                style={{
+                  padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db",
+                  background: page <= 1 ? "#f3f4f6" : "white",
+                  color: page <= 1 ? "#9ca3af" : "#374151",
+                  fontWeight: 700, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer",
+                  fontFamily: "inherit"
+                }}>
+                ← Previous
+              </button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => loadTickets(page + 1)}
+                disabled={page >= totalPages || isLoading}
+                style={{
+                  padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db",
+                  background: page >= totalPages ? "#f3f4f6" : "white",
+                  color: page >= totalPages ? "#9ca3af" : "#374151",
+                  fontWeight: 700, fontSize: 13, cursor: page >= totalPages ? "not-allowed" : "pointer",
+                  fontFamily: "inherit"
+                }}>
+                Next →
+              </button>
+              {isLoading && <span style={{ fontSize: 12, color: "#ff5a00", fontWeight: 700 }}>Loading...</span>}
+            </div>
           </div>
         </>
       )}
@@ -1394,12 +1464,16 @@ const [sourceViaFilter, setSourceViaFilter] = useState("all");
 const [supportOnly, setSupportOnly] = useState(false);
 
   useEffect(() => {
-    const load = () => fetch(`${BASE_URL}/tickets`)
+    const load = () => fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
       .then(r => r.json())
-      .then(data => { const normalized = data.map(t => ({ ...t, feedbackRating: t.feedbackRating ? parseInt(t.feedbackRating) : null })); setTickets(normalized); })
+      .then(data => {
+        const tickets = data.tickets || [];
+        const normalized = tickets.map(t => ({ ...t, feedbackRating: t.feedbackRating ? parseInt(t.feedbackRating) : null }));
+        setTickets(normalized);
+      })
       .catch(console.error);
     load();
-    const id = setInterval(load, 5000);
+    const id = setInterval(load, 30000);
     return () => clearInterval(id);
   }, []);
 

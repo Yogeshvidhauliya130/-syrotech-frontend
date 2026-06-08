@@ -177,7 +177,6 @@ const countOpen = (name) =>
     return p.level === nextLevel &&
       p.role === "support" &&
       p.approved &&
-      !p.isOnLeave &&
       specs.map(s => s.toLowerCase()).includes(product);
   });
 
