@@ -30,6 +30,7 @@ const [raiseForm, setRaiseForm] = useState({
   empType: "", empCode: "", empDept: "",
   empName: "", empEmail: "", empPhone: "",
   issues: [], description: "",
+  modelNo: "", serialNo: "",
 });
 const [raiseErrors, setRaiseErrors]       = useState({});
 const [raiseSubmitting, setRaiseSubmitting] = useState(false);
@@ -150,6 +151,8 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
       empName:           raiseForm.empName,
       empEmail:          raiseForm.empEmail,
       empPhone:          raiseForm.empPhone,
+      modelNo:   raiseForm.modelNo,
+serialNo:  raiseForm.serialNo,
     };
     try {
       const res = await fetch(`${BASE_URL}/tickets`, {
@@ -158,7 +161,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
         body: JSON.stringify(newTicket),
       });
       if (!res.ok) throw new Error("Server error");
-      setRaiseForm({ empType: "", empCode: "", empDept: "", empName: "", empEmail: "", empPhone: "", issues: [], description: "" });
+    setRaiseForm({ empType:"", empCode:"", empDept:"", empName:"", empEmail:"", empPhone:"", issues:[], description:"", modelNo:"", serialNo:"" });
       setRaiseErrors({});
       setRaiseSuccess("✅ Ticket submitted successfully!");
       setActiveTab("alltickets");
@@ -479,6 +482,25 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
               {raiseErrors.empPhone && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empPhone}</span>}
             </div>
 
+
+            {/* Model No */}
+<div>
+  <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" }}>
+    Model No <span style={{ color:"#9ca3af", fontSize:11, textTransform:"none", fontWeight:400 }}>(optional)</span>
+  </label>
+  <input name="modelNo" placeholder="e.g. SY-ONT-1234" value={raiseForm.modelNo} onChange={handleRaiseChange}
+    style={{ width:"100%", padding:"11px 14px", border:"1.5px solid #d1d5db", borderRadius:10, background:"#f9fafb", fontSize:14, outline:"none", fontFamily:"inherit", color:"#111827", boxSizing:"border-box" }} />
+</div>
+
+{/* Serial No */}
+<div>
+  <label style={{ display:"block", fontSize:11, fontWeight:700, color:"#374151", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" }}>
+    Serial No <span style={{ color:"#9ca3af", fontSize:11, textTransform:"none", fontWeight:400 }}>(optional)</span>
+  </label>
+  <input name="serialNo" placeholder="e.g. SN-00123456" value={raiseForm.serialNo} onChange={handleRaiseChange}
+    style={{ width:"100%", padding:"11px 14px", border:"1.5px solid #d1d5db", borderRadius:10, background:"#f9fafb", fontSize:14, outline:"none", fontFamily:"inherit", color:"#111827", boxSizing:"border-box" }} />
+</div>
+
             {/* Issue Chips */}
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -637,7 +659,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, background: "white", minWidth: 900 }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #1d4ed8, #2563eb)", position: "sticky", top: 0, zIndex: 2 }}>
-                  {["Ticket No","Raised By HR","Emp Code","Emp Type","Emp Name / KYC","Department","Issue","Status","Date","Action"].map((h, i) => (
+                  {["Ticket No","Raised By HR","Emp Code","Emp Type","Emp Name / KYC","Department","Model / Serial","Issue","Status","Date","Action"].map((h, i) => (
                     <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -659,7 +681,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
                       </td>
 
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #dbeafe" }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{ticket.empCode || ticket.serialNo || "—"}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{ticket.empCode || "—"}</div>
                       </td>
 
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #dbeafe" }}>
@@ -677,6 +699,11 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #dbeafe" }}>
                         <div style={{ fontSize: 12, color: "#374151" }}>{ticket.empDept || "—"}</div>
                       </td>
+
+                      <td style={{ padding:"12px 14px", borderRight:"1px solid #dbeafe" }}>
+  <div style={{ fontSize:12, fontWeight:700, color:"#374151" }}>{ticket.modelNo || "—"}</div>
+  <div style={{ fontSize:10, color:"#9ca3af", marginTop:2 }}>{ticket.serialNo || "—"}</div>
+</td>
 
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #dbeafe", cursor: "pointer", maxWidth: 180 }}
                         onClick={() => setIssuePopup(ticket)}>

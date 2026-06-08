@@ -1059,9 +1059,14 @@ isRma: issuePopup.firstIsRma || false,
 </td>
 
                       {/* Col 5 — Model */}
-                      <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: "pointer" }}
+                     <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: "pointer" }}
   onClick={() => setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}>
   <div style={{ fontSize: 11, fontWeight: 700, color: "#c94500", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fad8be" }}>{ticket.model || "—"}</div>
+  {(ticket.modelNo || ticket.serialNo) && (
+    <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>
+      📦 {ticket.modelNo || "—"} / {ticket.serialNo || "—"}
+    </div>
+  )}
 </td>
 
                       {/* Col 6 — Customer / KYC (with popup) */}
