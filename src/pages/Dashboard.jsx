@@ -146,9 +146,9 @@ const [itemFilter, setItemFilter]               = useState("all");
   }, []);
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets`)
+   fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
       .then(res => res.json())
-      .then(data => { if (Array.isArray(data)) setTickets(data); })
+      .then(data => { setTickets(data.tickets || []); })
       .catch(err => console.error("Failed to load tickets:", err));
   };
 
