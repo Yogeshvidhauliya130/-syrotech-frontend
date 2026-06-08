@@ -9,7 +9,7 @@ import AdminUsers from "./AdminUsers";
 import SLAReport from "./SLAReport";
 import ProductManager from "./ProductManager";
 import ReassignTicket from "./reassignTicket";
-import AbsentSupport from "./AbsentSupport";
+import AbsentSupport from "./absentsupportperson";
 import "./Admin.css";
 
 
