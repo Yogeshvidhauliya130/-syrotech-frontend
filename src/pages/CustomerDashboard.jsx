@@ -155,10 +155,10 @@ issueSuffix: "",
   }, [form.category, form.state, supportPersons, tickets]);
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets`)
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setTickets(data); })
-      .catch(console.error);
+    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+  .then(r => r.json())
+  .then(data => { setTickets(data.tickets || []); })
+  .catch(console.error);
   };
 
   useEffect(() => {
