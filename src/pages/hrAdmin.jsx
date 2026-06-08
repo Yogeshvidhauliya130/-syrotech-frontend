@@ -1,4 +1,14 @@
 import { useState, useEffect } from "react";
+
+const OLD_EMPLOYEE_ISSUES = [
+  "Desktop", "Laptop", "Email ID", "Mouse", "LAN Cable",
+  "Keyboard", "Internet", "Printer Connectivity", "other"
+];
+
+const NEW_EMPLOYEE_ISSUES = [
+  "Issue Laptop", "Issue Desktop", "Create Email ID",
+  "CRM Login", "Ticketing Tool Login", "Savvy HRMS Login", "other"
+];
 import { useNavigate } from "react-router-dom";
 
 import "./hrAdmin.css";
@@ -13,7 +23,17 @@ export default function HrAdmin() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
   const [tickets, setTickets]           = useState([]);
-  const [statusFilter, setStatusFilter] = useState("all");
+const [statusFilter, setStatusFilter] = useState("all");
+const [activeTab, setActiveTab]       = useState("alltickets");
+
+const [raiseForm, setRaiseForm] = useState({
+  empType: "", empCode: "", empDept: "",
+  empName: "", empEmail: "", empPhone: "",
+  issues: [], description: "",
+});
+const [raiseErrors, setRaiseErrors]       = useState({});
+const [raiseSubmitting, setRaiseSubmitting] = useState(false);
+const [raiseSuccess, setRaiseSuccess]     = useState("");
   const [filterYear, setFilterYear]     = useState("");
   const [filterMonth, setFilterMonth]   = useState("");
   const [filterDate, setFilterDate]     = useState("");
@@ -72,6 +92,97 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
       setResolving(false);
     }
   };
+
+
+
+  const handleRaiseChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "empType") {
+      setRaiseForm(prev => ({ ...prev, empType: value, issues: [], description: "" }));
+    } else {
+      setRaiseForm(prev => ({ ...prev, [name]: value }));
+    }
+    setRaiseErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const validateRaise = () => {
+    const e = {};
+    if (!raiseForm.empType) e.empType = "Please select employee type.";
+    if (raiseForm.empType === "old" && !raiseForm.empCode.trim()) e.empCode = "Employee code is required.";
+    if (!raiseForm.empDept.trim()) e.empDept = "Department is required.";
+    if (!raiseForm.empName.trim()) e.empName = "Employee name is required.";
+    if (raiseForm.empType !== "new" && !raiseForm.empEmail.trim()) e.empEmail = "Employee email is required.";
+    if (!raiseForm.empPhone.trim()) e.empPhone = "Employee phone is required.";
+    if (!raiseForm.issues || raiseForm.issues.length === 0) e.issue = "Please select at least one issue.";
+    if (!raiseForm.description.trim()) e.description = "Please describe the issue.";
+    else if (raiseForm.description.trim().length > 500) e.description = "Max 500 characters.";
+    return e;
+  };
+
+  const handleRaiseSubmit = async () => {
+    const errs = validateRaise();
+    if (Object.keys(errs).length > 0) { setRaiseErrors(errs); return; }
+    setRaiseSubmitting(true);
+    const newTicket = {
+      category:          "HR Ticket",
+      subCategory:       raiseForm.empType === "old" ? "Old Employee" : "New Employee",
+      model:             raiseForm.issues.join(", "),
+      serialNo:          raiseForm.empCode,
+      mac:               "",
+      customer:          raiseForm.empCode,
+      email:             currentUser?.email || "",
+      phone:             "",
+      city:              "",
+      state:             "",
+      country:           "India",
+      pincode:           "",
+      companyName:       "",
+      empDept:           raiseForm.empDept,
+      description:       `${raiseForm.issues.join(", ")} | ${raiseForm.description}`,
+      assignTo:          currentUser?.name || "HR Admin",
+      status:            "open",
+      source:            "hr",
+      raisedBy:          currentUser?.email || "hradmin@goip.in",
+      raisedByName:      currentUser?.name  || "HR Admin",
+      date:              new Date().toISOString().slice(0, 10),
+      createdAt:         new Date().toISOString(),
+      acceptedAt:        new Date().toISOString(),
+      firstDescription:  `${raiseForm.issues.join(", ")} | ${raiseForm.description}`,
+      firstCreatedAt:    new Date().toISOString(),
+      firstRaisedByName: currentUser?.name || "HR Admin",
+      empType:           raiseForm.empType,
+      empCode:           raiseForm.empCode,
+      empDept:           raiseForm.empDept,
+      hrIssue:           raiseForm.issues.join(", "),
+      empName:           raiseForm.empName,
+      empEmail:          raiseForm.empEmail,
+      empPhone:          raiseForm.empPhone,
+    };
+    try {
+      const res = await fetch(`${BASE_URL}/tickets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTicket),
+      });
+      if (!res.ok) throw new Error("Server error");
+      setRaiseForm({ empType: "", empCode: "", empDept: "", empName: "", empEmail: "", empPhone: "", issues: [], description: "" });
+      setRaiseErrors({});
+      setRaiseSuccess("✅ Ticket submitted successfully!");
+      setActiveTab("alltickets");
+      fetchTickets();
+      setTimeout(() => setRaiseSuccess(""), 4000);
+    } catch {
+      setRaiseErrors({ submit: "❌ Failed to submit ticket." });
+    } finally {
+      setRaiseSubmitting(false);
+    }
+  };
+
+  const raiseIssueOptions = raiseForm.empType === "old"
+    ? OLD_EMPLOYEE_ISSUES
+    : raiseForm.empType === "new"
+    ? NEW_EMPLOYEE_ISSUES
+    : [];
 
   const displayTickets = tickets
     .filter(t => {
@@ -260,8 +371,190 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
         </div>
       )}
 
+     {/* Tabs */}
+      <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
+        {[
+          ["raise",      "🎫 Raise Ticket"],
+          ["alltickets", `📋 All HR Tickets (${tickets.length})`],
+        ].map(([key, label]) => (
+          <button key={key} onClick={() => setActiveTab(key)}
+            style={{
+              padding: "14px 22px", fontSize: 13, background: "none",
+              border: "none", borderBottom: activeTab === key ? "3px solid #1d4ed8" : "3px solid transparent",
+              cursor: "pointer", whiteSpace: "nowrap", marginBottom: -2,
+              fontFamily: "inherit",
+              color: activeTab === key ? "#2563eb" : "#6b7280",
+              fontWeight: activeTab === key ? 800 : 500,
+            }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Success */}
+      {raiseSuccess && (
+        <div style={{ margin: "16px 28px 0", background: "#ecfdf5", border: "1.5px solid #6ee7b7", borderRadius: 10, padding: "12px 20px", fontSize: 14, fontWeight: 600, color: "#065f46" }}>
+          {raiseSuccess}
+        </div>
+      )}
+
       {/* Main Content */}
-      <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
+      <div style={{ maxWidth: activeTab === "raise" ? 680 : 1200, margin: "28px auto", padding: "0 16px" }}>
+
+      {/* ══ RAISE TICKET TAB ══ */}
+      {activeTab === "raise" && (
+        <div style={{ background: "white", borderRadius: 20, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #dbeafe" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28, paddingBottom: 20, borderBottom: "1px solid #eff6ff" }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🎫</div>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0 }}>Raise HR Ticket</h2>
+              <p style={{ fontSize: 13, color: "#6b7280", margin: "2px 0 0" }}>All fields marked <span style={{ color: "#2563eb" }}>*</span> are required.</p>
+            </div>
+          </div>
+
+          {raiseErrors.submit && (
+            <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#b91c1c", marginBottom: 16 }}>{raiseErrors.submit}</div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* Employee Type */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Type <span style={{ color: "#2563eb" }}>*</span></label>
+              <div style={{ display: "flex", gap: 12 }}>
+                {[["old","👤 Old Employee"],["new","🆕 New Employee"]].map(([val, label]) => (
+                  <button key={val} type="button"
+                    onClick={() => handleRaiseChange({ target: { name: "empType", value: val } })}
+                    style={{ flex: 1, padding: 12, borderRadius: 10, cursor: "pointer", fontFamily: "inherit", fontSize: 14,
+                      border: raiseForm.empType === val ? "2px solid #2563eb" : "1.5px solid #d1d5db",
+                      background: raiseForm.empType === val ? "#eff6ff" : "#f9fafb",
+                      color: raiseForm.empType === val ? "#1d4ed8" : "#374151",
+                      fontWeight: raiseForm.empType === val ? 700 : 500,
+                    }}>{label}
+                  </button>
+                ))}
+              </div>
+              {raiseErrors.empType && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empType}</span>}
+            </div>
+
+            {/* Department */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Department <span style={{ color: "#2563eb" }}>*</span></label>
+              <select name="empDept" value={raiseForm.empDept} onChange={handleRaiseChange}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empDept ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empDept ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }}>
+                <option value="">-- Select Department --</option>
+                {["R&D Department","IT","Marketing","Accounts","Sales","Logistics","RMA","Production-Passive","Production-SFP","Production-Factory"].map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+              {raiseErrors.empDept && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empDept}</span>}
+            </div>
+
+            {/* Employee Name */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Name <span style={{ color: "#2563eb" }}>*</span></label>
+              <input name="empName" placeholder="e.g. Rahul Sharma" value={raiseForm.empName} onChange={handleRaiseChange}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empName ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empName ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
+              {raiseErrors.empName && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empName}</span>}
+            </div>
+
+            {/* Employee Email */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Employee Email {raiseForm.empType === "new" ? <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span> : <span style={{ color: "#2563eb" }}>*</span>}
+              </label>
+              <input name="empEmail" placeholder="e.g. rahul@goip.in" value={raiseForm.empEmail} onChange={handleRaiseChange}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empEmail ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empEmail ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
+              {raiseErrors.empEmail && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empEmail}</span>}
+            </div>
+
+            {/* Employee Code */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Employee Code {raiseForm.empType === "old" ? <span style={{ color: "#2563eb" }}>*</span> : <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span>}
+              </label>
+              <input name="empCode" placeholder="e.g. EMP-1001" value={raiseForm.empCode} onChange={handleRaiseChange}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empCode ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empCode ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
+              {raiseErrors.empCode && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empCode}</span>}
+            </div>
+
+            {/* Employee Phone */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Phone <span style={{ color: "#2563eb" }}>*</span></label>
+              <input name="empPhone" placeholder="10-digit number" value={raiseForm.empPhone} onChange={handleRaiseChange} maxLength={10}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empPhone ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empPhone ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
+              {raiseErrors.empPhone && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empPhone}</span>}
+            </div>
+
+            {/* Issue Chips */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Select Issue <span style={{ color: "#2563eb" }}>*</span>
+                <span style={{ fontSize: 10, color: "#9ca3af", textTransform: "none", fontWeight: 400 }}> (select multiple)</span>
+              </label>
+              {!raiseForm.empType ? (
+                <div style={{ padding: "11px 14px", borderRadius: 10, border: "1.5px solid #d1d5db", background: "#f9fafb", fontSize: 13, color: "#9ca3af" }}>Select employee type first</div>
+              ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {raiseIssueOptions.map(opt => {
+                    const selected = raiseForm.issues.includes(opt);
+                    return (
+                      <button key={opt} type="button"
+                        onClick={() => {
+                          setRaiseForm(prev => ({ ...prev, issues: selected ? prev.issues.filter(i => i !== opt) : [...prev.issues, opt] }));
+                          setRaiseErrors(prev => ({ ...prev, issue: "" }));
+                        }}
+                        style={{ padding: "8px 14px", borderRadius: 20, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
+                          border: selected ? "2px solid #2563eb" : "1.5px solid #d1d5db",
+                          background: selected ? "#eff6ff" : "#f9fafb",
+                          color: selected ? "#1d4ed8" : "#374151",
+                          fontWeight: selected ? 700 : 500,
+                        }}>
+                        {selected ? "✓ " : ""}{opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {raiseForm.issues.length > 0 && (
+                <div style={{ fontSize: 11, color: "#2563eb", marginTop: 6, fontWeight: 600 }}>✅ Selected: {raiseForm.issues.join(", ")}</div>
+              )}
+              {raiseErrors.issue && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.issue}</span>}
+            </div>
+
+            {/* Description */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Issue Description <span style={{ color: "#2563eb" }}>*</span>
+                <span style={{ fontSize: 10, color: "#9ca3af", textTransform: "none", fontWeight: 400 }}> (max 500 chars)</span>
+              </label>
+              <textarea name="description" rows={4}
+                placeholder="Describe the issue in detail..."
+                value={raiseForm.description} onChange={handleRaiseChange}
+                disabled={raiseForm.issues.length === 0}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.description ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.description ? "#fff5f5" : raiseForm.issues.length === 0 ? "#f3f4f6" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6, opacity: raiseForm.issues.length === 0 ? 0.5 : 1 }} />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginTop: 3 }}>
+                {raiseErrors.description
+                  ? <span style={{ color: "#ef4444" }}>{raiseErrors.description}</span>
+                  : <span style={{ color: "#9ca3af" }}>{raiseForm.description.length}/500</span>}
+                <span style={{ color: raiseForm.description.length > 450 ? "#ef4444" : "#10b981", fontWeight: 600 }}>
+                  {500 - raiseForm.description.length} left
+                </span>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button onClick={handleRaiseSubmit} disabled={raiseSubmitting}
+              style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: raiseSubmitting ? "#9ca3af" : "linear-gradient(135deg,#2563eb,#1d4ed8)", color: "white", fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: raiseSubmitting ? "not-allowed" : "pointer", boxShadow: raiseSubmitting ? "none" : "0 4px 14px rgba(37,99,235,0.35)" }}>
+              {raiseSubmitting ? "⏳ Submitting..." : "🎫 Submit Ticket"}
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {activeTab === "alltickets" && (
+        <>
 
         {/* Top Bar */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -451,6 +744,8 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
         <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
           Total: <strong style={{ color: "#374151" }}>{tickets.length}</strong> tickets
         </div>
+      </>
+      )}
       </div>
     </div>
   );
