@@ -24,20 +24,18 @@ const [issuePopup, setIssuePopup] = useState(null);
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
  const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          const mine = data.filter(
-            (t) =>
-              t.ticketType === "lockin" &&
-              t.raisedBy === currentUser?.email
-          );
-          setTickets(mine);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+  .then((r) => r.json())
+  .then((data) => {
+    const mine = (data.tickets || []).filter(
+      (t) =>
+        t.ticketType === "lockin" &&
+        t.raisedBy === currentUser?.email
+    );
+    setTickets(mine);
+    setLoading(false);
+  })
+  .catch(() => setLoading(false));
   };
 
   useEffect(() => {
