@@ -50,7 +50,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
     fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
   .then(r => r.json())
   .then(data => {
-    setTickets((data.tickets || []).filter(t => t.source === "hr"));
+    setTickets((data.tickets || []).filter(t => t.source === "hr" || t.source === "hradmin"));
   })
       .catch(console.error);
   };
@@ -134,7 +134,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
       description:       `${raiseForm.issues.join(", ")} | ${raiseForm.description}`,
       assignTo:          currentUser?.name || "HR Admin",
       status:            "open",
-      source:            "hr",
+      source: "hradmin",
       raisedBy:          currentUser?.email || "hradmin@goip.in",
       raisedByName:      currentUser?.name  || "HR Admin",
       date:              new Date().toISOString().slice(0, 10),
