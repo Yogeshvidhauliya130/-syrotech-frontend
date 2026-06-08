@@ -35,9 +35,12 @@ const [currentPage, setCurrentPage] = useState(1);
 const PAGE_SIZE = 500;
 
  const fetchAll = () => {
-  fetch(`${BASE_URL}/tickets`)
+  fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
     .then(r => r.json())
-    .then(data => { if (Array.isArray(data)) setTickets(data); })
+    .then(data => { 
+      const list = data.tickets || [];
+      setTickets(list); 
+    })
     .catch(console.error);
   fetch(`${BASE_URL}/api/users`)
     .then(r => r.json())
@@ -203,7 +206,8 @@ const paginatedTickets = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPa
     );
     if (l3.length > 0) {
       const withCounts = await Promise.all(l3.map(async p => {
-        const all = await fetch(`${BASE_URL}/tickets`).then(r => r.json());
+        const res = await fetch(`${BASE_URL}/tickets?page=1&limit=2000`).then(r => r.json());
+        const all = res.tickets || [];
         const count = all.filter(t => t.assignTo === p.name && ["open","pending"].includes(t.status)).length;
         return { ...p, count };
       }));
