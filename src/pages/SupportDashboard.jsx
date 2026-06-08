@@ -278,7 +278,10 @@ const [myReassignedProductFilter, setMyReassignedProductFilter] = useState("all"
 const [myReassignedSubFilter, setMyReassignedSubFilter]         = useState("all");
 const [myReassignedItemFilter, setMyReassignedItemFilter]       = useState("all");
 
-  const [activeTab, setActiveTab] = useState("tickets");
+const [activeTab, setActiveTab] = useState("tickets");
+  const [assignedPage, setAssignedPage] = useState(1);
+  const [myRaisedPage, setMyRaisedPage] = useState(1);
+  const TICKETS_PER_PAGE = 200;
 
   // ✅ CHANGE 4: Added city, state, cityCustom, stateCustom to form
   const [form, setForm] = useState({
@@ -300,11 +303,12 @@ const [showLookupDropdown, setShowLookupDropdown] = useState(false);
 
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets`)
+    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
       .then(r => r.json())
       .then(data => {
-        setAllTickets(data);
-       const mine = data.filter(t =>
+        const allData = data.tickets || [];
+        setAllTickets(allData);
+       const mine = allData.filter(t =>
   (t.assignTo && currentUser?.name &&
   t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
   (t.resolvedBy && currentUser?.name &&
@@ -576,9 +580,10 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
     }
     setSubmitting(true);
     const cleanPhone = form.phone.replace(/\s+/g, "");
-    fetch(`${BASE_URL}/tickets`)
+    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
       .then(r => r.json())
-      .then(allTicketsData => {
+      .then(rawData => {
+        const allTicketsData = rawData.tickets || [];
     
         const newTicket = {
           ...form,
@@ -777,10 +782,24 @@ const filteredMyReassigned = allTickets
 
 
 
-  const myRaisedTickets = allTickets
+ const myRaisedTickets = allTickets
     .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+  // Pagination for Assigned Tickets
+  const assignedTotalPages = Math.ceil(filtered.length / TICKETS_PER_PAGE);
+  const paginatedFiltered = filtered.slice(
+    (assignedPage - 1) * TICKETS_PER_PAGE,
+    assignedPage * TICKETS_PER_PAGE
+  );
+
+  // Pagination for My Raised Tickets
+  const myRaisedTotalPages = Math.ceil(filteredMyRaised.length / TICKETS_PER_PAGE);
+  const paginatedMyRaised = filteredMyRaised.slice(
+    (myRaisedPage - 1) * TICKETS_PER_PAGE,
+    myRaisedPage * TICKETS_PER_PAGE
+  );
 
   const raisedViaLabel = (via) => {
     if (via === "support-email") return "📧 Support Email";
@@ -1682,7 +1701,7 @@ const filteredMyReassigned = allTickets
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredMyRaised.map((ticket, idx) => {
+                    {paginatedMyRaised.map((ticket, idx) => {
                       const s = (ticket.status || "open").toLowerCase();
                       return (
   <React.Fragment key={ticket.id}>
@@ -2029,9 +2048,28 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
                   </tbody>
                 </table>
               </div>
-              <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
-                Showing <strong style={{ color: "#374151" }}>{filteredMyRaised.length}</strong> of <strong style={{ color: "#374151" }}>{myRaisedTickets.length}</strong> tickets
-              </div>
+              {filteredMyRaised.length > TICKETS_PER_PAGE && (
+                <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontSize: 12, color: "#9ca3af" }}>
+                    Showing <strong>{(myRaisedPage - 1) * TICKETS_PER_PAGE + 1}</strong> - <strong>{Math.min(myRaisedPage * TICKETS_PER_PAGE, filteredMyRaised.length)}</strong> of <strong style={{ color: "#10b981" }}>{filteredMyRaised.length}</strong> tickets
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <button onClick={() => { setMyRaisedPage(p => p - 1); window.scrollTo(0,0); }}
+                      disabled={myRaisedPage <= 1}
+                      style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: myRaisedPage <= 1 ? "#f3f4f6" : "white", color: myRaisedPage <= 1 ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: myRaisedPage <= 1 ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                      ← Previous
+                    </button>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>
+                      Page {myRaisedPage} of {myRaisedTotalPages}
+                    </span>
+                    <button onClick={() => { setMyRaisedPage(p => p + 1); window.scrollTo(0,0); }}
+                      disabled={myRaisedPage >= myRaisedTotalPages}
+                      style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: myRaisedPage >= myRaisedTotalPages ? "#f3f4f6" : "white", color: myRaisedPage >= myRaisedTotalPages ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: myRaisedPage >= myRaisedTotalPages ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -2421,10 +2459,33 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
             </div>
           </div>
 
-          {filtered.length === 0 && (
+         {filtered.length === 0 && (
             <div style={{ textAlign: "center", padding: 60, background: "white", borderRadius: 14, color: "#aaa" }}>
               <div style={{ fontSize: 48 }}>📭</div>
               <p style={{ marginTop: 12 }}>No tickets in this category.</p>
+            </div>
+          )}
+
+          {filtered.length > TICKETS_PER_PAGE && (
+            <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ fontSize: 12, color: "#9ca3af" }}>
+                Showing <strong>{(assignedPage - 1) * TICKETS_PER_PAGE + 1}</strong> - <strong>{Math.min(assignedPage * TICKETS_PER_PAGE, filtered.length)}</strong> of <strong style={{ color: "#ff5a00" }}>{filtered.length}</strong> tickets
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button onClick={() => { setAssignedPage(p => p - 1); window.scrollTo(0,0); }}
+                  disabled={assignedPage <= 1}
+                  style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: assignedPage <= 1 ? "#f3f4f6" : "white", color: assignedPage <= 1 ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: assignedPage <= 1 ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                  ← Previous
+                </button>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>
+                  Page {assignedPage} of {assignedTotalPages}
+                </span>
+                <button onClick={() => { setAssignedPage(p => p + 1); window.scrollTo(0,0); }}
+                  disabled={assignedPage >= assignedTotalPages}
+                  style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: assignedPage >= assignedTotalPages ? "#f3f4f6" : "white", color: assignedPage >= assignedTotalPages ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: assignedPage >= assignedTotalPages ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                  Next →
+                </button>
+              </div>
             </div>
           )}
 
@@ -2439,7 +2500,7 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((ticket, idx) => {
+                 {paginatedFiltered.map((ticket, idx) => {
                     const s            = (ticket.status || "open").toLowerCase();
                     const isReassigned = !!ticket.reassignedFrom;
                     const isSupportRaised  = ticket.source === "support";
