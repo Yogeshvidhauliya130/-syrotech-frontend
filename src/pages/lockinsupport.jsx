@@ -76,20 +76,17 @@ const [activeTab, setActiveTab] = useState("tickets");
   const [dateSort, setDateSort]       = useState("newest");
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          // Only lockin tickets assigned to Tejvir
-          const mine = data.filter(
-            (t) =>
-              t.ticketType === "lockin" &&
-              t.assignTo === "Tejvir Singh"
-          );
-          setTickets(mine);
-        }
-      })
-      .catch(console.error);
+ fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+  .then((r) => r.json())
+  .then((data) => {
+    const mine = (data.tickets || []).filter(
+      (t) =>
+        t.ticketType === "lockin" &&
+        t.assignTo === "Tejvir Singh"
+    );
+    setTickets(mine);
+  })
+  .catch(console.error);
   };
 
   useEffect(() => {
