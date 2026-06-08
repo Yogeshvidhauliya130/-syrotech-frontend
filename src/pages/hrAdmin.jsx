@@ -107,13 +107,6 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
   const validateRaise = () => {
     const e = {};
-    if (!raiseForm.empType) e.empType = "Please select employee type.";
-    if (raiseForm.empType === "old" && !raiseForm.empCode.trim()) e.empCode = "Employee code is required.";
-    if (!raiseForm.empDept.trim()) e.empDept = "Department is required.";
-    if (!raiseForm.empName.trim()) e.empName = "Employee name is required.";
-    if (raiseForm.empType !== "new" && !raiseForm.empEmail.trim()) e.empEmail = "Employee email is required.";
-    if (!raiseForm.empPhone.trim()) e.empPhone = "Employee phone is required.";
-    if (!raiseForm.issues || raiseForm.issues.length === 0) e.issue = "Please select at least one issue.";
     if (!raiseForm.description.trim()) e.description = "Please describe the issue.";
     else if (raiseForm.description.trim().length > 500) e.description = "Max 500 characters.";
     return e;
@@ -420,7 +413,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
             {/* Employee Type */}
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Type <span style={{ color: "#2563eb" }}>*</span></label>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Type <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span></label>
               <div style={{ display: "flex", gap: 12 }}>
                 {[["old","👤 Old Employee"],["new","🆕 New Employee"]].map(([val, label]) => (
                   <button key={val} type="button"
@@ -439,7 +432,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
             {/* Department */}
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Department <span style={{ color: "#2563eb" }}>*</span></label>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Department <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span></label>
               <select name="empDept" value={raiseForm.empDept} onChange={handleRaiseChange}
                 style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empDept ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empDept ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }}>
                 <option value="">-- Select Department --</option>
@@ -452,7 +445,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
             {/* Employee Name */}
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Name <span style={{ color: "#2563eb" }}>*</span></label>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Name <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span></label>
               <input name="empName" placeholder="e.g. Rahul Sharma" value={raiseForm.empName} onChange={handleRaiseChange}
                 style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empName ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empName ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
               {raiseErrors.empName && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empName}</span>}
@@ -461,7 +454,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
             {/* Employee Email */}
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Employee Email {raiseForm.empType === "new" ? <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span> : <span style={{ color: "#2563eb" }}>*</span>}
+                Employee Email <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span>
               </label>
               <input name="empEmail" placeholder="e.g. rahul@goip.in" value={raiseForm.empEmail} onChange={handleRaiseChange}
                 style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empEmail ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empEmail ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
@@ -471,7 +464,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
             {/* Employee Code */}
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Employee Code {raiseForm.empType === "old" ? <span style={{ color: "#2563eb" }}>*</span> : <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span>}
+                Employee Code <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span>
               </label>
               <input name="empCode" placeholder="e.g. EMP-1001" value={raiseForm.empCode} onChange={handleRaiseChange}
                 style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empCode ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empCode ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
@@ -480,7 +473,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
             {/* Employee Phone */}
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Phone <span style={{ color: "#2563eb" }}>*</span></label>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Employee Phone <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span></label>
               <input name="empPhone" placeholder="10-digit number" value={raiseForm.empPhone} onChange={handleRaiseChange} maxLength={10}
                 style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empPhone ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empPhone ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }} />
               {raiseErrors.empPhone && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{raiseErrors.empPhone}</span>}
@@ -489,7 +482,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
             {/* Issue Chips */}
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Select Issue <span style={{ color: "#2563eb" }}>*</span>
+                Select Issue <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(optional)</span>
                 <span style={{ fontSize: 10, color: "#9ca3af", textTransform: "none", fontWeight: 400 }}> (select multiple)</span>
               </label>
               {!raiseForm.empType ? (
@@ -531,8 +524,8 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
               <textarea name="description" rows={4}
                 placeholder="Describe the issue in detail..."
                 value={raiseForm.description} onChange={handleRaiseChange}
-                disabled={raiseForm.issues.length === 0}
-                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.description ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.description ? "#fff5f5" : raiseForm.issues.length === 0 ? "#f3f4f6" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6, opacity: raiseForm.issues.length === 0 ? 0.5 : 1 }} />
+                disabled={false}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.description ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.description ? "#fff5f5" : "#f9fafb",fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6, opacity: 1}} />
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginTop: 3 }}>
                 {raiseErrors.description
                   ? <span style={{ color: "#ef4444" }}>{raiseErrors.description}</span>
