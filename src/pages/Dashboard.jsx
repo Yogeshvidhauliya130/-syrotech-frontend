@@ -5,8 +5,8 @@ import { getIssues } from "../data/issueList";
 import "./Dashboard.css";
 import RaiseLockinTicket from "./raiselockinticket";
 import MyLockinTickets from "./mylockinticket";
-import RaiseProductionTicket from "./raiseproductionticket";
-import MyProductionTickets from "./myproductionticket";
+import RaiseProductionTicket from "./RaiseProductionTicket";
+import MyProductionTickets from "./MyProductionTickets";
 
 const BASE_URL = "https://api.syrotech.com";
 
