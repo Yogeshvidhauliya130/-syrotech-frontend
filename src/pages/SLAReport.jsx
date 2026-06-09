@@ -212,6 +212,7 @@ const filtered = useMemo(() => {
       { label: "Sales Team",      count: sales,    color: "#ff5a00", icon: "🧑‍💼" },
       { label: "Support Team",    count: support,  color: "#059669", icon: "🛠️" },
       { label: "HR Team",         count: hr,       color: "#1d4ed8", icon: "🧑‍💼" },
+      { label: "Production", count: tickets.filter(t => t.ticketType === "production").length, color: "#10b981", icon: "🏭" },
     ];
   }, [filtered]);
 
@@ -226,6 +227,7 @@ const filtered = useMemo(() => {
     { key: "sales",     label: "Sales Persons",     icon: "🧑‍💼" },
     { key: "support",   label: "Support SLA",       icon: "🛠️" },
     { key: "trends",    label: "Monthly Trends",    icon: "📈" },
+    { key: "production", label: "Production", icon: "🏭" },
   ];
 
   if (loading) return (
@@ -760,6 +762,43 @@ const rate = pct(m.resolved, m.resolved + Math.max(0, open));
           </div>
         </div>
       )}
+      {activeSection === "production" && (
+  <div className="sla-section">
+    <div className="sla-card">
+    <div className="sla-card-title">🏭 Production Tickets — {tickets.filter(t => t.ticketType === "production").length} total</div>
+      <div className="sla-scroll">
+        <table className="sla-table">
+          <thead>
+            <tr>
+              {["Ticket No","Date","Category","Model","Raised By","Status","Resolved By"].map(h => <th key={h}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {tickets.filter(t => {
+  const d = new Date(t.createdAt || t.date);
+  if (filterDate) return t.ticketType === "production" && d.toDateString() === new Date(filterDate).toDateString();
+  if (filterYear && d.getFullYear() !== parseInt(filterYear)) return false;
+  if (filterMonth && d.getMonth() + 1 !== parseInt(filterMonth)) return false;
+  return t.ticketType === "production";
+})
+  .sort((a,b) => new Date(b.createdAt||b.date) - new Date(a.createdAt||a.date))
+  .map((t, i) => (
+                <tr key={t.id||t._id} className={i % 2 === 0 ? "even" : ""}>
+                  <td><strong style={{ color:"#10b981" }}>#{t.ticketNumber||"—"}</strong></td>
+                  <td>{t.date||"—"}</td>
+                  <td>{t.category||"—"}</td>
+                  <td>{t.model||"—"}</td>
+                  <td style={{ color:"#059669", fontWeight:700 }}>{t.raisedByName||"—"}</td>
+                  <td><span style={{ padding:"3px 8px", borderRadius:10, fontSize:10, fontWeight:700, color: t.status==="resolved"?"#1a7a46":"#e04e00", background: t.status==="resolved"?"#edfaf3":"#fff4ee" }}>{(t.status||"open").toUpperCase()}</span></td>
+                  <td style={{ color:"#059669" }}>{t.resolvedBy||"Pending"}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
