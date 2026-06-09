@@ -1195,7 +1195,7 @@ const filteredMyReassigned = allTickets
           ["myreassigned", `🔄 My Reassigned (${myReassignedTickets.length})`],
           ["raise",        "🎫 Raise Ticket"],
           ["producttesting", "🧪 Product Testing"],
-["producttestingtickets", "🧪 Product Testing Tickets"],
+["producttestingtickets", `🧪 Product Testing Tickets (${allTickets.filter(t => t.ticketType === "product_testing" && t.assignTo?.toLowerCase().trim() === currentUser?.name?.toLowerCase().trim()).length})`],
         ].map(([key, label]) => (
           <button key={key} onClick={() => setActiveTab(key)} style={{
             padding: "14px 22px", fontSize: 13, fontWeight: activeTab === key ? 800 : 500,
