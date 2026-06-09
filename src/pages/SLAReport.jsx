@@ -67,8 +67,9 @@ export default function SLAReport() {
   }, []);
 
   /* filtered tickets */
-  const filtered = useMemo(() => {
+const filtered = useMemo(() => {
     return tickets.filter(t => {
+      if (t.ticketType === "production") return false; // exclude production
       const d = new Date(t.createdAt || t.date);
       if (filterDate)  return d.toDateString() === new Date(filterDate).toDateString();
       if (filterYear  && d.getFullYear() !== parseInt(filterYear))  return false;
@@ -178,9 +179,10 @@ export default function SLAReport() {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
       const m = d.getMonth(); const y = d.getFullYear();
       const mTickets = tickets.filter(t => {
-        const td = new Date(t.createdAt || t.date);
-        return td.getMonth() === m && td.getFullYear() === y;
-      });
+  if (t.ticketType === "production") return false;
+  const td = new Date(t.createdAt || t.date);
+  return td.getMonth() === m && td.getFullYear() === y;
+});
       return {
         label: SHORT_M[m],
         total: mTickets.length,
