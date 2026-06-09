@@ -284,7 +284,7 @@ const handleFilterChange = async (newFilter) => {
   setFilter(newFilter);
   setIsLoading(true);
   try {
-    const res = await fetch(`${BASE_URL}/tickets?page=1&limit=10000`);
+   const res = await fetch(`${BASE_URL}/tickets?page=1&limit=2000`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
@@ -352,7 +352,7 @@ const [isLoading, setIsLoading] = useState(false);
 const loadTickets = async (pageNum = 1) => {
   setIsLoading(true);
   try {
-    const res = await fetch(`${BASE_URL}/tickets?page=1&limit=10000`);
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=2000`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
