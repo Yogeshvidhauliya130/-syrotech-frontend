@@ -8,6 +8,7 @@ import HR from "./pages/hr";
 import HrAdmin from "./pages/hrAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LockinSupport from "./pages/lockinsupport";
+import ProductionSupport from "./pages/productionsupport";
 import Feedback from "./pages/Feedback";
 function App() {
   return (
@@ -38,6 +39,9 @@ function App() {
         } />
         <Route path="/lockinsupport" element={
           <ProtectedRoute role="support"><LockinSupport /></ProtectedRoute>
+        } />
+         <Route path="/productionsupport" element={
+          <ProtectedRoute role="support"><ProductionSupport /></ProtectedRoute>
         } />
       </Routes>
     </BrowserRouter>

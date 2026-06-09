@@ -5,6 +5,8 @@ import { getIssues } from "../data/issueList";
 import "./Dashboard.css";
 import RaiseLockinTicket from "./raiselockinticket";
 import MyLockinTickets from "./mylockinticket";
+import RaiseProductionTicket from "./RaiseProductionTicket";
+import MyProductionTickets from "./MyProductionTickets";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -732,6 +734,8 @@ isRma: issuePopup.firstIsRma || false,
     ["mytickets",   `📋 My Tickets (${myTickets.length})`],
     ["raiselockin", "🔒 Raise Lockin Ticket"],
     ["mylockin",    "🔒 My Lockin Tickets"],
+     ["raiseproduction",  "🏭 Raise Production Ticket"],
+    ["myproduction",     "🏭 My Production Tickets"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)}
       className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
@@ -1426,6 +1430,15 @@ firstIsRma: ticket.firstIsRma || false,
         {activeTab === "mylockin" && (
   <MyLockinTickets tickets={tickets} />
 )}
+  {/* RAISE PRODUCTION TICKET */}
+        {activeTab === "raiseproduction" && (
+          <RaiseProductionTicket onSuccess={() => setActiveTab("myproduction")} />
+        )}
+
+        {/* MY PRODUCTION TICKETS */}
+        {activeTab === "myproduction" && (
+          <MyProductionTickets tickets={tickets} />
+        )}
 
       </div>
     </div>

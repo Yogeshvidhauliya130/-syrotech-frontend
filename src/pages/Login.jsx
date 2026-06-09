@@ -68,6 +68,8 @@ else if (data.user.role === "hradmin")  navigate("/hrAdmin",  { replace: true })
 else if (data.user.role === "support") {
   if (data.user.email === "tejvir.singh@goip.in") {
     navigate("/lockinsupport", { replace: true });
+  } else if (data.user.email === "nishant.gupta@goip.in") {
+    navigate("/productionsupport", { replace: true });
   } else {
     navigate("/support", { replace: true });
   }
