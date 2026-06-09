@@ -280,28 +280,26 @@ function Analytics({ typeFilter = "all" }) {
   
   const [filter, setFilter] = useState("all");
 
-  const handleFilterChange = async (newFilter) => {
-    setFilter(newFilter);
-    setIsLoading(true);
-    try {
-      let url = `${BASE_URL}/tickets?page=1&limit=5000`;
-      if (newFilter !== "all" && newFilter !== "reopened") {
-        url = `${BASE_URL}/tickets?status=${newFilter}&limit=5000`;
-      } else {
-        url = `${BASE_URL}/tickets?page=1&limit=500`;
-      }
-      const res = await fetch(url);
-      const data = await res.json();
-      setTickets(data.tickets || []);
-      setTotalPages(data.totalPages || 1);
-      setTotalCount(data.totalCount || 0);
-      setPage(1);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+ const handleFilterChange = async (newFilter) => {
+  setFilter(newFilter);
+  setIsLoading(true);
+  try {
+    let url = `${BASE_URL}/tickets/paginated?page=1&limit=200`;
+    if (newFilter !== "all" && newFilter !== "reopened") {
+      url = `${BASE_URL}/tickets/paginated?page=1&limit=200&status=${newFilter}`;
     }
-  };
+    const res = await fetch(url);
+    const data = await res.json();
+    setTickets(data.tickets || []);
+    setTotalPages(data.totalPages || 1);
+    setTotalCount(data.totalCount || 0);
+    setPage(1);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
+};
   const [search, setSearch]             = useState("");
   const [issuePopup, setIssuePopup]     = useState(null);
   const [feedbackData, setFeedbackData] = useState({});
@@ -358,7 +356,7 @@ const [isLoading, setIsLoading] = useState(false);
 const loadTickets = async (pageNum = 1) => {
   setIsLoading(true);
   try {
-    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=500`);
+    const res = await fetch(`${BASE_URL}/tickets/paginated?page=${pageNum}&limit=200`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
@@ -1473,7 +1471,7 @@ const [sourceViaFilter, setSourceViaFilter] = useState("all");
 const [supportOnly, setSupportOnly] = useState(false);
 
   useEffect(() => {
-    const load = () => fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+    const load = () => fetch(`${BASE_URL}/tickets/paginated?page=1&limit=10000`)
       .then(r => r.json())
       .then(data => {
         const tickets = data.tickets || [];
