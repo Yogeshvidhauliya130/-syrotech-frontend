@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import RaiseProductionTicket from "./RaiseProductionTicket";
+import RaiseProductionTicket from "./raiseproductionticket";
 
 const BASE_URL = "https://api.syrotech.com";
 
