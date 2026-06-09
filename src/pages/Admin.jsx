@@ -1083,7 +1083,7 @@ isRma: issuePopup.firstIsRma || false,
                       {/* Col 7 — Issue */}
                       <td style={{ padding: "11px 12px", maxWidth: 160, borderRight: "1px solid #e0d8d0" }}>
                         <div onClick={() => setIssuePopup({
-  description: ticket.firstDescription || ticket.description,
+description: ticket.ticketType === "product_testing" ? (ticket.productDescription || ticket.description) : (ticket.firstDescription || ticket.description),
   resolutionNotes: ticket.resolutionNotes,
   resolutionStatus: ticket.resolutionStatus,
   resolutionTimeTaken: ticket.resolutionTimeTaken,
@@ -1098,7 +1098,7 @@ isRma: issuePopup.firstIsRma || false,
 })}
                           style={{ fontSize: 12, color: "#374151", cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140, textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
                           title="Click to view full issue">
-                          {(ticket.description || "—").slice(0, 30)}{(ticket.description || "").length > 30 ? "…" : ""}
+                       {((ticket.ticketType === "product_testing" ? ticket.productDescription : ticket.description) || "—").slice(0, 30)}{((ticket.ticketType === "product_testing" ? ticket.productDescription : ticket.description) || "").length > 30 ? "…" : ""}
                         </div>
                         
                       </td>
