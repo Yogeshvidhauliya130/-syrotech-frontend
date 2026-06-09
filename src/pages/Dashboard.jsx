@@ -918,7 +918,7 @@ isRma: issuePopup.firstIsRma || false,
 
              </div>
 
-
+{/* PINCODE */}
               <div className="form-field">
                <label className="form-label">Pincode <span style={{ fontSize:11, color:"#6b7280" }}>(optional)</span><span className="form-hint"> (6 digits if provided)</span></label>
                 <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
