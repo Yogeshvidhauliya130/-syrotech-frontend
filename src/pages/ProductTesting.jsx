@@ -59,6 +59,7 @@ export default function ProductTesting({ currentUser }) {
       oemName: form.oemName,
       sampleReceiveDate: form.sampleReceiveDate,
       dcNumber: form.dcNumber,
+        productDescription: form.productDescription || "",
      ticketType: "product_testing",
       source: "support",
       raisedVia: "direct-call",
@@ -75,7 +76,7 @@ export default function ProductTesting({ currentUser }) {
         body: JSON.stringify(ticket),
       });
       if (!res.ok) throw new Error("Failed");
-      setForm({ category: "", subCategory: "", model: "", serialNo: "", macPrefix: "", macSuffix: "", mac: "", oemName: "", sampleReceiveDate: "", dcNumber: "" });
+     setForm({ category: "", subCategory: "", model: "", serialNo: "", macPrefix: "", macSuffix: "", mac: "", oemName: "", sampleReceiveDate: "", dcNumber: "", productDescription: "" });
       setSuccessMsg("✅ Product Testing Ticket raised successfully!");
       setTimeout(() => setSuccessMsg(""), 4000);
     } catch {
@@ -167,6 +168,16 @@ export default function ProductTesting({ currentUser }) {
           <div>
             <label style={{ fontSize: 13, fontWeight: 700, color: "#374151", display: "block", marginBottom: 6 }}>DC Number <span style={{ fontSize: 11, color: "#6b7280" }}>(optional)</span></label>
             <input name="dcNumber" placeholder="e.g. DC-2024-001" value={form.dcNumber} onChange={handleChange} style={inputStyle("dcNumber")} />
+          </div>
+{/* Product Description */}
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 700, color: "#374151", display: "block", marginBottom: 6 }}>Product Description <span style={{ fontSize: 11, color: "#6b7280" }}>(optional)</span></label>
+            <textarea name="productDescription" rows={4}
+              placeholder="Describe the product, testing requirements, observations..."
+              value={form.productDescription || ""}
+              onChange={e => setForm(prev => ({ ...prev, productDescription: e.target.value }))}
+              style={{ ...inputStyle("productDescription"), resize: "vertical", fontFamily: "DM Sans, sans-serif", lineHeight: 1.6 }}
+            />
           </div>
 
           {/* Submit */}
