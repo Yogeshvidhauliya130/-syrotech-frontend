@@ -276,8 +276,7 @@ else if (!/^\d+$/.test(form.phone.replace(/\s+/g, ""))) newErrors.phone = "Enter
     if (!form.city.trim())    newErrors.city    = "City is required.";
     if (!form.state.trim())   newErrors.state   = "State is required.";
     if (!form.country)        newErrors.country = "Please select a country.";
-    if (!form.pincode.trim()) newErrors.pincode = "Pincode is required.";
-    else if (!/^\d{6}$/.test(form.pincode.trim())) newErrors.pincode = "Enter a valid 6-digit pincode.";
+    if (form.pincode.trim() && !/^\d{6}$/.test(form.pincode.trim())) newErrors.pincode = "Enter a valid 6-digit pincode.";
    if (!form.issuePrefix) newErrors.description = "Please select an issue type.";
 else if (!form.issueSuffix.trim()) newErrors.description = "Please describe the issue in detail.";
 else if (form.issueSuffix.trim().length > 500) newErrors.description = "Description cannot exceed 500 characters.";
@@ -921,12 +920,12 @@ isRma: issuePopup.firstIsRma || false,
 
 
               <div className="form-field">
-                <label className="form-label">Pincode <span className="req">*</span><span className="form-hint"> (6 digits)</span></label>
+               <label className="form-label">Pincode <span style={{ fontSize:11, color:"#6b7280" }}>(optional)</span><span className="form-hint"> (6 digits if provided)</span></label>
                 <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
-                {errors.pincode
-                  ? <span className="field-error">{errors.pincode}</span>
-                  : <span className="field-hint">{form.pincode.length}/6 digits</span>
-                }
+              {errors.pincode
+  ? <span className="field-error">{errors.pincode}</span>
+  : <span className="field-hint">{form.pincode.length > 0 ? `${form.pincode.length}/6 digits` : "Optional"}</span>
+}
               </div>
 
             {/* Product Image */}
