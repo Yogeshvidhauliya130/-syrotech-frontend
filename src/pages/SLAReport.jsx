@@ -52,12 +52,12 @@ export default function SLAReport() {
 
  useEffect(() => {
     setLoading(true);
-    fetch(`${BASE_URL}/tickets/paginated?page=1&limit=10000`)
+    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
       .then(r => r.json())
       .then(data => { setTickets(data.tickets || []); setLoading(false); })
       .catch(() => setLoading(false));
     const id = setInterval(() => {
-      fetch(`${BASE_URL}/tickets/paginated?page=1&limit=10000`)
+      fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
         .then(r => r.json())
         .then(data => { setTickets(data.tickets || []); })
         .catch(() => {});
