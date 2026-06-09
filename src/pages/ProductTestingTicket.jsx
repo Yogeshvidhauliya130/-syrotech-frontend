@@ -10,6 +10,8 @@ export default function ProductTestingTickets({ currentUser }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [resolveForm, setResolveForm] = useState({});
   const [productPopup, setProductPopup] = useState(null);
+  const [statusUpdateForm, setStatusUpdateForm] = useState({});
+  const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
   const fetchTickets = () => {
     fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
@@ -64,6 +66,73 @@ export default function ProductTestingTickets({ currentUser }) {
   return (
     <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
 
+     {statusUpdateForm?.show && (
+  <div onClick={() => setStatusUpdateForm({})} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"28px 32px", maxWidth:560, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #bfdbfe" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+        <div style={{ fontSize:16, fontWeight:800, color:"#1d4ed8" }}>📝 Status Update</div>
+        <button onClick={() => setStatusUpdateForm({})} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+      </div>
+      <div style={{ marginBottom:20 }}>
+        <div style={{ fontSize:12, fontWeight:700, color:"#374151", marginBottom:8 }}>Update Note <span style={{ color:"#ef4444" }}>*</span></div>
+        <textarea rows={5} placeholder="Write update note about testing progress..."
+          value={statusUpdateForm.note || ""}
+          onChange={e => setStatusUpdateForm(prev => ({ ...prev, note: e.target.value }))}
+          style={{ width:"100%", padding:"11px 14px", border:"2px solid #bfdbfe", borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", boxSizing:"border-box", color:"#000000", lineHeight:1.6 }} />
+      </div>
+      <div style={{ display:"flex", gap:12 }}>
+        <button onClick={() => {
+          const note = statusUpdateForm.note?.trim();
+          if (!note) { alert("Please write an update note."); return; }
+          const ticketId = statusUpdateForm.id;
+          const ticket = tickets.find(t => t.id === ticketId);
+          const newEntry = { note, updatedBy: currentUser?.name, updatedAt: new Date().toISOString() };
+          const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
+          fetch(`${BASE_URL}/tickets/${ticketId}`, {
+            method:"PATCH", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note })
+          }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
+        }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
+          ✅ Submit Update
+        </button>
+        <button onClick={() => setStatusUpdateForm({})}
+          style={{ background:"#e2e8f0", border:"none", borderRadius:10, padding:"12px 20px", cursor:"pointer", fontSize:13, color:"#64748b", fontFamily:"inherit" }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{statusUpdatePopup && (
+  <div onClick={() => setStatusUpdatePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:500, width:"100%", maxHeight:"80vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #bfdbfe" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <div style={{ fontSize:14, fontWeight:800, color:"#1d4ed8" }}>📝 Status Update History</div>
+        <button onClick={() => setStatusUpdatePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+      </div>
+      {Array.isArray(statusUpdatePopup) && statusUpdatePopup.length > 0 ? (
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {statusUpdatePopup.map((entry, i) => (
+            <div key={i} style={{ borderRadius:8, border:"1px solid #e5e7eb", overflow:"hidden", fontSize:12 }}>
+              <div style={{ background:"#eff6ff", padding:"6px 12px", display:"flex", justifyContent:"space-between" }}>
+                <span style={{ fontWeight:700, color:"#1d4ed8" }}>Update {i+1}</span>
+                <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.updatedAt).toLocaleString()}</span>
+              </div>
+              <div style={{ padding:"8px 12px", background:"white" }}>
+                <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>By: <strong>{entry.updatedBy}</strong></div>
+                <div style={{ color:"#374151", lineHeight:1.5 }}>{entry.note}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ textAlign:"center", color:"#9ca3af", padding:20 }}>No status updates yet.</div>
+      )}
+    </div>
+  </div>
+)}
+
       {productPopup && (
         <div onClick={() => setProductPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #d1fae5" }}>
@@ -116,7 +185,7 @@ export default function ProductTestingTickets({ currentUser }) {
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #059669, #10b981)", position: "sticky", top: 0, zIndex: 2 }}>
-                {["Ticket No", "Date", "Product", "Item Name", "Serial No", "OEM", "Sample Date", "DC No", "Status", "Actions"].map((h, i) => (
+                {["Ticket No", "Date", "Product", "Item Name", "Serial No", "OEM", "Sample Date", "DC No", "Status", "Status Update", "Actions"].map((h, i) => (
                   <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -149,6 +218,21 @@ export default function ProductTestingTickets({ currentUser }) {
                           <div style={{ fontSize: 9, color: "#10b981", marginTop: 3 }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>
                         )}
                       </td>
+                   <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5" }}>
+                        {Array.isArray(ticket.statusUpdates) && ticket.statusUpdates.length > 0 && (
+                          <div onClick={() => setStatusUpdatePopup(ticket.statusUpdates)}
+                            style={{ fontSize:10, color:"#1d4ed8", cursor:"pointer", fontWeight:700, background:"#eff6ff", padding:"2px 6px", borderRadius:4, display:"inline-block", marginBottom:6 }}>
+                            📝 {ticket.statusUpdates.length} Update{ticket.statusUpdates.length > 1 ? "s" : ""} — View
+                          </div>
+                        )}
+                        {s === "open" && (
+                          <button onClick={() => setStatusUpdateForm({ show: true, id: ticket.id, note: "" })}
+                            style={{ background:"#1d4ed8", color:"white", border:"none", padding:"4px 10px", borderRadius:6, cursor:"pointer", fontSize:11, fontWeight:600, display:"block" }}>
+                            📝 Update
+                          </button>
+                        )}
+                      </td>
+
                       <td style={{ padding: "12px 14px" }}>
                         {s === "open" && (
                           <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
@@ -166,7 +250,7 @@ export default function ProductTestingTickets({ currentUser }) {
 
                     {showResolve && s === "open" && (
                       <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                        <td colSpan={10} style={{ padding: "16px 20px" }}>
+                        <td colSpan={11}style={{ padding: "16px 20px" }}>
                           <div style={{ maxWidth: 700, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
                             <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 12 }}>✅ Resolve Testing Ticket</div>
                             <div style={{ marginBottom: 14 }}>
