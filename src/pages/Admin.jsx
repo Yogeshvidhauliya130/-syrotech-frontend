@@ -389,7 +389,7 @@ useEffect(() => {
   const filtered = applyFilter(
   tickets
     .filter(t => {
-      if (typeFilter === "product") return t.source !== "hr" && t.ticketType !== "lockin";
+      if (typeFilter === "product") return t.source !== "hr" && t.ticketType !== "lockin" && t.ticketType !== "product_testing";
       if (typeFilter === "lockin")  return t.ticketType === "lockin";
       if (typeFilter === "hr")      return t.source === "hr" || t.source === "hradmin";
       if (typeFilter === "production") return t.ticketType === "production";
