@@ -284,7 +284,7 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
         {/* LOGIN FORM */}
         {page === "login" && (
           <div className="form-section">
-            <p style={{ fontSize:20, fontWeight:700, color:"#ff5a00", textTransform:"uppercase", letterSpacing:"0.1em", margin:"0 0 4px 0" }}>Ticketing Tool</p>
+            <p style={{ fontSize:20, fontWeight:900, color:"#ff5a00", textTransform:"uppercase", letterSpacing:"0.1em", margin:"0 0 4px 0" }}>Ticketing Tool</p>
      
             <p className="form-subtitle">Please sign in to continue</p>
 
