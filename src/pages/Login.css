@@ -30,7 +30,7 @@ body { font-family: 'Outfit', sans-serif; }
 
 /* ── Card — compact ── */
 .login-card {
-  width: 100%; max-width: 400px;
+  width: 100%; max-width: 420px;
   background: white;
   border-radius: 20px;
   padding: 28px 28px 22px;
@@ -307,10 +307,11 @@ select.field-input {
 @media (min-width: 900px) {
   .login-left-panel {
     display: block;
-    flex: 1.2;
+    flex: 1;
   }
   .login-right-panel {
-    flex: 0.8;
+    width: 480px;
     flex-shrink: 0;
+    flex-grow: 0;
   }
 }
