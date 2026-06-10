@@ -19,12 +19,13 @@ body { font-family: 'Outfit', sans-serif; }
 
 /* ── Background ── */
 .login-container {
- min-height: 100vh;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
   display: flex;
   align-items: stretch;
   gap: 0;
   background: #f4f0eb;
-  
 }
 
 /* ── Card — compact ── */
@@ -305,11 +306,11 @@ select.field-input {
 /* Show left panel on big screens */
 @media (min-width: 900px) {
   .login-left-panel {
-     display: block;  
-    flex: 1;          
+    display: block;
+    flex: 1.2;
   }
   .login-right-panel {
-    width: 440px;
+    flex: 0.8;
     flex-shrink: 0;
   }
 }
