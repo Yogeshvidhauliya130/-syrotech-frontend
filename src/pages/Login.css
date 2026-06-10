@@ -22,12 +22,12 @@ body { font-family: 'Outfit', sans-serif; }
  min-height: 100vh;
   display: flex;
   align-items: stretch;
+  gap: 0;
   background: #f4f0eb;
   background-image:
   
     radial-gradient(ellipse 80% 60% at 10% 10%, rgba(255,90,0,0.08) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 90% 90%, rgba(255,90,0,0.05) 0%, transparent 60%);
-    gap: 0;
 }
 
 /* ── Card — compact ── */
@@ -286,9 +286,10 @@ select.field-input {
 .login-left-panel img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;  
   object-position: center center;
   display: block;   /* removes bottom gap under image */
+   background: #fff4ee;   
 }
 
 /* Right side — card wrapper */
