@@ -1148,7 +1148,46 @@ firstIsRma: ticket.firstIsRma || false,
                             style={{ fontSize: 9, color: "#c2410c", fontWeight: 700, cursor: "pointer", marginTop: 3 }}>🔄 reassigned</div>
                         )}
                         {ticket.createdAt && <div style={{ fontSize: 9, color: "#9ca3af", marginTop: 3 }}>🕐 {new Date(ticket.createdAt).toLocaleDateString()}</div>}
-                        {ticket.resolvedAt && <div style={{ fontSize: 9, color: "#10b981", marginTop: 2 }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
+                      {ticket.resolvedAt && <div style={{ fontSize: 9, color: "#10b981", marginTop: 2 }}>✅ {new Date(ticket.resolvedAt).toLocaleDateString()}</div>}
+
+{/* ✅ Admin Reopen Button */}
+{s === "resolved" && (
+  <div onClick={() => {
+    const newIssue = window.prompt("Reason for reopening this ticket:");
+    if (!newIssue || !newIssue.trim()) return;
+    const existingHistory = Array.isArray(ticket.issueHistory) ? ticket.issueHistory : [];
+    const newEntry = {
+      description: newIssue.trim(),
+      raisedBy: "admin",
+      raisedByName: "Admin",
+      raisedAt: new Date().toISOString(),
+      assignTo: ticket.assignTo,
+    };
+    fetch(`${BASE_URL}/tickets/${ticket.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "reopened",
+        resolvedAt: null,
+        resolutionNotes: "",
+        reopenedAt: new Date().toISOString(),
+        reopenCount: (ticket.reopenCount || 0) + 1,
+        issueHistory: [...existingHistory, newEntry],
+        description: newIssue.trim(),
+        firstDescription: ticket.firstDescription || ticket.description,
+        firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+        firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
+        firstResolvedNotes: ticket.firstResolvedNotes || ticket.resolutionNotes || null,
+        firstResolvedAt: ticket.firstResolvedAt || ticket.resolvedAt || null,
+        firstResolvedBy: ticket.firstResolvedBy || ticket.resolvedBy || null,
+        firstIsRma: ticket.firstIsRma || false,
+      })
+    }).then(() => loadTickets(page));
+  }} style={{ fontSize:9, color:"#dc2626", marginTop:3, cursor:"pointer", fontWeight:700, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+    🔄 Reopen
+  </div>
+)}
+                        
                       </td>
 
                       {/* Col 9 — Image */}
