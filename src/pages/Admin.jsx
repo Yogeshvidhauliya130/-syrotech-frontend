@@ -325,6 +325,7 @@ const [filterDate, setFilterDate]   = useState("");
   const [reassignMonth, setReassignMonth]         = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
+  const [employeePopup, setEmployeePopup] = useState(null);
 
   
   const saveFeedback = (ticketId, ticket) => {
@@ -762,6 +763,38 @@ isRma: issuePopup.firstIsRma || false,
         </div>
       )}
 
+{/*employee details*/ }
+{employeePopup && (
+  <div onClick={() => setEmployeePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:420, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #fce7f3" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <div style={{ fontSize:14, fontWeight:800, color:"#9d174d" }}>🧑‍💼 Employee Details</div>
+        <button onClick={() => setEmployeePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+      </div>
+      <div style={{ background:"#fdf2f8", borderRadius:10, padding:"14px 16px", border:"1px solid #fbcfe8" }}>
+        {[
+          ["🏷️ Emp Type",   employeePopup.empType === "new" ? "🆕 New Employee" : employeePopup.empType === "old" ? "👤 Old Employee" : "—"],
+          ["👤 Name",        employeePopup.empName],
+          ["✉️ Email",       employeePopup.empEmail],
+          ["📞 Phone",       employeePopup.empPhone],
+          ["🆔 Emp Code",    employeePopup.empCode],
+          ["🏢 Department",  employeePopup.empDept],
+          ["🛠️ Issue",       employeePopup.hrIssue],
+          ["📦 Model No",    employeePopup.modelNo],
+          ["🔢 Serial No",   employeePopup.serialNo],
+        ].map(([label, val]) => (
+          <div key={label} style={{ display:"flex", gap:10, marginBottom:10 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", minWidth:110 }}>{label}</div>
+            <div style={{ fontSize:13, fontWeight:600, color:"#111" }}>{val || "—"}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+
+
+
 
 {/* Status Update History Popup */}
 {statusUpdatePopup && (
@@ -979,7 +1012,7 @@ isRma: issuePopup.firstIsRma || false,
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1300, background: "white" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-              {["Ticket No","Raised From","Raised By","Product","Item Name","Customer / KYC","Issue","History","Status","Image","Sup. Updates","Customer Rating"].map((h, i) => (
+             {["Ticket No","Raised From","Raised By","Product","Item Name","Customer / KYC","Employee Details","Issue","History","Status","Image","Sup. Updates","Customer Rating"].map((h, i) => (
                     <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -1082,6 +1115,27 @@ isRma: issuePopup.firstIsRma || false,
                         )}
                       </td>
 
+{/* Employee Details */}
+<td style={{ padding:"11px 12px", borderRight:"1px solid #e0d8d0", textAlign:"center" }}>
+  {(ticket.empName || ticket.empCode || ticket.hrIssue) ? (
+    <button onClick={() => setEmployeePopup({
+      empType:  ticket.empType,
+      empName:  ticket.empName,
+      empEmail: ticket.empEmail,
+      empPhone: ticket.empPhone,
+      empCode:  ticket.empCode,
+      empDept:  ticket.empDept,
+      hrIssue:  ticket.hrIssue,
+      modelNo:  ticket.modelNo,
+      serialNo: ticket.serialNo,
+    })}
+    style={{ background:"#fdf2f8", border:"1.5px solid #fbcfe8", borderRadius:8, padding:"5px 10px", cursor:"pointer", fontSize:11, fontWeight:700, color:"#9d174d", fontFamily:"inherit" }}>
+      🧑‍💼 View
+    </button>
+  ) : (
+    <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>
+  )}
+</td>
                       {/* Col 7 — Issue */}
                       <td style={{ padding: "11px 12px", maxWidth: 160, borderRight: "1px solid #e0d8d0" }}>
                         <div onClick={() => setIssuePopup({
