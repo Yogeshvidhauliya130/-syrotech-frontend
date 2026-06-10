@@ -1806,6 +1806,36 @@ t.resolutionNotes || "—",
 
     doc.save(`${agent}_Report_${new Date().toISOString().slice(0,10)}.pdf`);
   };
+  const exportAllPDF = () => {
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text("All Agents Performance Report", 14, 18);
+  doc.setFontSize(11);
+  doc.text(`Period: ${periodLabel()}`, 14, 27);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 34);
+
+  autoTable(doc, {
+    startY: 42,
+    head: [["Agent", "Total", "Resolved", "Open", "RMA", "SLA%", "Avg Hrs", "Avg Rating"]],
+    body: filteredAgents.map(agent => {
+      const s = getAgentStats(agent, tickets);
+      return [
+        agent,
+        s.total,
+        s.resolved,
+        s.open,
+        s.rma,
+        `${s.compliance}%`,
+        s.avgHours === "—" ? "—" : `${s.avgHours}h`,
+        s.avgFeedback === "—" ? "—" : `${s.avgFeedback}/5`,
+      ];
+    }),
+    theme: "striped",
+    headStyles: { fillColor: [201, 69, 0] },
+  });
+
+  doc.save(`All_Agents_${new Date().toISOString().slice(0, 10)}.pdf`);
+};
 
   return (
     <div className="tab-content">
@@ -1814,7 +1844,9 @@ t.resolutionNotes || "—",
           <h2 className="tab-title">Support Performance</h2>
           <p className="tab-sub">Ticket Resolution Performance — Time Score + Customer Feedback</p>
         </div>
-        {agents.length > 0 && <button className="export-all-btn" onClick={exportAllExcel}>⬇️ Export All to Excel</button>}
+       {agents.length > 0 && <button className="export-all-btn" onClick={exportAllExcel}>⬇️ Export All to Excel</button>}
+{agents.length > 0 && <button className="export-all-btn" onClick={exportAllPDF} style={{ background: "#ef4444" }}>⬇️ Export All to PDF</button>}
+        
       </div>
 
       <div className="period-filter-bar">
@@ -2103,6 +2135,7 @@ const resolutionRate = activeTotal > 0
       style={{ background:"#ef4444", color:"white", border:"none", borderRadius:6, padding:"5px 10px", fontSize:11, cursor:"pointer", fontWeight:600 }}>
       📄 PDF
     </button>
+    
   </div>
 </td>
                     </tr>
