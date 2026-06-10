@@ -273,16 +273,17 @@ select.field-input {
 /* Left side image panel */
 .login-left-panel {
   flex: 1;
-  display: none; /* hidden on mobile */
+  display: none;
   background: #fff4ee;
   overflow: hidden;
+  min-height: 100vh;
 }
 
 .login-left-panel img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  object-position: left center;  /* changed from center to left center */
 }
 
 /* Right side — card wrapper */
@@ -302,9 +303,10 @@ select.field-input {
 @media (min-width: 900px) {
   .login-left-panel {
     display: flex;
+    flex: 1.2;          /* left side takes slightly more space */
   }
   .login-right-panel {
-    width: 460px;
+    width: 480px;
     flex-shrink: 0;
   }
 }
