@@ -24,8 +24,10 @@ body { font-family: 'Outfit', sans-serif; }
   align-items: stretch;
   background: #f4f0eb;
   background-image:
+  
     radial-gradient(ellipse 80% 60% at 10% 10%, rgba(255,90,0,0.08) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 90% 90%, rgba(255,90,0,0.05) 0%, transparent 60%);
+    gap: 0;
 }
 
 /* ── Card — compact ── */
@@ -274,21 +276,23 @@ select.field-input {
 .login-left-panel {
   flex: 1;
   display: none;
-  background: #fff4ee;
   overflow: hidden;
+  background: #fff4ee;
   min-height: 100vh;
+  padding: 0;    /* make sure no padding */
+  margin: 0;     /* make sure no margin */
 }
 
 .login-left-panel img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: left center;  /* changed from center to left center */
+  object-position: center center;
+  display: block;   /* removes bottom gap under image */
 }
 
 /* Right side — card wrapper */
 .login-right-panel {
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -298,15 +302,14 @@ select.field-input {
     radial-gradient(ellipse 80% 60% at 10% 10%, rgba(255,90,0,0.08) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 90% 90%, rgba(255,90,0,0.05) 0%, transparent 60%);
 }
-
 /* Show left panel on big screens */
 @media (min-width: 900px) {
   .login-left-panel {
     display: flex;
-    flex: 1.2;          /* left side takes slightly more space */
+    flex: 1;          
   }
   .login-right-panel {
-    width: 480px;
+    width: 440px;
     flex-shrink: 0;
   }
 }
