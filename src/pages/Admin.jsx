@@ -13,6 +13,8 @@ import AbsentSupport from "./absentsupportperson";
 import "./Admin.css";
 
 
+
+
 const BASE_URL = "https://api.syrotech.com";
 
 function getTimeScore(t) {
@@ -1787,7 +1789,7 @@ return true;
 
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 10,
-      head: [["Ticket No", "Customer", "Product", "Status", "Date", "Resolved At"]],
+      head: [["Ticket No", "Customer", "Product", "Status", "Date", "Resolved At", "Phone", "Resolution Notes"]],
       body: stats.agentTickets.map(t => [
         t.ticketNumber || "—",
         t.customer || "—",
@@ -1795,6 +1797,8 @@ return true;
         (t.status || "open").toUpperCase(),
         t.date || "—",
         t.resolvedAt ? new Date(t.resolvedAt).toLocaleDateString() : "—",
+        t.phone || "—",
+t.resolutionNotes || "—",
       ]),
       theme: "striped",
       headStyles: { fillColor: [201, 69, 0] },
