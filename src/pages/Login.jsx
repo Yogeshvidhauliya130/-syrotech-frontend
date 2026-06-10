@@ -265,8 +265,16 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
 
 
 
-  return (
-    <div className="login-container">
+ return (
+  <div className="login-container">
+
+    {/* LEFT SIDE — Banner Image */}
+    <div className="login-left-panel">
+      <img src="/banner.png" alt="Syrotech Banner" />
+    </div>
+
+    {/* RIGHT SIDE — Login Card */}
+    <div className="login-right-panel">
       <div className="login-card">
 
         <div className="login-logo-area">
@@ -700,10 +708,11 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
   </div>
 )}
 
- <p className="footer">© 2026 Syrotech Networks Pvt. Ltd.</p>
-    
-      </div>
-    </div>
+<p className="footer">© 2026 Syrotech Networks Pvt. Ltd.</p>
+
+      </div>  
+    </div>   
+  </div>      
   );
 }
 

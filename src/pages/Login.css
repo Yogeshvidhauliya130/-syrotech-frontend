@@ -19,9 +19,9 @@ body { font-family: 'Outfit', sans-serif; }
 
 /* ── Background ── */
 .login-container {
-  min-height: 100vh;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
+ min-height: 100vh;
+  display: flex;
+  align-items: stretch;
   background: #f4f0eb;
   background-image:
     radial-gradient(ellipse 80% 60% at 10% 10%, rgba(255,90,0,0.08) 0%, transparent 60%),
@@ -265,4 +265,46 @@ select.field-input {
   border-color: var(--orange);
   background: white;
   box-shadow: 0 0 0 3px var(--orange-glow);
+}
+
+
+
+
+/* Left side image panel */
+.login-left-panel {
+  flex: 1;
+  display: none; /* hidden on mobile */
+  background: #fff4ee;
+  overflow: hidden;
+}
+
+.login-left-panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Right side — card wrapper */
+.login-right-panel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #f4f0eb;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 10% 10%, rgba(255,90,0,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 90%, rgba(255,90,0,0.05) 0%, transparent 60%);
+}
+
+/* Show left panel on big screens */
+@media (min-width: 900px) {
+  .login-left-panel {
+    display: flex;
+  }
+  .login-right-panel {
+    width: 460px;
+    flex-shrink: 0;
+  }
 }
