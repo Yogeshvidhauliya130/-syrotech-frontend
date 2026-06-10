@@ -222,6 +222,7 @@ const [analyticsType, setAnalyticsType] = useState("all");
       ["lockin",  "🔒 Lockin Software"],
       ["hr",      "🧑‍💼 Internal IT"],
        ["production", "🏭 Production"],
+       ["testing",    "🧪 Testing"], 
     ].map(([type, label]) => (
       <button key={type}
         onClick={() => { setTab("analytics"); setAnalyticsType(type); setShowAnalyticsMenu(false); }}
@@ -392,6 +393,7 @@ useEffect(() => {
       if (typeFilter === "lockin")  return t.ticketType === "lockin";
       if (typeFilter === "hr")      return t.source === "hr" || t.source === "hradmin";
       if (typeFilter === "production") return t.ticketType === "production";
+      if (typeFilter === "testing")    return t.ticketType === "product_testing";
       return true;
     })
     .filter(t => {
