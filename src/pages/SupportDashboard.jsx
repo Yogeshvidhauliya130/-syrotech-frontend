@@ -1417,9 +1417,9 @@ const filteredMyReassigned = allTickets
                 <select name="country" value={form.country} onChange={handleChange} style={inputStyle("country")}>
                   <option value="">Select Country</option>
                   <option>India</option><option>United States</option><option>United Kingdom</option>
-                  <option>China</option><option>China</option><option>China</option>
-                  <option>Nepal</option><option>Nepal</option><option>Nepal</option>
-                  <option>Pakistan</option><option>Pakistan</option><option>Pakistan</option>
+                  <option>China</option>
+                  <option>Nepal</option>
+                  <option>Pakistan</option>
                   <option>United Arab Emirates</option><option>Saudi Arabia</option><option>Canada</option>
                   <option>Australia</option><option>Singapore</option><option>Germany</option>
                   <option>France</option><option>Nepal</option><option>Bangladesh</option>
