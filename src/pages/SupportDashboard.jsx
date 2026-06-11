@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import { useProducts } from "../hooks/useProducts";
 import { getIssues } from "../data/issueList";
+import ProductTesting from "./ProductTesting";
+import ProductTestingTickets from "./ProductTestingTickets";
 
 
 const BASE_URL = "https://api.syrotech.com";
@@ -1179,6 +1181,8 @@ const filteredMyReassigned = allTickets
           ["myraised",     `📞 My Raised (${myRaisedTickets.length})`],
           ["myreassigned", `🔄 My Reassigned (${myReassignedTickets.length})`],
           ["raise",        "🎫 Raise Ticket"],
+          ["producttesting",    "🧪 Product Testing"],
+["mytestingtickets",  "🧪 My Testing Tickets"],
         ].map(([key, label]) => (
           <button key={key} onClick={() => setActiveTab(key)} style={{
             padding: "14px 22px", fontSize: 13, fontWeight: activeTab === key ? 800 : 500,
@@ -1212,6 +1216,15 @@ const filteredMyReassigned = allTickets
         </div>
       )}
 
+
+
+{activeTab === "producttesting" && (
+  <ProductTesting currentUser={currentUser} />
+)}
+
+{activeTab === "mytestingtickets" && (
+  <ProductTestingTickets currentUser={currentUser} />
+)}
       {/* ══ RAISE TICKET TAB ══ */}
       {activeTab === "raise" && (
   <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
