@@ -286,33 +286,60 @@ export const PRODUCT_MODELS = {
 
   // ── Networking Switch ───────────────────────
   "Networking Switch": {
-    "Unmanaged POE Switches-AI Series": [
-      "SY-0400P-2T-78W-AI",
-      "SY-0800P-2T-120W-AI",
-      "SY-0800P-2G-120W-AI",
-      "SY-4000P-1T-2S-96W-AI",
-      "SY-8000P-2T-150W-AI",
-      "SY-8000P-2T-2S-150W-AI",
-      "SY-2400P-2T-2S-400W"
+    "Unmanaged POE Switch": [
+      "SY-0400P-2T-AI",
+      "SY-0800P-2T-AI",
+      "SY-4000P-1T-2S-AI",
+      "SY-8000P-2T-AI",
+      "SY-8000P-2T-2S-AI",
+      "SY-2400P-2T-2S-AI"
+      
     ],
-    "Managed L2 POE Switches": [
-      "SY-8000P-2S-120W-L2",
-      "SY-8000P-2S-150W-L2",
-      "SY-2400P-4S-400W-L2",
-      "SY-ESPL2G82S",
-      "SY-ESPL2G244X"
+    "Manage Poe Switch": [
+      "SY-8000P-2S-150W L2",
+      "SY-2400P-4S-400W L2",
+      "SY-2400P-4X-400W L2"
+      
     ],
-    "Managed Industrial POE Switch": [
+
+//L2& L3 manage Switch
+"L2& L3 manage Switch": [
+      "SY-8000-4X L2",
+      "SY-2400-4X L2",
+      "SY-2400S-4X DP",
+      "SY-2400X-2Q28 L3"  
+    ],
+
+    "Industrial Manage POE & Non-POE": [
       "SY-4000P-2S-IND",
       "SY-8000P-2S-IND",
       "SY-8000P-4S-IND",
       "SY-1016P-4S-IND",
-      "SY-1024P-8CS-4P-IND",
-      "SY-2400X-2Q28-L3",
-      "SY-2400S-4X-DP",
-      "SY-2400-4X-L2",
-      "SY-8000-4X-L2"
-    ]
+      "SY-1024P-8CS-4X-IND",
+      "SY-4000-2S IND L2",
+      "SY-8000-2S IND L2"
+    ],
+
+//Indutrial Unmanage POE & Non_poe
+
+ "Industrial Unmanage POE & Non_poe": [
+      "SY-4000-2S-IND-UM",
+      "SY-4000P-2S-IND-UM",
+      "SY-8000P-2S-IND_UM"
+    ],
+
+// Desktop 
+ "Desktop": [
+      "SY-10008",
+    ],  
+
+
+    //Power supply 
+    "Power Supply": [
+      "SY-SMPS48-50DR",
+      "SY-SMPS48-10DR",
+      "SY-SMPS48-25DR",
+    ], 
   },
 
   // ── Entrance Product ────────────────────────

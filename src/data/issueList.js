@@ -111,13 +111,13 @@ export const ISSUE_LIST = {
       "Others",
     ],
 
-    "Unmanaged POE Switches-AI Series": [
+    "Unmanaged POE Switch": [
       "Unmanaged Switch",
       "POE Port Issue",
       "POE & Fiber Switch",
     ],
 
-    "Managed L2 POE Switches": [
+    "Manage Poe Switch": [
       "Manageable Switch (L2/L3)",
       "POE Port Issue",
       "POE & Fiber Switch",
@@ -125,13 +125,39 @@ export const ISSUE_LIST = {
       "Fiber Switch (L2/L3)",
     ],
 
-    "Managed Industrial POE Switch": [
+    "L2& L3 manage Switch": [
       "Manageable Switch (L2/L3)",
       "POE Port Issue",
       "POE & Fiber Switch",
       "POE & Non_POE Switch (L2/L3)",
       "Fiber Switch (L2/L3)",
+      "others",
     ],
+    "Industrial Manage POE & Non-POE": [
+      "Manageable Switch (L2/L3)",
+      "POE Port Issue",
+      "POE & Fiber Switch",
+      "POE & Non_POE Switch (L2/L3)",
+      "Fiber Switch (L2/L3)",
+      "others",
+    ],
+
+    "Industrial Unmanage POE & Non_poe": [
+      "Manageable Switch (L2/L3)",
+      "POE Port Issue",
+      "POE & Fiber Switch",
+      "POE & Non_POE Switch (L2/L3)",
+      "Fiber Switch (L2/L3)",
+      "others",
+    ],
+    "Desktop": [
+      "others",
+    ],
+    "Power Supply": [
+      "others",
+    ],
+
+    
   },
 
   // ── Grandstream UC ──────────────────────────────────────────────
