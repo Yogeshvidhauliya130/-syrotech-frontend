@@ -74,6 +74,7 @@ export default function RaiseProductionTicket({ onSuccess }) {
       setErrors(validationErrors);
       return;
     }
+    
     setSubmitting(true);
     const newTicket = {
       ...form,

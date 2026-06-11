@@ -152,10 +152,10 @@
 .rt-chip-active .rt-chip-count,
 .rt-chip-active-orange .rt-chip-count,
 .rt-chip-active-green .rt-chip-count {
-  background: currentColor;
+  background: rgba(0, 0, 0, 0.18);
   color: white;
-  filter: brightness(0) invert(1);
-  opacity: 0.9;
+  filter: none;
+  opacity: 1;
 }
 
 .rt-chip-sm {
