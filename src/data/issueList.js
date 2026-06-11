@@ -93,7 +93,7 @@ export const ISSUE_LIST = {
       "Low Pon Power Issue",
       "Uplink SFP Rx/Tx Power Issue",
       "Uplink SFP not Getting UP",
-      "Others",
+      
     ],
   },
 
@@ -115,6 +115,7 @@ export const ISSUE_LIST = {
       "Unmanaged Switch",
       "POE Port Issue",
       "POE & Fiber Switch",
+      "others",
     ],
 
     "Manage Poe Switch": [
@@ -123,6 +124,7 @@ export const ISSUE_LIST = {
       "POE & Fiber Switch",
       "POE & Non_POE Switch (L2/L3)",
       "Fiber Switch (L2/L3)",
+       "others",
     ],
 
     "L2& L3 manage Switch": [
