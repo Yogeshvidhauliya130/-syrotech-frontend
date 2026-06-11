@@ -722,6 +722,7 @@ serialNo:  raiseForm.serialNo,
 <div style={{ fontSize:10, color:"#9ca3af", marginTop:2 }}>{ticket.serialNo || "—"}</div>
 </td>
 
+
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #dbeafe", cursor: "pointer", maxWidth: 180 }}
                         onClick={() => setIssuePopup(ticket)}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: "#1d4ed8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160, textDecoration: "underline", textDecorationStyle: "dotted" }}>
