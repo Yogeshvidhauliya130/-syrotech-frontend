@@ -41,6 +41,8 @@ const [raiseSuccess, setRaiseSuccess]     = useState("");
   const [searchQuery, setSearchQuery]   = useState("");
   const [resolvePopup, setResolvePopup] = useState(null);
   const [resolveNote, setResolveNote]   = useState("");
+  const [resolveModelNo, setResolveModelNo] = useState("");
+const [resolveSerialNo, setResolveSerialNo] = useState("");
   const [resolving, setResolving]       = useState(false);
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
@@ -80,10 +82,14 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
           resolvedAt: new Date().toISOString(),
           resolutionNotes: resolveNote.trim(),
           resolvedBy: currentUser?.name || "HR Admin",
+          modelNo: resolveModelNo.trim(),
+  serialNo: resolveSerialNo.trim(),
         }),
       });
       setResolvePopup(null);
       setResolveNote("");
+      setResolveModelNo("");
+setResolveSerialNo("");
       setSuccessMsg("✅ Ticket resolved successfully!");
       fetchTickets();
       setTimeout(() => setSuccessMsg(""), 4000);
@@ -337,12 +343,23 @@ serialNo:  raiseForm.serialNo,
 
       {/* Resolve Popup */}
       {resolvePopup && (
-        <div onClick={() => { setResolvePopup(null); setResolveNote(""); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div onClick={() => { setResolvePopup(null); setResolveNote(""); setResolveModelNo(""); setResolveSerialNo(""); }}style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 480, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #6ee7b7" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: "#065f46" }}>✅ Resolve Ticket #{resolvePopup.ticketNumber}</div>
-              <button onClick={() => { setResolvePopup(null); setResolveNote(""); }} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13 }}>✕ Close</button>
+            <button onClick={() => { setResolvePopup(null); setResolveNote(""); setResolveModelNo(""); setResolveSerialNo(""); }} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13 }}>✕ Close</button>
             </div>
+
+            <div style={{ marginBottom: 12 }}>
+  <div style={{ fontSize: 11, fontWeight: 700, color: "#374151", textTransform: "uppercase", marginBottom: 6 }}>Model No <span style={{ color: "#9ca3af", fontSize: 10, textTransform: "none" }}>(optional)</span></div>
+  <input placeholder="e.g. SY-ONT-1234" value={resolveModelNo} onChange={e => setResolveModelNo(e.target.value)}
+    style={{ width: "100%", padding: "9px 12px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", color: "#111", boxSizing: "border-box" }} />
+</div>
+<div style={{ marginBottom: 12 }}>
+  <div style={{ fontSize: 11, fontWeight: 700, color: "#374151", textTransform: "uppercase", marginBottom: 6 }}>Serial No <span style={{ color: "#9ca3af", fontSize: 10, textTransform: "none" }}>(optional)</span></div>
+  <input placeholder="e.g. SN-00123456" value={resolveSerialNo} onChange={e => setResolveSerialNo(e.target.value)}
+    style={{ width: "100%", padding: "9px 12px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "inherit", color: "#111", boxSizing: "border-box" }} />
+</div>
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#374151", textTransform: "uppercase", marginBottom: 8 }}>
                 What was resolved? <span style={{ color: "#ef4444" }}>*</span>
@@ -359,7 +376,7 @@ serialNo:  raiseForm.serialNo,
               <button onClick={handleResolve} disabled={resolving} style={{ flex: 1, background: "linear-gradient(135deg, #10b981, #059669)", color: "white", border: "none", padding: 11, borderRadius: 8, fontSize: 13, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}>
                 {resolving ? "⏳ Resolving..." : "✅ Mark as Resolved"}
               </button>
-              <button onClick={() => { setResolvePopup(null); setResolveNote(""); }} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "11px 16px", cursor: "pointer", fontSize: 12, color: "#64748b", fontFamily: "inherit" }}>
+             <button onClick={() => { setResolvePopup(null); setResolveNote(""); setResolveModelNo(""); setResolveSerialNo(""); }} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "11px 16px", cursor: "pointer", fontSize: 12, color: "#64748b", fontFamily: "inherit" }}>
                 Cancel
               </button>
             </div>
