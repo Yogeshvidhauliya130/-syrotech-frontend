@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import { useProducts } from "../hooks/useProducts";
 import { getIssues } from "../data/issueList";
-import ProductTesting from "./ProductTesting";
-import ProductTestingTickets from "./ProductTestingTicket";
 
 
 const BASE_URL = "https://api.syrotech.com";
@@ -19,6 +17,10 @@ const RMA_REASONS = [
 
 const STATE_CITY_MAP = {
   "Andhra Pradesh": ["Visakhapatnam","Vijayawada","Guntur","Nellore","Kurnool","Tirupati","Rajahmundry","Kakinada"],
+  "China": ["Others"],
+  "Bhutan": ["Others"],
+  "Nepal": ["Others"],
+  "Pakistan": ["Others"],
   "Arunachal Pradesh": ["Itanagar","Naharlagun","Pasighat","Tawang"],
   "Assam": ["Guwahati","Silchar","Dibrugarh","Jorhat","Nagaon","Tezpur"],
   "Bihar": ["Patna","Gaya","Muzaffarpur","Bhagalpur","Darbhanga","Purnia"],
@@ -280,10 +282,7 @@ const [myReassignedProductFilter, setMyReassignedProductFilter] = useState("all"
 const [myReassignedSubFilter, setMyReassignedSubFilter]         = useState("all");
 const [myReassignedItemFilter, setMyReassignedItemFilter]       = useState("all");
 
-const [activeTab, setActiveTab] = useState("tickets");
-  const [assignedPage, setAssignedPage] = useState(1);
-  const [myRaisedPage, setMyRaisedPage] = useState(1);
-  const TICKETS_PER_PAGE = 200;
+  const [activeTab, setActiveTab] = useState("tickets");
 
   // ✅ CHANGE 4: Added city, state, cityCustom, stateCustom to form
   const [form, setForm] = useState({
@@ -298,19 +297,18 @@ description: "", assignTo: currentUser?.name || "",
   const [formErrors, setFormErrors]   = useState({});
   const [submitting, setSubmitting]   = useState(false);
   const [successMsg, setSuccessMsg]   = useState("");
- const [imagePreviews, setImagePreviews] = useState([]);
+  const [imagePreview, setImagePreview] = useState("");
 const [lookupQuery, setLookupQuery] = useState("");
 const [lookupSuggestions, setLookupSuggestions] = useState([]);
 const [showLookupDropdown, setShowLookupDropdown] = useState(false);
 
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+    fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
       .then(data => {
-        const allData = data.tickets || [];
-        setAllTickets(allData);
-       const mine = allData.filter(t =>
+        setAllTickets(data);
+       const mine = data.filter(t =>
   (t.assignTo && currentUser?.name &&
   t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
   (t.resolvedBy && currentUser?.name &&
@@ -342,7 +340,7 @@ setTickets(mine);
 
   useEffect(() => {
     fetchTickets();
-    const poll = setInterval(fetchTickets, 30000);
+    const poll = setInterval(fetchTickets, 8000);
     return () => clearInterval(poll);
   }, []);
 
@@ -516,23 +514,20 @@ const handleResolveSubmit = (ticketId) => {
     navigate("/", { replace: true });
   };
 
- const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-    const oversized = files.find(f => f.size > 3 * 1024 * 1024);
-    if (oversized) {
-      setFormErrors(prev => ({ ...prev, productImage: `"${oversized.name}" exceeds 3MB limit` }));
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      setFormErrors(prev => ({ ...prev, productImage: "Image must be less than 3MB" }));
       return;
     }
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setImagePreviews(prev => [...prev, ev.target.result]);
-        setForm(prev => ({ ...prev, productImages: [...(prev.productImages || []), ev.target.result] }));
-        setFormErrors(prev => ({ ...prev, productImage: "" }));
-      };
-      reader.readAsDataURL(file);
-    });
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setForm(prev => ({ ...prev, productImage: ev.target.result }));
+      setImagePreview(ev.target.result);
+      setFormErrors(prev => ({ ...prev, productImage: "" }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleChange = (e) => {
@@ -585,15 +580,12 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
     }
     setSubmitting(true);
     const cleanPhone = form.phone.replace(/\s+/g, "");
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+    fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
-      .then(rawData => {
-        const allTicketsData = rawData.tickets || [];
+      .then(allTicketsData => {
     
-      const newTicket = {
+        const newTicket = {
           ...form,
-          productImages: form.productImages || [],
-          productImage:  (form.productImages && form.productImages[0]) || "",
           phone:        cleanPhone,
           status:       "open",
           acceptedAt:   new Date().toISOString(),
@@ -610,8 +602,8 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
         })
           .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
           .then(() => {
-            setForm({ category: "", subCategory: "", model: "", serialNo: "", mac: "", macPrefix: "", macSuffix: "", customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "", description: "", assignTo: currentUser?.name || "", productImage: "", productImages: [], raisedVia: "call", issuePrefix: "", issueSuffix: "" });
-      setImagePreviews([]); setFormErrors({}); setLookupQuery(""); setLookupSuggestions([]); setShowLookupDropdown(false);
+            setForm({ category: "", subCategory: "", model: "", serialNo: "", mac: "", macPrefix: "", macSuffix: "", customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "", description: "", assignTo: currentUser?.name || "", productImage: "", raisedVia: "call", issuePrefix: "", issueSuffix: "" });
+      setImagePreview(""); setFormErrors({}); setLookupQuery(""); setLookupSuggestions([]); setShowLookupDropdown(false);
            
            setSuccessMsg("✅ Ticket submitted successfully! Status: OPEN");
 fetchTickets();
@@ -789,24 +781,10 @@ const filteredMyReassigned = allTickets
 
 
 
- const myRaisedTickets = allTickets
+  const myRaisedTickets = allTickets
     .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
-
-  // Pagination for Assigned Tickets
-  const assignedTotalPages = Math.ceil(filtered.length / TICKETS_PER_PAGE);
-  const paginatedFiltered = filtered.slice(
-    (assignedPage - 1) * TICKETS_PER_PAGE,
-    assignedPage * TICKETS_PER_PAGE
-  );
-
-  // Pagination for My Raised Tickets
-  const myRaisedTotalPages = Math.ceil(filteredMyRaised.length / TICKETS_PER_PAGE);
-  const paginatedMyRaised = filteredMyRaised.slice(
-    (myRaisedPage - 1) * TICKETS_PER_PAGE,
-    myRaisedPage * TICKETS_PER_PAGE
-  );
 
   const raisedViaLabel = (via) => {
     if (via === "support-email") return "📧 Support Email";
@@ -1199,8 +1177,6 @@ const filteredMyReassigned = allTickets
           ["myraised",     `📞 My Raised (${myRaisedTickets.length})`],
           ["myreassigned", `🔄 My Reassigned (${myReassignedTickets.length})`],
           ["raise",        "🎫 Raise Ticket"],
-          ["producttesting", "🧪 Product Testing"],
-["producttestingtickets", `🧪 Product Testing Tickets (${allTickets.filter(t => t.ticketType === "product_testing" && t.assignTo?.toLowerCase().trim() === currentUser?.name?.toLowerCase().trim()).length})`],
         ].map(([key, label]) => (
           <button key={key} onClick={() => setActiveTab(key)} style={{
             padding: "14px 22px", fontSize: 13, fontWeight: activeTab === key ? 800 : 500,
@@ -1525,32 +1501,27 @@ const filteredMyReassigned = allTickets
             <div className="form-field" style={{ padding: "20px 36px 0" }}>
               <label className="form-label">Product Image <span className="form-hint">(optional — upload photo showing serial no &amp; MAC address)</span></label>
               <div style={{ border: `2px dashed ${formErrors.productImage ? "#ef4444" : "#ddd5c8"}`, borderRadius: 10, padding: "16px 20px", background: "#f9f7f4", textAlign: "center" }}>
-               <div style={{ textAlign: "center" }}>
+                {!imagePreview ? (
+                  <div>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
-                    <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>
-                      Upload product photos (max 3MB each)
-                      {imagePreviews.length > 0 && <span style={{ marginLeft: 8, background: "#10b981", color: "white", borderRadius: 10, padding: "1px 8px", fontSize: 11, fontWeight: 700 }}>{imagePreviews.length} added</span>}
-                    </div>
+                    <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>Upload product photo (max 3MB)</div>
                     <label style={{ background: "#ff5a00", color: "white", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-block" }}>
-                      + Add Images
-                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: "none" }} />
+                      Choose Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
                     </label>
                   </div>
-                  {imagePreviews.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14, justifyContent: "center" }}>
-                      {imagePreviews.map((src, i) => (
-                        <div key={i} style={{ position: "relative" }}>
-                          <img src={src} alt={`Product ${i + 1}`}
-                            style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 8, border: "2px solid #e0d8d0", cursor: "pointer" }}
-                            onClick={() => openImageInNewTab(src)} />
-                          <button type="button" onClick={() => {
-                            setImagePreviews(prev => prev.filter((_, idx) => idx !== i));
-                            setForm(prev => ({ ...prev, productImages: (prev.productImages || []).filter((_, idx) => idx !== i) }));
-                          }} style={{ position: "absolute", top: -6, right: -6, background: "#dc2626", color: "white", border: "none", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", fontSize: 11, fontWeight: 700, lineHeight: "20px", textAlign: "center", padding: 0 }}>✕</button>
-                        </div>
-                      ))}
+                ) : (
+                  <div>
+                    <img src={imagePreview} alt="Product" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
+                    <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
+                      <label style={{ background: "#f0ebe3", color: "#555", border: "1px solid #ddd5c8", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>
+                        Change Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+                      </label>
+                      <button type="button" onClick={() => { setImagePreview(""); setForm(prev => ({ ...prev, productImage: "" })); }}
+                        style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Remove</button>
                     </div>
-                  )}
+                    <div style={{ fontSize: 11, color: "#10b981", marginTop: 8, fontWeight: 600 }}>✅ Image uploaded</div>
+                  </div>
+                )}
               </div>
               {formErrors.productImage && <span className="field-error">{formErrors.productImage}</span>}
             </div>
@@ -1715,7 +1686,7 @@ const filteredMyReassigned = allTickets
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedMyRaised.map((ticket, idx) => {
+                    {filteredMyRaised.map((ticket, idx) => {
                       const s = (ticket.status || "open").toLowerCase();
                       return (
   <React.Fragment key={ticket.id}>
@@ -1813,11 +1784,10 @@ firstIsRma: ticket.firstIsRma || false,
 </td>
 
 <td style={{ padding:"12px 14px", textAlign:"left", borderRight:"1px solid #d1fae5" }}>
-  {(ticket.productImages?.length > 0 || ticket.productImage) ? (
+  {ticket.productImage ? (
     <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
       style={{ background:"#f0fdf4", border:"1.5px solid #86efac", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:11, fontWeight:700, color:"#065f46" }}>
       📷 {expandedImage === ticket.id ? "Hide" : "View"}
-      {ticket.productImages?.length > 1 && <span style={{ marginLeft:5, background:"#059669", color:"white", borderRadius:8, padding:"1px 6px", fontSize:10, fontWeight:700 }}>{ticket.productImages.length}</span>}
     </button>
   ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
 </td>
@@ -2020,19 +1990,17 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
   </tr>
 )}
       
-{expandedImage === ticket.id && (ticket.productImages?.length > 0 || ticket.productImage) && (
+{expandedImage === ticket.id && ticket.productImage && (
   <tr key={`img-mr-${ticket.id}`} style={{ background:"#f0fdf4" }}>
     <td colSpan={12} style={{ padding:"12px 20px" }}>
-      <div style={{ fontSize:12, fontWeight:700, color:"#065f46", marginBottom:10 }}>
-        📷 Product Images ({(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).length})
-        <span style={{ fontSize:11, color:"#6b7280", fontWeight:400, marginLeft:8 }}>Click any image to open full size</span>
-      </div>
-      <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
-        {(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).map((src, i) => (
-          <img key={i} src={src} alt={`Product ${i+1}`}
-            style={{ maxHeight:200, maxWidth:250, borderRadius:8, border:"2px solid #86efac", cursor:"pointer", objectFit:"cover" }}
-            onClick={() => openImageInNewTab(src)} />
-        ))}
+      <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
+        <img src={ticket.productImage} alt="Product"
+          style={{ maxHeight:200, maxWidth:300, borderRadius:8, border:"2px solid #86efac", cursor:"pointer" }}
+          onClick={() => openImageInNewTab(ticket.productImage)} />
+        <div style={{ fontSize:12, color:"#065f46" }}>
+          <div style={{ fontWeight:700, marginBottom:4 }}>📷 Product Image</div>
+          <div style={{ color:"#6b7280" }}>Click image to open full size</div>
+        </div>
       </div>
     </td>
   </tr>
@@ -2065,28 +2033,9 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
                   </tbody>
                 </table>
               </div>
-              {filteredMyRaised.length > TICKETS_PER_PAGE && (
-                <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                    Showing <strong>{(myRaisedPage - 1) * TICKETS_PER_PAGE + 1}</strong> - <strong>{Math.min(myRaisedPage * TICKETS_PER_PAGE, filteredMyRaised.length)}</strong> of <strong style={{ color: "#10b981" }}>{filteredMyRaised.length}</strong> tickets
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <button onClick={() => { setMyRaisedPage(p => p - 1); window.scrollTo(0,0); }}
-                      disabled={myRaisedPage <= 1}
-                      style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: myRaisedPage <= 1 ? "#f3f4f6" : "white", color: myRaisedPage <= 1 ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: myRaisedPage <= 1 ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-                      ← Previous
-                    </button>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>
-                      Page {myRaisedPage} of {myRaisedTotalPages}
-                    </span>
-                    <button onClick={() => { setMyRaisedPage(p => p + 1); window.scrollTo(0,0); }}
-                      disabled={myRaisedPage >= myRaisedTotalPages}
-                      style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: myRaisedPage >= myRaisedTotalPages ? "#f3f4f6" : "white", color: myRaisedPage >= myRaisedTotalPages ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: myRaisedPage >= myRaisedTotalPages ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-                      Next →
-                    </button>
-                  </div>
-                </div>
-              )}
+              <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
+                Showing <strong style={{ color: "#374151" }}>{filteredMyRaised.length}</strong> of <strong style={{ color: "#374151" }}>{myRaisedTickets.length}</strong> tickets
+              </div>
             </>
           )}
         </div>
@@ -2279,15 +2228,6 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
             </>
           )}
         </div>
-      )}
-
-      
-    {activeTab === "producttesting" && (
-        <ProductTesting currentUser={currentUser} />
-      )}
-
-      {activeTab === "producttestingtickets" && (
-        <ProductTestingTickets currentUser={currentUser} />
       )}
 
       {/* ══ ASSIGNED TICKETS TAB ══ */}
@@ -2485,33 +2425,10 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
             </div>
           </div>
 
-         {filtered.length === 0 && (
+          {filtered.length === 0 && (
             <div style={{ textAlign: "center", padding: 60, background: "white", borderRadius: 14, color: "#aaa" }}>
               <div style={{ fontSize: 48 }}>📭</div>
               <p style={{ marginTop: 12 }}>No tickets in this category.</p>
-            </div>
-          )}
-
-          {filtered.length > TICKETS_PER_PAGE && (
-            <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                Showing <strong>{(assignedPage - 1) * TICKETS_PER_PAGE + 1}</strong> - <strong>{Math.min(assignedPage * TICKETS_PER_PAGE, filtered.length)}</strong> of <strong style={{ color: "#ff5a00" }}>{filtered.length}</strong> tickets
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <button onClick={() => { setAssignedPage(p => p - 1); window.scrollTo(0,0); }}
-                  disabled={assignedPage <= 1}
-                  style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: assignedPage <= 1 ? "#f3f4f6" : "white", color: assignedPage <= 1 ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: assignedPage <= 1 ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-                  ← Previous
-                </button>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>
-                  Page {assignedPage} of {assignedTotalPages}
-                </span>
-                <button onClick={() => { setAssignedPage(p => p + 1); window.scrollTo(0,0); }}
-                  disabled={assignedPage >= assignedTotalPages}
-                  style={{ padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db", background: assignedPage >= assignedTotalPages ? "#f3f4f6" : "white", color: assignedPage >= assignedTotalPages ? "#9ca3af" : "#374151", fontWeight: 700, fontSize: 13, cursor: assignedPage >= assignedTotalPages ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-                  Next →
-                </button>
-              </div>
             </div>
           )}
 
@@ -2526,7 +2443,7 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
                   </tr>
                 </thead>
                 <tbody>
-                 {paginatedFiltered.map((ticket, idx) => {
+                  {filtered.map((ticket, idx) => {
                     const s            = (ticket.status || "open").toLowerCase();
                     const isReassigned = !!ticket.reassignedFrom;
                     const isSupportRaised  = ticket.source === "support";
@@ -2758,11 +2675,10 @@ firstIsRma: ticket.firstIsRma || false,
 
                           {/* Image column */}
                           <td style={{ padding: "12px 14px", textAlign: "left", borderRight: "1px solid #d1fae5" }}>
-                            {(ticket.productImages?.length > 0 || ticket.productImage) ? (
+                            {ticket.productImage ? (
                               <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
                                 style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#065f46" }}>
                                 📷 {expandedImage === ticket.id ? "Hide" : "View"}
-                                {ticket.productImages?.length > 1 && <span style={{ marginLeft:5, background:"#059669", color:"white", borderRadius:8, padding:"1px 6px", fontSize:10, fontWeight:700 }}>{ticket.productImages.length}</span>}
                               </button>
                             ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                           </td>
@@ -2789,19 +2705,15 @@ firstIsRma: ticket.firstIsRma || false,
                           </td>
                         </tr>
 
-                       {expandedImage === ticket.id && (ticket.productImages?.length > 0 || ticket.productImage) && (
+                        {expandedImage === ticket.id && ticket.productImage && (
                           <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={12} style={{ padding: "12px 20px" }}>
-                              <div style={{ fontSize:12, fontWeight:700, color:"#065f46", marginBottom:10 }}>
-                                📷 Product Images ({(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).length})
-                                <span style={{ fontSize:11, color:"#6b7280", fontWeight:400, marginLeft:8 }}>Click any image to open full size</span>
-                              </div>
-                              <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
-                                {(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).map((src, i) => (
-                                  <img key={i} src={src} alt={`Product ${i+1}`}
-                                    style={{ maxHeight:200, maxWidth:250, borderRadius:8, border:"2px solid #86efac", cursor:"pointer", objectFit:"cover" }}
-                                    onClick={() => openImageInNewTab(src)} />
-                                ))}
+                              <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                <img src={ticket.productImage} alt="Product" style={{ maxHeight: 200, maxWidth: 300, borderRadius: 8, border: "2px solid #86efac", cursor: "pointer" }} onClick={() => openImageInNewTab(ticket.productImage)} />
+                                <div style={{ fontSize: 12, color: "#065f46" }}>
+                                  <div style={{ fontWeight: 700, marginBottom: 4 }}>📷 Product Image</div>
+                                  <div style={{ color: "#6b7280" }}>Click image to open full size</div>
+                                </div>
                               </div>
                             </td>
                           </tr>
