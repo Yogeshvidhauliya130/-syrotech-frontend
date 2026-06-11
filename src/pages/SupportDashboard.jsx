@@ -307,8 +307,9 @@ const [showLookupDropdown, setShowLookupDropdown] = useState(false);
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
       .then(data => {
-        setAllTickets(data);
-       const mine = data.filter(t =>
+    const allData = data.tickets || [];
+    setAllTickets(allData);
+    const mine = allData.filter(t =>
   (t.assignTo && currentUser?.name &&
   t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
   (t.resolvedBy && currentUser?.name &&
@@ -582,7 +583,8 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
     const cleanPhone = form.phone.replace(/\s+/g, "");
     fetch(`${BASE_URL}/tickets`)
       .then(r => r.json())
-      .then(allTicketsData => {
+      .then(rawData => {
+    const allTicketsData = rawData.tickets || [];
     
         const newTicket = {
           ...form,
