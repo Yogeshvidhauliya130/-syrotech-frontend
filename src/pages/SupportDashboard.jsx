@@ -1509,6 +1509,7 @@ const filteredMyReassigned = allTickets
                       Choose Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
                     </label>
                   </div>
+                  
                 ) : (
                   <div>
                     <img src={imagePreview} alt="Product" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
