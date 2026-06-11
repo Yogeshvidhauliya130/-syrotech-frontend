@@ -1092,10 +1092,12 @@ isRma: issuePopup.firstIsRma || false,
 </td>
 
                       {/* Col 5 — Model */}
-                     <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: "pointer" }}
-  onClick={() => setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}>
-  <div style={{ fontSize: 11, fontWeight: 700, color: "#c94500", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fad8be" }}>{ticket.model || "—"}</div>
-  {(ticket.modelNo || ticket.serialNo) && (
+                <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: (ticket.source === "hr" || ticket.source === "hradmin") ? "default" : "pointer" }}
+  onClick={() => { if(ticket.source === "hr" || ticket.source === "hradmin") return; setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac }); }}>
+  <div style={{ fontSize: 11, fontWeight: 700, color: "#c94500", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fad8be" }}>
+    {(ticket.source === "hr" || ticket.source === "hradmin") ? "—" : (ticket.model || "—")}
+  </div>
+  {!(ticket.source === "hr" || ticket.source === "hradmin") && (ticket.modelNo || ticket.serialNo) && (
     <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>
       📦 {ticket.modelNo || "—"} / {ticket.serialNo || "—"}
     </div>
@@ -1436,8 +1438,8 @@ firstIsRma: ticket.firstIsRma || false,
 </td>
                       {/* Model */}
                      <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #fde68a", cursor: "pointer" }}
-  onClick={() => setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac })}>
-  <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>{ticket.model || "—"}</div>
+  onClick={() => { if(ticket.source === "hr" || ticket.source === "hradmin") return; setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac }); }}>
+  <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>{(ticket.source === "hr" || ticket.source === "hradmin") ? "—" : (ticket.model || "—")}</div>
 </td>
                       {/* Customer */}
                       <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #fde68a", cursor: "pointer" }}
