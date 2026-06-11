@@ -121,7 +121,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
       category:          "HR Ticket",
       subCategory:       raiseForm.empType === "old" ? "Old Employee" : "New Employee",
       model:             raiseForm.issues.join(", "),
-      serialNo:          raiseForm.empCode,
+      serialNo: raiseForm.serialNo,
       mac:               "",
       customer:          raiseForm.empCode,
       email:             currentUser?.email || "",
