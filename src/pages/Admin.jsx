@@ -1248,14 +1248,21 @@ firstIsRma: ticket.firstIsRma || false,
                         
                       </td>
 
-                      {/* Col 9 — Image */}
+                     {/* Col 9 — Image */}
                       <td style={{ padding: "11px 10px", textAlign: "center", borderRight: "1px solid #e0d8d0" }}>
-                        {ticket.productImage ? (
+                        {(ticket.productImages?.length > 0 || ticket.productImage) ? (
                           <button onClick={() => {
+                            const images = ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage];
                             const win = window.open("", "_blank");
-                            win.document.write(`<html><body style="margin:0;background:#111;display:flex;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box;"><img src="${ticket.productImage}" style="max-width:100%;height:auto;border-radius:8px;" /></body></html>`);
+                            win.document.write(`<html><head><title>Product Images</title></head><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px;box-sizing:border-box;gap:16px;">
+                              <div style="color:white;font-size:14px;font-weight:700;margin-bottom:8px;">📷 Product Images (${images.length})</div>
+                              ${images.map((src, i) => `<img src="${src}" alt="Product ${i+1}" style="max-width:100%;height:auto;border-radius:8px;border:2px solid #86efac;" />`).join('')}
+                            </body></html>`);
                             win.document.close();
-                          }} style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: "#065f46" }}>📷 View</button>
+                          }} style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: "#065f46" }}>
+                            📷 View
+                            {ticket.productImages?.length > 1 && <span style={{ marginLeft:4, background:"#059669", color:"white", borderRadius:8, padding:"1px 5px", fontSize:9, fontWeight:700 }}>{ticket.productImages.length}</span>}
+                          </button>
                         ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                       </td>
 

@@ -298,7 +298,7 @@ description: "", assignTo: currentUser?.name || "",
   const [formErrors, setFormErrors]   = useState({});
   const [submitting, setSubmitting]   = useState(false);
   const [successMsg, setSuccessMsg]   = useState("");
-  const [imagePreview, setImagePreview] = useState("");
+ const [imagePreviews, setImagePreviews] = useState([]);
 const [lookupQuery, setLookupQuery] = useState("");
 const [lookupSuggestions, setLookupSuggestions] = useState([]);
 const [showLookupDropdown, setShowLookupDropdown] = useState(false);
@@ -516,20 +516,23 @@ const handleResolveSubmit = (ticketId) => {
     navigate("/", { replace: true });
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      setFormErrors(prev => ({ ...prev, productImage: "Image must be less than 3MB" }));
+ const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const oversized = files.find(f => f.size > 3 * 1024 * 1024);
+    if (oversized) {
+      setFormErrors(prev => ({ ...prev, productImage: `"${oversized.name}" exceeds 3MB limit` }));
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setForm(prev => ({ ...prev, productImage: ev.target.result }));
-      setImagePreview(ev.target.result);
-      setFormErrors(prev => ({ ...prev, productImage: "" }));
-    };
-    reader.readAsDataURL(file);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setImagePreviews(prev => [...prev, ev.target.result]);
+        setForm(prev => ({ ...prev, productImages: [...(prev.productImages || []), ev.target.result] }));
+        setFormErrors(prev => ({ ...prev, productImage: "" }));
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleChange = (e) => {
@@ -587,8 +590,10 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
       .then(rawData => {
         const allTicketsData = rawData.tickets || [];
     
-        const newTicket = {
+      const newTicket = {
           ...form,
+          productImages: form.productImages || [],
+          productImage:  (form.productImages && form.productImages[0]) || "",
           phone:        cleanPhone,
           status:       "open",
           acceptedAt:   new Date().toISOString(),
@@ -605,8 +610,8 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
         })
           .then(res => { if (!res.ok) throw new Error("Server error"); return res.json(); })
           .then(() => {
-            setForm({ category: "", subCategory: "", model: "", serialNo: "", mac: "", macPrefix: "", macSuffix: "", customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "", description: "", assignTo: currentUser?.name || "", productImage: "", raisedVia: "call", issuePrefix: "", issueSuffix: "" });
-      setImagePreview(""); setFormErrors({}); setLookupQuery(""); setLookupSuggestions([]); setShowLookupDropdown(false);
+            setForm({ category: "", subCategory: "", model: "", serialNo: "", mac: "", macPrefix: "", macSuffix: "", customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "", description: "", assignTo: currentUser?.name || "", productImage: "", productImages: [], raisedVia: "call", issuePrefix: "", issueSuffix: "" });
+      setImagePreviews([]); setFormErrors({}); setLookupQuery(""); setLookupSuggestions([]); setShowLookupDropdown(false);
            
            setSuccessMsg("✅ Ticket submitted successfully! Status: OPEN");
 fetchTickets();
@@ -1520,27 +1525,32 @@ const filteredMyReassigned = allTickets
             <div className="form-field" style={{ padding: "20px 36px 0" }}>
               <label className="form-label">Product Image <span className="form-hint">(optional — upload photo showing serial no &amp; MAC address)</span></label>
               <div style={{ border: `2px dashed ${formErrors.productImage ? "#ef4444" : "#ddd5c8"}`, borderRadius: 10, padding: "16px 20px", background: "#f9f7f4", textAlign: "center" }}>
-                {!imagePreview ? (
-                  <div>
+               <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
-                    <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>Upload product photo (max 3MB)</div>
+                    <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>
+                      Upload product photos (max 3MB each)
+                      {imagePreviews.length > 0 && <span style={{ marginLeft: 8, background: "#10b981", color: "white", borderRadius: 10, padding: "1px 8px", fontSize: 11, fontWeight: 700 }}>{imagePreviews.length} added</span>}
+                    </div>
                     <label style={{ background: "#ff5a00", color: "white", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-block" }}>
-                      Choose Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+                      + Add Images
+                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: "none" }} />
                     </label>
                   </div>
-                ) : (
-                  <div>
-                    <img src={imagePreview} alt="Product" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
-                    <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
-                      <label style={{ background: "#f0ebe3", color: "#555", border: "1px solid #ddd5c8", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>
-                        Change Image<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
-                      </label>
-                      <button type="button" onClick={() => { setImagePreview(""); setForm(prev => ({ ...prev, productImage: "" })); }}
-                        style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Remove</button>
+                  {imagePreviews.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14, justifyContent: "center" }}>
+                      {imagePreviews.map((src, i) => (
+                        <div key={i} style={{ position: "relative" }}>
+                          <img src={src} alt={`Product ${i + 1}`}
+                            style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 8, border: "2px solid #e0d8d0", cursor: "pointer" }}
+                            onClick={() => openImageInNewTab(src)} />
+                          <button type="button" onClick={() => {
+                            setImagePreviews(prev => prev.filter((_, idx) => idx !== i));
+                            setForm(prev => ({ ...prev, productImages: (prev.productImages || []).filter((_, idx) => idx !== i) }));
+                          }} style={{ position: "absolute", top: -6, right: -6, background: "#dc2626", color: "white", border: "none", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", fontSize: 11, fontWeight: 700, lineHeight: "20px", textAlign: "center", padding: 0 }}>✕</button>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ fontSize: 11, color: "#10b981", marginTop: 8, fontWeight: 600 }}>✅ Image uploaded</div>
-                  </div>
-                )}
+                  )}
               </div>
               {formErrors.productImage && <span className="field-error">{formErrors.productImage}</span>}
             </div>
@@ -1803,10 +1813,11 @@ firstIsRma: ticket.firstIsRma || false,
 </td>
 
 <td style={{ padding:"12px 14px", textAlign:"left", borderRight:"1px solid #d1fae5" }}>
-  {ticket.productImage ? (
+  {(ticket.productImages?.length > 0 || ticket.productImage) ? (
     <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
       style={{ background:"#f0fdf4", border:"1.5px solid #86efac", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:11, fontWeight:700, color:"#065f46" }}>
       📷 {expandedImage === ticket.id ? "Hide" : "View"}
+      {ticket.productImages?.length > 1 && <span style={{ marginLeft:5, background:"#059669", color:"white", borderRadius:8, padding:"1px 6px", fontSize:10, fontWeight:700 }}>{ticket.productImages.length}</span>}
     </button>
   ) : <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>}
 </td>
@@ -2009,17 +2020,19 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
   </tr>
 )}
       
-{expandedImage === ticket.id && ticket.productImage && (
+{expandedImage === ticket.id && (ticket.productImages?.length > 0 || ticket.productImage) && (
   <tr key={`img-mr-${ticket.id}`} style={{ background:"#f0fdf4" }}>
     <td colSpan={12} style={{ padding:"12px 20px" }}>
-      <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
-        <img src={ticket.productImage} alt="Product"
-          style={{ maxHeight:200, maxWidth:300, borderRadius:8, border:"2px solid #86efac", cursor:"pointer" }}
-          onClick={() => openImageInNewTab(ticket.productImage)} />
-        <div style={{ fontSize:12, color:"#065f46" }}>
-          <div style={{ fontWeight:700, marginBottom:4 }}>📷 Product Image</div>
-          <div style={{ color:"#6b7280" }}>Click image to open full size</div>
-        </div>
+      <div style={{ fontSize:12, fontWeight:700, color:"#065f46", marginBottom:10 }}>
+        📷 Product Images ({(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).length})
+        <span style={{ fontSize:11, color:"#6b7280", fontWeight:400, marginLeft:8 }}>Click any image to open full size</span>
+      </div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
+        {(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).map((src, i) => (
+          <img key={i} src={src} alt={`Product ${i+1}`}
+            style={{ maxHeight:200, maxWidth:250, borderRadius:8, border:"2px solid #86efac", cursor:"pointer", objectFit:"cover" }}
+            onClick={() => openImageInNewTab(src)} />
+        ))}
       </div>
     </td>
   </tr>
@@ -2745,10 +2758,11 @@ firstIsRma: ticket.firstIsRma || false,
 
                           {/* Image column */}
                           <td style={{ padding: "12px 14px", textAlign: "left", borderRight: "1px solid #d1fae5" }}>
-                            {ticket.productImage ? (
+                            {(ticket.productImages?.length > 0 || ticket.productImage) ? (
                               <button onClick={() => setExpandedImage(expandedImage === ticket.id ? null : ticket.id)}
                                 style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#065f46" }}>
                                 📷 {expandedImage === ticket.id ? "Hide" : "View"}
+                                {ticket.productImages?.length > 1 && <span style={{ marginLeft:5, background:"#059669", color:"white", borderRadius:8, padding:"1px 6px", fontSize:10, fontWeight:700 }}>{ticket.productImages.length}</span>}
                               </button>
                             ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                           </td>
@@ -2775,15 +2789,19 @@ firstIsRma: ticket.firstIsRma || false,
                           </td>
                         </tr>
 
-                        {expandedImage === ticket.id && ticket.productImage && (
+                       {expandedImage === ticket.id && (ticket.productImages?.length > 0 || ticket.productImage) && (
                           <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={12} style={{ padding: "12px 20px" }}>
-                              <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                <img src={ticket.productImage} alt="Product" style={{ maxHeight: 200, maxWidth: 300, borderRadius: 8, border: "2px solid #86efac", cursor: "pointer" }} onClick={() => openImageInNewTab(ticket.productImage)} />
-                                <div style={{ fontSize: 12, color: "#065f46" }}>
-                                  <div style={{ fontWeight: 700, marginBottom: 4 }}>📷 Product Image</div>
-                                  <div style={{ color: "#6b7280" }}>Click image to open full size</div>
-                                </div>
+                              <div style={{ fontSize:12, fontWeight:700, color:"#065f46", marginBottom:10 }}>
+                                📷 Product Images ({(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).length})
+                                <span style={{ fontSize:11, color:"#6b7280", fontWeight:400, marginLeft:8 }}>Click any image to open full size</span>
+                              </div>
+                              <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
+                                {(ticket.productImages?.length > 0 ? ticket.productImages : [ticket.productImage]).map((src, i) => (
+                                  <img key={i} src={src} alt={`Product ${i+1}`}
+                                    style={{ maxHeight:200, maxWidth:250, borderRadius:8, border:"2px solid #86efac", cursor:"pointer", objectFit:"cover" }}
+                                    onClick={() => openImageInNewTab(src)} />
+                                ))}
                               </div>
                             </td>
                           </tr>
