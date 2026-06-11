@@ -4,7 +4,7 @@ import "./Dashboard.css";
 import { useProducts } from "../hooks/useProducts";
 import { getIssues } from "../data/issueList";
 import ProductTesting from "./ProductTesting";
-import ProductTestingTickets from "./ProductTestingTickets";
+import ProductTestingTickets from "./ProductTestingTicket";
 
 
 const BASE_URL = "https://api.syrotech.com";
