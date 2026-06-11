@@ -2789,6 +2789,8 @@ firstIsRma: ticket.firstIsRma || false,
                           </td>
                         </tr>
 
+
+
                        {expandedImage === ticket.id && (ticket.productImages?.length > 0 || ticket.productImage) && (
                           <tr key={`img-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                             <td colSpan={12} style={{ padding: "12px 20px" }}>

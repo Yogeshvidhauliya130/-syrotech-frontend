@@ -126,6 +126,7 @@ export const ISSUE_LIST = {
       "Fiber Switch (L2/L3)",
        "others",
     ],
+    
 
     "L2& L3 manage Switch": [
       "Manageable Switch (L2/L3)",
