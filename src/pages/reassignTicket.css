@@ -149,14 +149,14 @@
   font-weight: 700;
 }
 
-.rt-chip-active .rt-chip-count,
+/* .rt-chip-active .rt-chip-count,
 .rt-chip-active-orange .rt-chip-count,
 .rt-chip-active-green .rt-chip-count {
   background: rgba(0, 0, 0, 0.18);
   color: white;
   filter: none;
   opacity: 1;
-}
+} */
 
 .rt-chip-sm {
   padding: 4px 10px;
