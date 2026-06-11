@@ -702,7 +702,7 @@ serialNo:  raiseForm.serialNo,
 
                       <td style={{ padding:"12px 14px", borderRight:"1px solid #dbeafe" }}>
   <div style={{ fontSize:12, fontWeight:700, color:"#374151" }}>{ticket.modelNo || "—"}</div>
-  <div style={{ fontSize:10, color:"#9ca3af", marginTop:2 }}>{ticket.serialNo || "—"}</div>
+<div style={{ fontSize:10, color:"#9ca3af", marginTop:2 }}>{ticket.serialNo === ticket.empCode ? "—" : (ticket.serialNo || "—")}</div>
 </td>
 
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #dbeafe", cursor: "pointer", maxWidth: 180 }}
