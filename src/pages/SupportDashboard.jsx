@@ -58,6 +58,7 @@ const STATE_CITY_MAP = {
   "Ladakh": ["Leh","Kargil"],
   "Lakshadweep": ["Kavaratti","Agatti","Minicoy"],
   "Puducherry": ["Puducherry","Karaikal","Mahe","Yanam"],
+  "Other": ["Other"],
 };
 
 const INDIAN_STATES = Object.keys(STATE_CITY_MAP).sort();
@@ -1423,7 +1424,7 @@ const filteredMyReassigned = allTickets
                   <option>United Arab Emirates</option><option>Saudi Arabia</option><option>Canada</option>
                   <option>Australia</option><option>Singapore</option><option>Germany</option>
                   <option>France</option><option>Nepal</option><option>Bangladesh</option>
-                  <option>Sri Lanka</option><option>Pakistan</option><option>Other</option>
+                  <option>Sri Lanka</option><option>Other</option>
                 </select>
                 {formErrors.country && <span className="field-error">{formErrors.country}</span>}
               </div>
