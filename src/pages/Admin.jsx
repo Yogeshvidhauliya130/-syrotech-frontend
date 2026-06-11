@@ -783,7 +783,7 @@ isRma: issuePopup.firstIsRma || false,
           ["🏢 Department",  employeePopup.empDept],
           ["🛠️ Issue",       employeePopup.hrIssue],
           ["📦 Model No",    employeePopup.modelNo],
-          ["🔢 Serial No",   employeePopup.serialNo],
+          ["🔢 Serial No",   employeePopup.serialNo === employeePopup.empCode ? "—" : (employeePopup.serialNo || "—")],
         ].map(([label, val]) => (
           <div key={label} style={{ display:"flex", gap:10, marginBottom:10 }}>
             <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", minWidth:110 }}>{label}</div>
