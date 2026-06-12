@@ -34,6 +34,8 @@ const [showPriorityList, setShowPriorityList] = useState(false);
 const [currentPage, setCurrentPage] = useState(1);
 const [totalPages, setTotalPages]   = useState(1);
 const [totalCount, setTotalCount]   = useState(0);
+const [ticketNoSearch, setTicketNoSearch] = useState([]);
+const [searchingTicketNo, setSearchingTicketNo] = useState(false);
 const PAGE_SIZE = 100;
 
  const fetchAll = (pageNum = currentPage) => {
@@ -61,6 +63,25 @@ const PAGE_SIZE = 100;
   }, [currentPage, statusFilter]);
 
   useEffect(() => { setCurrentPage(1); }, [statusFilter, sourceFilter, customerTypeFilter, levelFilter, filterYear, filterMonth, dateSort, companyFilter, searchQuery]);
+
+  // ✅ When admin types digits, search that ticket number across the WHOLE database
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (/^\d+$/.test(q)) {
+      setSearchingTicketNo(true);
+      const timer = setTimeout(() => {
+        fetch(`${BASE_URL}/tickets?ticketNumber=${q}&limit=50`)
+          .then(r => r.json())
+          .then(data => { setTicketNoSearch(data.tickets || []); })
+          .catch(() => setTicketNoSearch([]))
+          .finally(() => setSearchingTicketNo(false));
+      }, 400);
+      return () => clearTimeout(timer);
+    } else {
+      setTicketNoSearch([]);
+      setSearchingTicketNo(false);
+    }
+  }, [searchQuery]);
 
   const getPersonLevel = (name) => {
     const p = supportPersons.find(x => x.name && name && x.name.toLowerCase().trim() === name.toLowerCase().trim());
@@ -125,7 +146,8 @@ const PAGE_SIZE = 100;
       return dateSort === "newest" ? db - da : da - db;
     });
 
-   const paginatedTickets = filtered;
+   const isTicketNoSearch = /^\d+$/.test(searchQuery.trim());
+   const paginatedTickets = isTicketNoSearch ? ticketNoSearch : filtered;
 
   const counts = {
     all:      tickets.length,
@@ -547,7 +569,7 @@ const PAGE_SIZE = 100;
           <tbody>
            {paginatedTickets.length === 0 ? (
               <tr>
-                <td colSpan={10} className="rt-empty">No tickets found for the selected filters.</td>
+               <td colSpan={10} className="rt-empty">{searchingTicketNo ? "Searching…" : "No tickets found for the selected filters."}</td>
               </tr>
             ) : (
               paginatedTickets.map((ticket, idx) => {
