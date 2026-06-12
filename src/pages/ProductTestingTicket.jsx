@@ -24,6 +24,7 @@ const fetchTickets = () => {
           t.ticketType === "product_testing" &&
           t.assignTo?.toLowerCase().trim() === currentUser?.name?.toLowerCase().trim()
         );
+        
         setTickets(mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
       })
       .catch(console.error);
