@@ -148,7 +148,9 @@ const [itemFilter, setItemFilter]               = useState("all");
   }, []);
 
   const fetchTickets = () => {
-   fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+   const email = currentUser?.email || "";
+   if (!email) return;
+   fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&limit=2000`)
       .then(res => res.json())
       .then(data => { setTickets(data.tickets || []); })
       .catch(err => console.error("Failed to load tickets:", err));
@@ -156,7 +158,7 @@ const [itemFilter, setItemFilter]               = useState("all");
 
   useEffect(() => {
     fetchTickets();
-    const id = setInterval(fetchTickets, 30000);
+    const id = setInterval(fetchTickets, 60000);
     return () => clearInterval(id);
   }, []);
 
