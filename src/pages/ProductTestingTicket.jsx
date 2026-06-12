@@ -13,8 +13,10 @@ export default function ProductTestingTickets({ currentUser }) {
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
-  const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+const fetchTickets = () => {
+    const name = currentUser?.name || "";
+    if (!name) return;
+    fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(name)}&ticketType=product_testing&limit=2000`)
       .then(r => r.json())
       .then(data => {
         const all = data.tickets || [];
