@@ -586,6 +586,7 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
       return;
     }
     const cleanPhone = form.phone.replace(/\s+/g, "");
+    setSubmitting(true);
     {
         const newTicket = {
           ...form,
