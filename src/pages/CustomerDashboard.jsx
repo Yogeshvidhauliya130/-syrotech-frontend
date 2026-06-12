@@ -155,7 +155,9 @@ issueSuffix: "",
   }, [form.category, form.state, supportPersons, tickets]);
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+    const email = currentUser?.email || "";
+    if (!email) return;
+    fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&limit=2000`)
   .then(r => r.json())
   .then(data => { setTickets(data.tickets || []); })
   .catch(console.error);
@@ -163,7 +165,7 @@ issueSuffix: "",
 
   useEffect(() => {
     fetchTickets();
-    const id = setInterval(fetchTickets, 10000);
+    const id = setInterval(fetchTickets, 60000);
     return () => clearInterval(id);
   }, []);
 
