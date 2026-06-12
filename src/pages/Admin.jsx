@@ -288,11 +288,12 @@ const handleFilterChange = async (newFilter) => {
   setFilter(newFilter);
   setIsLoading(true);
   try {
-   const res = await fetch(`${BASE_URL}/tickets?page=1&limit=2000`);
+   const res = await fetch(`${BASE_URL}/tickets?page=1&limit=100`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
     setTotalCount(data.totalCount || 0);
+    setOpenCount(data.openCount || 0);   // ✅ keep open count visible
     setPage(1);
   } catch (err) {
     console.error(err);
@@ -349,27 +350,28 @@ const [filterDate, setFilterDate]   = useState("");
       .catch(err => { console.error("Failed:", err); setSavingId(null); });
   };
 
-  const [page, setPage] = useState(1);
+ const [page, setPage] = useState(1);
 const [totalPages, setTotalPages] = useState(1);
 const [totalCount, setTotalCount] = useState(0);
+const [openCount, setOpenCount] = useState(0);   // ✅ NEW
 const [isLoading, setIsLoading] = useState(false);
 
 const loadTickets = async (pageNum = 1) => {
   setIsLoading(true);
   try {
-    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=2000`);
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
     setTotalCount(data.totalCount || 0);
-    setPage(1);
+    setOpenCount(data.openCount || 0);   // ✅ keep open count visible
+    setPage(pageNum);                    // ✅ fix: was hardcoded to 1
   } catch (err) {
     console.error(err);
   } finally {
     setIsLoading(false);
   }
 };
-
 useEffect(() => {
   loadTickets(1);
 }, []);
@@ -1308,6 +1310,7 @@ firstIsRma: ticket.firstIsRma || false,
          <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>
               Showing <strong style={{ color: "#374151" }}>{filtered.length}</strong> of <strong style={{ color: "#374151" }}>{totalCount}</strong> total tickets
+              {" · "}<strong style={{ color: "#e04e00" }}>{openCount}</strong> open
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button
