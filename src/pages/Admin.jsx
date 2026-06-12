@@ -304,7 +304,9 @@ const handleFilterChange = async (newFilter) => {
     setIsLoading(false);
   }
 };
-  const [search, setSearch]             = useState("");
+ const [search, setSearch]             = useState("");
+  const [ticketNoSearch, setTicketNoSearch] = useState([]);
+  const [searchingTicketNo, setSearchingTicketNo] = useState(false);
   const [issuePopup, setIssuePopup]     = useState(null);
   const [feedbackData, setFeedbackData] = useState({});
   const [savingId, setSavingId]         = useState(null);
@@ -381,6 +383,25 @@ const loadTickets = async (pageNum = 1) => {
     setIsLoading(false);
   }
 };
+// ✅ When admin types digits, search that ticket number across the WHOLE database
+useEffect(() => {
+  const q = search.trim();
+  if (/^\d+$/.test(q)) {
+    setSearchingTicketNo(true);
+    const timer = setTimeout(() => {
+      fetch(`${BASE_URL}/tickets?ticketNumber=${q}&limit=50`)
+        .then(r => r.json())
+        .then(data => { setTicketNoSearch(data.tickets || []); })
+        .catch(() => setTicketNoSearch([]))
+        .finally(() => setSearchingTicketNo(false));
+    }, 400);
+    return () => clearTimeout(timer);
+  } else {
+    setTicketNoSearch([]);
+    setSearchingTicketNo(false);
+  }
+}, [search]);
+
 useEffect(() => {
   loadTickets(1);
 }, []);
@@ -440,7 +461,7 @@ useEffect(() => {
   );
   return matchedPersons.some(p => p.level === parseInt(levelFilter));
 })
-.filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.customer, t.phone, t.email, t.category, t.subCategory, t.model, t.serialNo]
+.filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.customer, t.phone, t.email, t.category, t.subCategory, t.model, t.serialNo, String(t.ticketNumber || "")]
   .some(f => (f || "").toLowerCase().includes(search.toLowerCase())))
 
 
@@ -1031,9 +1052,9 @@ isRma: issuePopup.firstIsRma || false,
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={10} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>No tickets found.</td></tr>
-                ) : filtered.map((ticket, idx) => {
+               {(/^\d+$/.test(search.trim()) ? ticketNoSearch : filtered).length === 0 ? (
+                  <tr><td colSpan={10} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>{searchingTicketNo ? "Searching…" : "No tickets found."}</td></tr>
+                ) : (/^\d+$/.test(search.trim()) ? ticketNoSearch : filtered).map((ticket, idx) => {
                   const s               = (ticket.status || "open").toLowerCase();
                   const isResolved      = s === "resolved";
                   const isSupportRaised = ticket.source === "support";
