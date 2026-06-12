@@ -177,9 +177,11 @@ const [allTickets, setAllTickets] = useState([]);
 
   const cities = STATE_CITY_MAP[form.state] || [];
   useEffect(() => {
-  fetch("https://api.syrotech.com/tickets")
+  const email = currentUser?.email || "";
+  if (!email) return;
+  fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&limit=2000`)
     .then(r => r.json())
-    .then(data => { if (Array.isArray(data)) setAllTickets(data); })
+    .then(data => { if (Array.isArray(data.tickets)) setAllTickets(data.tickets); })
     .catch(console.error);
 }, []);
 

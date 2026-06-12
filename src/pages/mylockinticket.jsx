@@ -23,16 +23,13 @@ const [customerPopup, setCustomerPopup] = useState(null);
 const [issuePopup, setIssuePopup] = useState(null);
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
- const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+const fetchTickets = () => {
+    const email = currentUser?.email || "";
+    if (!email) { setLoading(false); return; }
+    fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&ticketType=lockin&limit=2000`)
   .then((r) => r.json())
   .then((data) => {
-    const mine = (data.tickets || []).filter(
-      (t) =>
-        t.ticketType === "lockin" &&
-        t.raisedBy === currentUser?.email
-    );
-    setTickets(mine);
+    setTickets(data.tickets || []);
     setLoading(false);
   })
   .catch(() => setLoading(false));
@@ -47,7 +44,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
       setLoading(false);
     } else {
       fetchTickets();
-      const id = setInterval(fetchTickets, 10000);
+      const id = setInterval(fetchTickets, 60000);
       return () => clearInterval(id);
     }
   }, [allTickets]);
