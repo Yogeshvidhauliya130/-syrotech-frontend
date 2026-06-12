@@ -293,7 +293,10 @@ const handleFilterChange = async (newFilter) => {
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
     setTotalCount(data.totalCount || 0);
-    setOpenCount(data.openCount || 0);   // ✅ keep open count visible
+    setOpenCount(data.openCount || 0);
+    setResolvedCount(data.resolvedCount || 0);
+    setRmaCount(data.rmaCount || 0);
+    setReopenedCount(data.reopenedCount || 0);
     setPage(1);
   } catch (err) {
     console.error(err);
@@ -354,6 +357,9 @@ const [filterDate, setFilterDate]   = useState("");
 const [totalPages, setTotalPages] = useState(1);
 const [totalCount, setTotalCount] = useState(0);
 const [openCount, setOpenCount] = useState(0);   // ✅ NEW
+const [resolvedCount, setResolvedCount] = useState(0);   // ✅ NEW
+const [rmaCount, setRmaCount] = useState(0);   // ✅ NEW
+const [reopenedCount, setReopenedCount] = useState(0);   // ✅ NEW
 const [isLoading, setIsLoading] = useState(false);
 
 const loadTickets = async (pageNum = 1) => {
@@ -364,7 +370,10 @@ const loadTickets = async (pageNum = 1) => {
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
     setTotalCount(data.totalCount || 0);
-    setOpenCount(data.openCount || 0);   // ✅ keep open count visible
+    setOpenCount(data.openCount || 0);
+    setResolvedCount(data.resolvedCount || 0);
+    setRmaCount(data.rmaCount || 0);
+    setReopenedCount(data.reopenedCount || 0);
     setPage(pageNum);                    // ✅ fix: was hardcoded to 1
   } catch (err) {
     console.error(err);
@@ -384,11 +393,11 @@ useEffect(() => {
   }, []);
 
  const counts = {
-  all: tickets.length,
-  open: tickets.filter(t => t.status === "open").length,
-  resolved: tickets.filter(t => t.status === "resolved").length,
-  rma: tickets.filter(t => t.status === "rma").length,
- reopened: tickets.filter(t => (t.status || "").toLowerCase() === "reopened").length,
+  all: totalCount,
+  open: openCount,
+  resolved: resolvedCount,
+  rma: rmaCount,
+  reopened: reopenedCount,
 };
 
   const filtered = applyFilter(
