@@ -58,7 +58,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
       .catch(console.error);
   };
 
-  
+
   useEffect(() => {
     fetchTickets();
     const id = setInterval(fetchTickets, 60000);
@@ -712,6 +712,8 @@ serialNo:  raiseForm.serialNo,
                         <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{ticket.empName || "—"}</div>
                         <div style={{ fontSize: 10, color: "#6b7280" }}>{ticket.empEmail || "—"}</div>
                         <div style={{ fontSize: 10, color: "#6b7280" }}>{ticket.empPhone || "—"}</div>
+                        {ticket.location && <div style={{ fontSize: 10, color: "#6b7280" }}>📍 {ticket.location}</div>}
+                        {ticket.designation && <div style={{ fontSize: 10, color: "#6b7280" }}>💼 {ticket.designation}</div>}
                       </td>
 
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #dbeafe" }}>
