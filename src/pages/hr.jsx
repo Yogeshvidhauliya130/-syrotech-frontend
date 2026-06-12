@@ -48,17 +48,17 @@ export default function HR() {
 
   // ── fetch all HR tickets ──
   const fetchTickets = () => {
-   fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+   fetch(`${BASE_URL}/tickets?source=hr&limit=2000`)
   .then(r => r.json())
   .then(data => {
-    setTickets((data.tickets || []).filter(t => t.source === "hr"));
+    setTickets(data.tickets || []);
   })
       .catch(console.error);
   };
 
   useEffect(() => {
     fetchTickets();
-    const id = setInterval(fetchTickets, 10000);
+    const id = setInterval(fetchTickets, 60000);
     return () => clearInterval(id);
   }, []);
 
