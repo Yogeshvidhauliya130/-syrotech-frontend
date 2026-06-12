@@ -58,6 +58,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
       .catch(console.error);
   };
 
+  
   useEffect(() => {
     fetchTickets();
     const id = setInterval(fetchTickets, 60000);
