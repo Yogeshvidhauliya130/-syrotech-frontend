@@ -32,14 +32,18 @@ const [priorityCompanies, setPriorityCompanies] = useState([]);
 const [companyFilter, setCompanyFilter]       = useState("all");
 const [showPriorityList, setShowPriorityList] = useState(false);
 const [currentPage, setCurrentPage] = useState(1);
-const PAGE_SIZE = 500;
+const [totalPages, setTotalPages]   = useState(1);
+const [totalCount, setTotalCount]   = useState(0);
+const PAGE_SIZE = 100;
 
- const fetchAll = () => {
-  fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+ const fetchAll = (pageNum = currentPage) => {
+  const statusParam = statusFilter !== "all" ? `&status=${statusFilter}` : "";
+  fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=${PAGE_SIZE}${statusParam}`)
     .then(r => r.json())
     .then(data => { 
-      const list = data.tickets || [];
-      setTickets(list); 
+      setTickets(data.tickets || []); 
+      setTotalPages(data.totalPages || 1);
+      setTotalCount(data.totalCount || 0);
     })
     .catch(console.error);
   fetch(`${BASE_URL}/api/users`)
@@ -53,10 +57,8 @@ const PAGE_SIZE = 500;
 };
 
   useEffect(() => {
-    fetchAll();
-    const id = setInterval(fetchAll, 10000);
-    return () => clearInterval(id);
-  }, []);
+    fetchAll(currentPage);
+  }, [currentPage, statusFilter]);
 
   useEffect(() => { setCurrentPage(1); }, [statusFilter, sourceFilter, customerTypeFilter, levelFilter, filterYear, filterMonth, dateSort, companyFilter, searchQuery]);
 
@@ -123,8 +125,7 @@ const PAGE_SIZE = 500;
       return dateSort === "newest" ? db - da : da - db;
     });
 
-    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-const paginatedTickets = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+   const paginatedTickets = filtered;
 
   const counts = {
     all:      tickets.length,
@@ -678,7 +679,7 @@ const paginatedTickets = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPa
     ← Previous
   </button>
   <span style={{ fontSize:13, color:"#6b7280" }}>
-    Showing <strong style={{ color:"#374151" }}>{(currentPage-1)*PAGE_SIZE+1}</strong> - <strong style={{ color:"#374151" }}>{Math.min(currentPage*PAGE_SIZE, filtered.length)}</strong> of <strong style={{ color:"#ff5a00" }}>{filtered.length}</strong> filtered tickets
+    Page <strong style={{ color:"#374151" }}>{currentPage}</strong> of <strong style={{ color:"#374151" }}>{totalPages}</strong> · <strong style={{ color:"#ff5a00" }}>{totalCount}</strong> total tickets
   </span>
   <button
     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
