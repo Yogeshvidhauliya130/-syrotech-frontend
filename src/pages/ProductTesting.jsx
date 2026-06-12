@@ -112,6 +112,7 @@ export default function ProductTesting({ currentUser }) {
             {formErrors.category && <span style={{ fontSize: 12, color: "#ef4444" }}>{formErrors.category}</span>}
           </div>
 
+
           {/* Sub Category */}
           <div>
             <label style={{ fontSize: 13, fontWeight: 700, color: "#374151", display: "block", marginBottom: 6 }}>Sub Category <span style={{ color: "#ff6b35" }}>*</span></label>

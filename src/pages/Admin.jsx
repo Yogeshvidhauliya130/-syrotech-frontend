@@ -1586,8 +1586,8 @@ useEffect(() => { setLevelFilter(initialLevel); }, [initialLevel]);
 const [sourceViaFilter, setSourceViaFilter] = useState("all");
 const [supportOnly, setSupportOnly] = useState(false);
 
-  useEffect(() => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+ useEffect(() => {
+    fetch(`${BASE_URL}/tickets?page=1&limit=100000`)
       .then(r => r.json())
       .then(data => {
         const tickets = data.tickets || [];
