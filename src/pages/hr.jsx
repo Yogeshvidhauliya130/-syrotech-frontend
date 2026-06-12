@@ -42,6 +42,8 @@ export default function HR() {
     empName: "",
     empEmail: "",
     empPhone: "",
+    location: "",
+    designation: "",
     issues: [],
     description: "",
   });
@@ -138,6 +140,8 @@ export default function HR() {
       empName:    form.empName,
       empEmail:   form.empEmail,
       empPhone:   form.empPhone,
+      location:    form.location,
+      designation: form.designation,
     };
 
     try {
@@ -147,7 +151,7 @@ export default function HR() {
         body: JSON.stringify(newTicket),
       });
       if (!res.ok) throw new Error("Server error");
-      setForm({ empType: "", empCode: "", empDept: "", empName: "", empEmail: "", empPhone: "", issues: [], description: "" });
+      setForm({ empType: "", empCode: "", empDept: "", empName: "", empEmail: "", empPhone: "", location: "", designation: "", issues: [], description: "" });
       setErrors({});
       setSuccessMsg("✅ Ticket submitted successfully!");
       setActiveTab("mytickets");
@@ -460,6 +464,34 @@ export default function HR() {
                 {errors.empPhone && <span className="hr-field__error">{errors.empPhone}</span>}
               </div>
 
+              {/* Location */}
+              <div>
+                <label className="hr-field__label">
+                  Location <span style={{color:"#9ca3af", fontSize:11}}>(optional)</span>
+                </label>
+                <input
+                  name="location"
+                  placeholder="e.g. Delhi Office, 2nd Floor"
+                  value={form.location}
+                  onChange={handleChange}
+                  className="hr-input"
+                />
+              </div>
+
+              {/* Designation */}
+              <div>
+                <label className="hr-field__label">
+                  Designation <span style={{color:"#9ca3af", fontSize:11}}>(optional)</span>
+                </label>
+                <input
+                  name="designation"
+                  placeholder="e.g. Software Engineer"
+                  value={form.designation}
+                  onChange={handleChange}
+                  className="hr-input"
+                />
+              </div>
+
               {/* Issue Select — Multiple */}
               <div>
                 <label className="hr-field__label">
@@ -651,7 +683,7 @@ export default function HR() {
               <table className="hr-table">
                 <thead>
                   <tr>
-                    {["Ticket No","Ticket Type","Raised By HR","Emp Code","Emp Type / KYC","Department","Issue","Status","Date","Remark"].map((h, i) => (
+                  {["Ticket No","Ticket Type","Raised By HR","Emp Code","Emp Type / KYC","Department","Location","Designation","Issue","Status","Date","Remark"].map((h, i) => (
                       <th key={i}>{h}</th>
                     ))}
                   </tr>
@@ -684,7 +716,11 @@ export default function HR() {
                           <div className="hr-cell__emp-phone">{ticket.empPhone || "—"}</div>
                         </td>
 
-                        <td><div className="hr-cell__dept">{ticket.empDept || ticket.companyName || "—"}</div></td>
+                       <td><div className="hr-cell__dept">{ticket.empDept || ticket.companyName || "—"}</div></td>
+
+                        <td><div className="hr-cell__dept">{ticket.location || "—"}</div></td>
+
+                        <td><div className="hr-cell__dept">{ticket.designation || "—"}</div></td>
 
                         <td className="hr-cell__issue-wrap" onClick={() => setIssuePopup(ticket)}>
                           <div className="hr-cell__issue-text">{ticket.hrIssue || ticket.model || "—"}</div>
