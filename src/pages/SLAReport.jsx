@@ -57,13 +57,6 @@ export default function SLAReport() {
       .then(r => r.json())
       .then(data => { setTickets(data.tickets || []); setLoading(false); })
       .catch(() => setLoading(false));
-    const id = setInterval(() => {
-      fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
-        .then(r => r.json())
-        .then(data => { setTickets(data.tickets || []); })
-        .catch(() => {});
-    }, 30000);
-    return () => clearInterval(id);
   }, []);
 
   /* filtered tickets */
