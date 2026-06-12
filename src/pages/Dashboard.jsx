@@ -287,7 +287,8 @@ else if (form.issueSuffix.trim().length > 500) newErrors.description = "Descript
     return newErrors;
   };
 
-  const handleSubmit = () => {
+ const handleSubmit = () => {
+    if (submitting) return;
     form.description = `${form.issuePrefix} | ${form.issueSuffix}`;
 const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
