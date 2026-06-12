@@ -307,7 +307,10 @@ const [showLookupDropdown, setShowLookupDropdown] = useState(false);
 
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=5000`)
+    const name  = currentUser?.name  || "";
+    const email = currentUser?.email || "";
+    if (!name && !email) return;
+    fetch(`${BASE_URL}/tickets?mineName=${encodeURIComponent(name)}&mineEmail=${encodeURIComponent(email)}&limit=5000`)
       .then(r => r.json())
       .then(data => {
     const allData = data.tickets || [];
@@ -342,9 +345,9 @@ setTickets(mine);
       .catch(err => console.error(err));
   };
 
-  useEffect(() => {
+ useEffect(() => {
     fetchTickets();
-    const poll = setInterval(fetchTickets, 8000);
+    const poll = setInterval(fetchTickets, 30000);
     return () => clearInterval(poll);
   }, []);
 
@@ -582,13 +585,8 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
       if (firstErr) firstErr.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    setSubmitting(true);
     const cleanPhone = form.phone.replace(/\s+/g, "");
-    fetch(`${BASE_URL}/tickets?page=1&limit=5000`)
-  .then(r => r.json())
-  .then(rawData => {
-    const allTicketsData = rawData.tickets || [];
-    
+    {
         const newTicket = {
           ...form,
           phone:        cleanPhone,
@@ -617,11 +615,7 @@ setTimeout(() => setActiveTab("myraised"), 500);
           })
           .catch(() => setFormErrors({ submit: "❌ Failed to submit ticket." }))
           .finally(() => setSubmitting(false));
-      })
-      .catch(() => {
-        setFormErrors({ submit: "❌ Failed to check existing tickets." });
-        setSubmitting(false);
-      });
+      }
   };
 
   const borderColor = (field) => formErrors[field] ? "#ef4444" : "#ddd5c8";
