@@ -32,21 +32,18 @@ export default function ProductionSupport() {
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
   const [expandedImage, setExpandedImage] = useState(null);
 
-  const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+ const fetchTickets = () => {
+    fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent("Nishant Gupta")}&ticketType=production&limit=2000`)
       .then(r => r.json())
       .then(data => {
-        const mine = (data.tickets || []).filter(
-          t => t.ticketType === "production" && t.assignTo === "Nishant Gupta"
-        );
-        setTickets(mine);
+        setTickets(data.tickets || []);
       })
       .catch(console.error);
   };
 
   useEffect(() => {
     fetchTickets();
-    const id = setInterval(fetchTickets, 8000);
+    const id = setInterval(fetchTickets, 30000);
     return () => clearInterval(id);
   }, []);
 

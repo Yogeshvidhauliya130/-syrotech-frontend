@@ -76,22 +76,17 @@ const [activeTab, setActiveTab] = useState("tickets");
   const [dateSort, setDateSort]       = useState("newest");
 
   const fetchTickets = () => {
- fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+ fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent("Tejvir Singh")}&ticketType=lockin&limit=2000`)
   .then((r) => r.json())
   .then((data) => {
-    const mine = (data.tickets || []).filter(
-      (t) =>
-        t.ticketType === "lockin" &&
-        t.assignTo === "Tejvir Singh"
-    );
-    setTickets(mine);
+    setTickets(data.tickets || []);
   })
   .catch(console.error);
   };
 
   useEffect(() => {
     fetchTickets();
-    const id = setInterval(fetchTickets, 8000);
+    const id = setInterval(fetchTickets, 30000);
     return () => clearInterval(id);
   }, []);
 

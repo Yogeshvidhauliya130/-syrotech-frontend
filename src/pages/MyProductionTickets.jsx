@@ -24,13 +24,12 @@ export default function MyProductionTickets({ tickets: allTickets }) {
   const [expandedImage, setExpandedImage] = useState(null);
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=2000`)
+    const email = currentUser?.email || "";
+    if (!email) { setLoading(false); return; }
+    fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&ticketType=production&limit=2000`)
       .then(r => r.json())
       .then(data => {
-        const mine = (data.tickets || []).filter(
-          t => t.ticketType === "production" && t.raisedBy === currentUser?.email
-        );
-        setTickets(mine);
+        setTickets(data.tickets || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -45,7 +44,7 @@ export default function MyProductionTickets({ tickets: allTickets }) {
       setLoading(false);
     } else {
       fetchTickets();
-      const id = setInterval(fetchTickets, 10000);
+      const id = setInterval(fetchTickets, 60000);
       return () => clearInterval(id);
     }
   }, [allTickets]);
