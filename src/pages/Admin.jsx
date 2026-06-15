@@ -284,25 +284,9 @@ function Analytics({ typeFilter = "all" }) {
   
   const [filter, setFilter] = useState("all");
 
-const handleFilterChange = async (newFilter) => {
+const handleFilterChange = (newFilter) => {
   setFilter(newFilter);
-  setIsLoading(true);
-  try {
-   const res = await fetch(`${BASE_URL}/tickets?page=1&limit=100`);
-    const data = await res.json();
-    setTickets(data.tickets || []);
-    setTotalPages(data.totalPages || 1);
-    setTotalCount(data.totalCount || 0);
-    setOpenCount(data.openCount || 0);
-    setResolvedCount(data.resolvedCount || 0);
-    setRmaCount(data.rmaCount || 0);
-    setReopenedCount(data.reopenedCount || 0);
-    setPage(1);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setIsLoading(false);
-  }
+  loadTickets(1, newFilter);
 };
  const [search, setSearch]             = useState("");
   const [ticketNoSearch, setTicketNoSearch] = useState([]);
@@ -364,10 +348,11 @@ const [rmaCount, setRmaCount] = useState(0);   // ✅ NEW
 const [reopenedCount, setReopenedCount] = useState(0);   // ✅ NEW
 const [isLoading, setIsLoading] = useState(false);
 
-const loadTickets = async (pageNum = 1) => {
+const loadTickets = async (pageNum = 1, statusFilter = filter) => {
   setIsLoading(true);
   try {
-    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100`);
+    const statusParam = statusFilter && statusFilter !== "all" ? `&status=${statusFilter}` : "";
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
