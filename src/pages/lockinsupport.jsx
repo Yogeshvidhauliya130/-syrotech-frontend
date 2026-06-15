@@ -76,7 +76,7 @@ const [activeTab, setActiveTab] = useState("tickets");
   const [dateSort, setDateSort]       = useState("newest");
 
   const fetchTickets = () => {
- fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent("Tejvir Singh")}&ticketType=lockin&limit=2000`)
+ fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(currentUser?.name || "")}&ticketType=lockin&limit=2000`)
   .then((r) => r.json())
   .then((data) => {
     setTickets(data.tickets || []);

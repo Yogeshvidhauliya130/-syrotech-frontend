@@ -265,10 +265,9 @@ else if (!/^\d+$/.test(form.phone.replace(/\s+/g, ""))) e.phone = "Enter a valid
 
     const ticketData = {
       ...form,
-      ticketType:   "lockin",
+     ticketType:   "lockin",
        logoImage:    logoType === "customized" ? (logoFile || "") : "syrotech",
 logoType:     logoType,
-      assignTo:     "Tejvir Singh",
       raisedBy:     currentUser?.email || "",
       raisedByName: currentUser?.name  || "",
       status:       "open",
