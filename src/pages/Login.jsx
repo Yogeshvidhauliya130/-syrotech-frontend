@@ -66,7 +66,7 @@ useEffect(() => {
 else if (data.user.role === "hr")       navigate("/hr",       { replace: true });
 else if (data.user.role === "hradmin")  navigate("/hrAdmin",  { replace: true });
 else if (data.user.role === "support") {
-  if (data.user.email === "tejvir.singh@goip.in") {
+  if (data.user.email === "tejvir.singh@goip.in" || data.user.email === "naman.gupta@goip.in") {
     navigate("/lockinsupport", { replace: true });
   } else if (data.user.email === "nishant.gupta@goip.in") {
     navigate("/productionsupport", { replace: true });
