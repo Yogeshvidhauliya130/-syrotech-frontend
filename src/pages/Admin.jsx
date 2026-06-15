@@ -272,6 +272,11 @@ const [analyticsType, setAnalyticsType] = useState("all");
 ═══════════════════════════════════════════════════ */
 function Analytics({ typeFilter = "all" }) {
   const [tickets, setTickets]           = useState([]);
+  const [reassignedTickets, setReassignedTickets] = useState([]);
+  const [reassignedPage, setReassignedPage] = useState(1);
+  const [reassignedTotalPages, setReassignedTotalPages] = useState(1);
+  const [reassignedTotalCount, setReassignedTotalCount] = useState(0);
+  const [reassignedLoading, setReassignedLoading] = useState(false);
   const {
   filterCat, filterSub, filterItem,
   setCat, setSub, setItem,
@@ -391,6 +396,28 @@ useEffect(() => {
   loadTickets(1);
 }, []);
 
+// ✅ Load reassigned tickets from server, 100 per page
+const loadReassigned = async (pageNum = 1) => {
+  setReassignedLoading(true);
+  try {
+    const res = await fetch(`${BASE_URL}/tickets?reassigned=true&page=${pageNum}&limit=100`);
+    const data = await res.json();
+    setReassignedTickets(data.tickets || []);
+    setReassignedTotalPages(data.totalPages || 1);
+    setReassignedTotalCount(data.totalCount || 0);
+    setReassignedPage(pageNum);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setReassignedLoading(false);
+  }
+};
+
+// Load page 1 when the Reassigned tab is opened
+useEffect(() => {
+  if (analyticsTab === "reassigned") loadReassigned(1);
+}, [analyticsTab]);
+
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
       .then(r => r.json())
@@ -453,7 +480,7 @@ useEffect(() => {
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
 );
   // All reassigned tickets
- const allReassigned = tickets
+ const allReassigned = reassignedTickets
     .filter(t => !!t.reassignedFrom)
     .filter(t => filter === "all" || (t.status || "open").toLowerCase() === filter)
     .filter(t => reassignProductFilter === "all" || t.category === reassignProductFilter)
@@ -884,7 +911,7 @@ isRma: issuePopup.firstIsRma || false,
       <div style={{ display: "flex", gap: 0, background: "white", borderRadius: 10, border: "1.5px solid #e0d8d0", marginBottom: 16, overflow: "hidden", width: "fit-content" }}>
         {[
           ["tickets",    "📋 All Tickets",                  filtered.length],
-          ["reassigned", "🔄 Reassigned Tickets",           tickets.filter(t => !!t.reassignedFrom).length],
+          ["reassigned", "🔄 Reassigned Tickets",           reassignedTotalCount],
         ].map(([key, label, cnt]) => (
           <button key={key} onClick={() => setAnalyticsTab(key)} style={{
             padding: "10px 20px", fontSize: 13, fontWeight: analyticsTab === key ? 800 : 500,
@@ -1546,8 +1573,40 @@ firstIsRma: ticket.firstIsRma || false,
               </tbody>
             </table>
           </div>
-          <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af", textAlign: "right" }}>
-            Showing <strong style={{ color: "#374151" }}>{allReassigned.length}</strong> of <strong style={{ color: "#374151" }}>{tickets.filter(t => !!t.reassignedFrom).length}</strong> reassigned tickets
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>
+              Showing <strong style={{ color: "#374151" }}>{allReassigned.length}</strong> on this page · <strong style={{ color: "#374151" }}>{reassignedTotalCount}</strong> reassigned total
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                onClick={() => loadReassigned(reassignedPage - 1)}
+                disabled={reassignedPage <= 1 || reassignedLoading}
+                style={{
+                  padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db",
+                  background: reassignedPage <= 1 ? "#f3f4f6" : "white",
+                  color: reassignedPage <= 1 ? "#9ca3af" : "#374151",
+                  fontWeight: 700, fontSize: 13, cursor: reassignedPage <= 1 ? "not-allowed" : "pointer",
+                  fontFamily: "inherit"
+                }}>
+                ← Previous
+              </button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>
+                Page {reassignedPage} of {reassignedTotalPages}
+              </span>
+              <button
+                onClick={() => loadReassigned(reassignedPage + 1)}
+                disabled={reassignedPage >= reassignedTotalPages || reassignedLoading}
+                style={{
+                  padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db",
+                  background: reassignedPage >= reassignedTotalPages ? "#f3f4f6" : "white",
+                  color: reassignedPage >= reassignedTotalPages ? "#9ca3af" : "#374151",
+                  fontWeight: 700, fontSize: 13, cursor: reassignedPage >= reassignedTotalPages ? "not-allowed" : "pointer",
+                  fontFamily: "inherit"
+                }}>
+                Next →
+              </button>
+              {reassignedLoading && <span style={{ fontSize: 12, color: "#ff5a00", fontWeight: 700 }}>Loading...</span>}
+            </div>
           </div>
         </>
       )}
