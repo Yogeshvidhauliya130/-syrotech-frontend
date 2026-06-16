@@ -254,7 +254,7 @@ else if (!/^\d+$/.test(form.phone.replace(/\s+/g, ""))) e.phone = "Enter a valid
 
     setSubmitting(true);
 
-    // Convert file to base64 if uploaded
+    // Convert files to base64 if uploaded
     let fileBase64 = "";
     let fileNameSaved = "";
     if (file) {
@@ -295,6 +295,7 @@ logoType:     logoType,
         customer: "", email: "", companyName: "", state: "", city: "", pincode: "",
         description: "",
       });
+
       setFile(null);
       setFileName("");
       setLookupQuery("");
