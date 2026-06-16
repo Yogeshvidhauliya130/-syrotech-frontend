@@ -542,7 +542,7 @@ select option { color: #111111; background-color: #ffffff; }
 /* ══════════════════════════════════════════
    SCROLLBAR
 ══════════════════════════════════════════ */
-::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar { width: 14px; height: 14px; }
 ::-webkit-scrollbar-track { background: #e8e0d4; border-radius: 10px;}
 ::-webkit-scrollbar-thumb { background: #c4b8ac; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #a89890; }
