@@ -151,6 +151,7 @@ export default function RaiseLockinTicket({ onSuccess }) {
     state: "",
     city: "",
     pincode: "",
+    description: "",
   });
 
   const [file, setFile] = useState(null);
@@ -228,6 +229,8 @@ const [allTickets, setAllTickets] = useState([]);
 
   const validate = () => {
     const e = {};
+    if (!form.description.trim()) e.description = "Please describe the issue.";
+    else if (form.description.trim().length > 500) e.description = "Description cannot exceed 500 characters.";
     if (!form.category)    e.category    = "Please select a category.";
    if (!logoType) e.logoType = "Please select a logo type.";
 if (logoType === "customized" && !logoFile) e.logo = "Company logo is required.";
@@ -274,6 +277,7 @@ logoType:     logoType,
       source:       "sales-lockin",
       date:         new Date().toISOString().slice(0, 10),
       createdAt:    new Date().toISOString(),
+       firstDescription: form.description,
       fileBase64,
       fileName:     fileNameSaved,
     };
@@ -289,6 +293,7 @@ logoType:     logoType,
       setForm({
         category: "", subCategory: "", model: "", hardwareVersion: "",
         customer: "", email: "", companyName: "", state: "", city: "", pincode: "",
+        description: "",
       });
       setFile(null);
       setFileName("");
@@ -702,6 +707,29 @@ setLogoPreview("");
         </div>
         {errors.file && <span className="field-error">{errors.file}</span>}
       </div>
+
+ {/* issue description textarea*/}
+{/* Issue Description */}
+      <div className="form-field" style={{ padding: "20px 36px 0" }}>
+        <label className="form-label">
+          Issue Description <span className="req">*</span>
+          <span className="form-hint"> (max 500 characters)</span>
+        </label>
+        <textarea
+          rows={4}
+          name="description"
+          placeholder="Describe the issue in detail — what happened, when it started, what error you see..."
+          value={form.description}
+          onChange={handleChange}
+          style={{ ...inputStyle("description"), resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {errors.description
+            ? <span className="field-error">{errors.description}</span>
+            : <span className="field-hint">{(form.description || "").length}/500 characters</span>}
+        </div>
+      </div>
+
 
       {/* Submit */}
       <button

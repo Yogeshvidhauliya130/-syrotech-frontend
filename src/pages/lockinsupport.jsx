@@ -551,7 +551,7 @@ const handleResolve = async (ticketId) => {
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, background: "white", minWidth: 1100 }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", position: "sticky", top: 0, zIndex: 2 }}>
-        {["Ticket No","Date","Category","Product Details","Customer","Raised By","File","Logo","History","Status","Status Update","Action"].map((h, i) => (
+        {["Ticket No","Date","Category","Product Details","Customer","Issue","Raised By","File","Logo","History","Status","Status Update","Action"].map((h, i) => (
                     <th key={i} style={{
                       padding: "12px 12px", fontSize: 10, fontWeight: 800,
                       color: "white", textTransform: "uppercase",
@@ -625,6 +625,27 @@ const handleResolve = async (ticketId) => {
   </div>
   <div style={{ fontSize: 10, color: "#6b7280" }}>{t.companyName || ""}</div>
 </td>
+
+{/* Issue */}
+                        <td style={{ padding: "10px 12px" }}>
+                          <div
+                            onClick={() => setIssuePopup({
+                              description: t.description,
+                              firstDescription: t.firstDescription || t.description,
+                              firstCreatedAt: t.firstCreatedAt || t.createdAt,
+                              firstRaisedByName: t.firstRaisedByName || t.raisedByName,
+                              firstResolvedNotes: t.firstResolvedNotes || (Array.isArray(t.issueHistory) && t.issueHistory.length === 0 ? t.resolutionNotes : null) || null,
+                              firstResolvedAt: t.firstResolvedAt || null,
+                              firstResolvedBy: t.firstResolvedBy || null,
+                              issueHistory: t.issueHistory,
+                              resolutionNotes: t.resolutionNotes,
+                            })}
+                            style={{ fontSize: 12, color: "#374151", cursor: "pointer", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#9ca3af" }}
+                            title="Click to view full issue">
+                            {t.description?.length > 35 ? t.description.slice(0, 35) + "…" : t.description || "—"}
+                          </div>
+                        </td>
+                        
                         <td style={{ padding: "10px 12px" }}>
   <div
     onClick={() => setRaisedByPopup({
