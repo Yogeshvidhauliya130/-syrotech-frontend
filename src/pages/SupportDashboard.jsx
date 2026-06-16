@@ -257,6 +257,7 @@ const [resolveAction, setResolveAction] = useState({});
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const prevCountRef = useRef(0);
+const [assignedCounts, setAssignedCounts] = useState({ all: 0, open: 0, resolved: 0, rma: 0, reopened: 0 });
   // ✅ CHANGE 2: New filter for tickets reassigned OUT by current user
   const [myReassignedFilter, setMyReassignedFilter] = useState(false);
 
@@ -310,7 +311,7 @@ const [showLookupDropdown, setShowLookupDropdown] = useState(false);
     const name  = currentUser?.name  || "";
     const email = currentUser?.email || "";
     if (!name && !email) return;
-    fetch(`${BASE_URL}/tickets?mineName=${encodeURIComponent(name)}&mineEmail=${encodeURIComponent(email)}&limit=5000`)
+    fetch(`${BASE_URL}/tickets?mineName=${encodeURIComponent(name)}&mineEmail=${encodeURIComponent(email)}&limit=200`)
       .then(r => r.json())
       .then(data => {
     const allData = data.tickets || [];
@@ -345,9 +346,32 @@ setTickets(mine);
       .catch(err => console.error(err));
   };
 
+  //fetchAssignedCounts 
+
+  const fetchAssignedCounts = () => {
+  const name = currentUser?.name || "";
+  if (!name) return;
+  fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(name)}&limit=1`)
+    .then(r => r.json())
+    .then(data => {
+      setAssignedCounts({
+        all:      data.totalCount    || 0,
+        open:     data.openCount     || 0,
+        resolved: data.resolvedCount || 0,
+        rma:      data.rmaCount      || 0,
+        reopened: data.reopenedCount || 0,
+      });
+    })
+    .catch(err => console.error(err));
+};
+
  useEffect(() => {
     fetchTickets();
-    const poll = setInterval(fetchTickets, 30000);
+    fetchAssignedCounts();
+    const poll = setInterval(() => {
+      fetchTickets();
+      fetchAssignedCounts();
+    }, 30000);
     return () => clearInterval(poll);
   }, []);
 
@@ -629,13 +653,7 @@ setTimeout(() => setActiveTab("myraised"), 500);
     fontFamily: "DM Sans, sans-serif", color: "#111",
   });
 
-  const counts = {
-    all:      tickets.length,
-    open:     tickets.filter(t => t.status === "open").length,
-    resolved: tickets.filter(t => t.status === "resolved").length,
-    rma:      tickets.filter(t => t.status === "rma").length,
-    reopened: tickets.filter(t => t.status === "reopened").length,
-  };
+ const counts = assignedCounts;
   const activeTotal = counts.all;
 const resolutionPct = activeTotal === 0 ? 0 : Math.round(((counts.resolved + counts.rma) / activeTotal) * 100);
   const resolved      = tickets.filter(t => t.status === "resolved" && t.createdAt && t.resolvedAt);
@@ -1173,7 +1191,7 @@ const filteredMyReassigned = allTickets
       {/* Tabs — ✅ CHANGE 2: Added "My Reassigned" tab */}
       <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
         {[
-          ["tickets",      `📋 Assigned Tickets (${tickets.length})`],
+         ["tickets",      `📋 Assigned Tickets (${counts.all})`],
           ["myraised",     `📞 My Raised (${myRaisedTickets.length})`],
           ["myreassigned", `🔄 My Reassigned (${myReassignedTickets.length})`],
           ["raise",        "🎫 Raise Ticket"],
