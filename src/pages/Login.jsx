@@ -270,7 +270,7 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
 
     {/* LEFT SIDE — Banner Image */}
     <div className="login-left-panel">
-      <img src="/banner.png" alt="Syrotech Banner" />
+      <img src="/banner3.jpg" alt="Syrotech Banner" />
     </div>
 
     {/* RIGHT SIDE — Login Card */}
