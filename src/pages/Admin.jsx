@@ -323,7 +323,45 @@ const [filterDate, setFilterDate]   = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
   const [employeePopup, setEmployeePopup] = useState(null);
+  const [editTicket, setEditTicket] = useState(null);
 
+
+
+  const saveEditTicket = () => {
+    if (!editTicket) return;
+    const id = editTicket.id;
+    setSavingId(id);
+    const body = {
+      customer:        editTicket.customer,
+      email:           editTicket.email,
+      phone:           editTicket.phone,
+      companyName:     editTicket.companyName,
+      city:            editTicket.city,
+      country:         editTicket.country,
+      category:        editTicket.category,
+      subCategory:     editTicket.subCategory,
+      model:           editTicket.model,
+      serialNo:        editTicket.serialNo,
+      mac:             editTicket.mac,
+      description:     editTicket.description,
+      firstDescription: editTicket.description,
+      status:          editTicket.status,
+      assignTo:        editTicket.assignTo,
+    };
+    fetch(`${BASE_URL}/tickets/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+      .then(r => r.json())
+      .then(updated => {
+        setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
+        setSavingId(null);
+        setEditTicket(null);
+        alert("✅ Ticket updated successfully!");
+      })
+      .catch(err => { console.error("Edit failed:", err); setSavingId(null); alert("❌ Failed to update ticket."); });
+  };
   
   const saveFeedback = (ticketId, ticket) => {
     const fb = feedbackData[ticketId] || {};
@@ -840,7 +878,75 @@ isRma: issuePopup.firstIsRma || false,
     </div>
   </div>
 )}
+{/* Edit Ticket Popup */}
+{editTicket && (
+  <div onClick={() => setEditTicket(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:560, width:"100%", maxHeight:"88vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #fad8be" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <div style={{ fontSize:15, fontWeight:800, color:"#c94500" }}>✏️ Edit Ticket #{editTicket.ticketNumber}</div>
+        <button onClick={() => setEditTicket(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+      </div>
 
+      {[
+        ["Customer Name", "customer"],
+        ["Email", "email"],
+        ["Phone", "phone"],
+        ["Company", "companyName"],
+        ["City", "city"],
+        ["Country", "country"],
+        ["Category", "category"],
+        ["Sub Category", "subCategory"],
+        ["Model", "model"],
+        ["Serial No", "serialNo"],
+        ["MAC Address", "mac"],
+        ["Assigned To", "assignTo"],
+      ].map(([label, field]) => (
+        <div key={field} style={{ marginBottom:12 }}>
+          <label style={{ fontSize:11, fontWeight:700, color:"#6b7280", display:"block", marginBottom:4 }}>{label}</label>
+          <input
+            value={editTicket[field] || ""}
+            onChange={e => setEditTicket(prev => ({ ...prev, [field]: e.target.value }))}
+            style={{ width:"100%", padding:"9px 12px", border:"1.5px solid #d1d5db", borderRadius:8, fontSize:13, outline:"none", fontFamily:"inherit", color:"#111", boxSizing:"border-box" }}
+          />
+        </div>
+      ))}
+
+      <div style={{ marginBottom:12 }}>
+        <label style={{ fontSize:11, fontWeight:700, color:"#6b7280", display:"block", marginBottom:4 }}>Status</label>
+        <select
+          value={editTicket.status || "open"}
+          onChange={e => setEditTicket(prev => ({ ...prev, status: e.target.value }))}
+          style={{ width:"100%", padding:"9px 12px", border:"1.5px solid #d1d5db", borderRadius:8, fontSize:13, outline:"none", fontFamily:"inherit", color:"#111", background:"white", boxSizing:"border-box" }}>
+          <option value="open">open</option>
+          <option value="resolved">resolved</option>
+          <option value="rma">rma</option>
+          <option value="reopened">reopened</option>
+        </select>
+      </div>
+
+      <div style={{ marginBottom:16 }}>
+        <label style={{ fontSize:11, fontWeight:700, color:"#6b7280", display:"block", marginBottom:4 }}>Issue Description</label>
+        <textarea
+          rows={4}
+          value={editTicket.description || ""}
+          onChange={e => setEditTicket(prev => ({ ...prev, description: e.target.value }))}
+          style={{ width:"100%", padding:"9px 12px", border:"1.5px solid #d1d5db", borderRadius:8, fontSize:13, outline:"none", fontFamily:"inherit", color:"#111", resize:"vertical", lineHeight:1.6, boxSizing:"border-box" }}
+        />
+      </div>
+
+      <div style={{ display:"flex", gap:10 }}>
+        <button onClick={saveEditTicket} disabled={savingId === editTicket.id}
+          style={{ flex:1, background:"linear-gradient(135deg,#c94500,#ff5a00)", color:"white", border:"none", padding:"11px 24px", borderRadius:9, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
+          {savingId === editTicket.id ? "⏳ Saving..." : "✅ Save Changes"}
+        </button>
+        <button onClick={() => setEditTicket(null)}
+          style={{ background:"#e2e8f0", border:"none", borderRadius:9, padding:"11px 20px", cursor:"pointer", fontSize:13, color:"#64748b", fontFamily:"inherit" }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
 
 
@@ -1160,9 +1266,13 @@ isRma: issuePopup.firstIsRma || false,
                             🛠️ {ticket.assignTo}
                           </div>
                         )}
-                        {isReassigned && (
+                       {isReassigned && (
                           <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700, marginTop: 2 }}>🔄 from {ticket.reassignedFrom}</div>
                         )}
+                        <div onClick={(e) => { e.stopPropagation(); setEditTicket({ ...ticket }); }}
+                          style={{ fontSize: 10, color: "#c94500", fontWeight: 700, marginTop: 4, cursor: "pointer", background: "#fff4ee", padding: "2px 8px", borderRadius: 4, display: "inline-block", border: "1px solid #fad8be" }}>
+                          ✏️ Edit
+                        </div>
                       </td>
 
 {/* Employee Details */}
