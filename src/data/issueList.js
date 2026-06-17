@@ -396,6 +396,15 @@ export const ISSUE_LIST = {
     ],
   },
 
+
+
+    // EMS/NMS 
+  "EMS/NMS": {
+    "_common": [
+      "Others",
+    ],
+  },
+
 };
 
 

@@ -89,6 +89,21 @@ export const PRODUCT_MODELS = {
     "SY-AP-1200-ODAC",
     "SY-AP-1200-AC",
     "SY-AP-3000-AX",
+    "others",
+  ]
+},
+
+
+
+
+// ── Wirelss Access Point ───────────────────────────────
+"EMS/NMS": {
+  "EMS/NMS": [
+    "L2 EMS",
+    "L3 EMS",
+    "VINCE",
+    "BS-EMS",
+    "others",
   ]
 },
 
@@ -887,6 +902,7 @@ export const SALES_PRODUCT_MODELS = {
   "OLT":                                  PRODUCT_MODELS["OLT"],
   "ONT":                                          PRODUCT_MODELS["ONT"],
   "Wireless Access Point":                      PRODUCT_MODELS["Wireless Access Point"],
+  "EMS/NMS":                                    PRODUCT_MODELS["EMS/NMS"],
   "Media Converter":                            PRODUCT_MODELS["Media Converter"],
   "Optical Transceivers":                       PRODUCT_MODELS["Optical Transceivers"],
   "Networking Switch":                          PRODUCT_MODELS["Networking Switch"],
