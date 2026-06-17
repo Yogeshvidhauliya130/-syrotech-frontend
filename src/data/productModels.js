@@ -84,7 +84,7 @@ export const PRODUCT_MODELS = {
 
 
 // ── Wirelss Access Point ───────────────────────────────
-"Wirelss Access Point": {
+"Wireless Access Point": {
   "Access Point": [
     "SY-AP-1200-ODAC",
     "SY-AP-1200-AC",
