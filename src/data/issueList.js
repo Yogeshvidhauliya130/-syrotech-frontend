@@ -72,8 +72,7 @@ export const ISSUE_LIST = {
 
 // ── Wireless Access Point ──────────────────────────────────────────────────
 "Wireless Access Point": {
-  "_common": [
-    "Others",
+  "Access Point": [
     "Others",
   ],
 },
