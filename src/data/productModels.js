@@ -81,6 +81,19 @@ export const PRODUCT_MODELS = {
   ]
 },
 
+
+
+// ── Wirelss Access Point ───────────────────────────────
+"Wirelss Access Point": {
+  "Access Point": [
+    "SY-AP-1200-ODAC",
+    "SY-AP-1200-AC",
+    "SY-AP-3000-AX",
+  ]
+},
+
+
+
   // ── Media Converter ─────────────────────────
   "Media Converter": {
     "Media Converter": [
@@ -871,6 +884,7 @@ export const CUSTOMER_CATEGORIES = getCategories();
 export const SALES_PRODUCT_MODELS = {
   "OLT":                                  PRODUCT_MODELS["OLT"],
   "ONT":                                          PRODUCT_MODELS["ONT"],
+  "Wireless Access Point":                      PRODUCT_MODELS["Wireless Access Point"],
   "Media Converter":                            PRODUCT_MODELS["Media Converter"],
   "Optical Transceivers":                       PRODUCT_MODELS["Optical Transceivers"],
   "Networking Switch":                          PRODUCT_MODELS["Networking Switch"],
