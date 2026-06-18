@@ -395,7 +395,8 @@ const loadTickets = async (pageNum = 1, statusFilter = filter) => {
   setIsLoading(true);
   try {
     const statusParam = statusFilter && statusFilter !== "all" ? `&status=${statusFilter}` : "";
-    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}`);
+    const typeParam = typeFilter && typeFilter !== "all" ? `&typeFilter=${typeFilter}` : "";
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
@@ -432,13 +433,14 @@ useEffect(() => {
 
 useEffect(() => {
   loadTickets(1);
-}, []);
+}, [typeFilter]);
 
 // ✅ Load reassigned tickets from server, 100 per page
 const loadReassigned = async (pageNum = 1) => {
   setReassignedLoading(true);
   try {
-    const res = await fetch(`${BASE_URL}/tickets?reassigned=true&page=${pageNum}&limit=100`);
+    const typeParam = typeFilter && typeFilter !== "all" ? `&typeFilter=${typeFilter}` : "";
+    const res = await fetch(`${BASE_URL}/tickets?reassigned=true&page=${pageNum}&limit=100${typeParam}`);
     const data = await res.json();
     setReassignedTickets(data.tickets || []);
     setReassignedTotalPages(data.totalPages || 1);
@@ -474,11 +476,6 @@ useEffect(() => {
   const filtered = applyFilter(
   tickets
     .filter(t => {
-      if (typeFilter === "product") return t.source !== "hr" && t.ticketType !== "lockin" && t.ticketType !== "product_testing";
-      if (typeFilter === "lockin")  return t.ticketType === "lockin";
-      if (typeFilter === "hr")      return t.source === "hr" || t.source === "hradmin";
-      if (typeFilter === "production") return t.ticketType === "production";
-      if (typeFilter === "testing")    return t.ticketType === "product_testing";
       return true;
     })
     .filter(t => {
