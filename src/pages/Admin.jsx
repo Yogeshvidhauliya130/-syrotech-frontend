@@ -1277,23 +1277,25 @@ isRma: issuePopup.firstIsRma || false,
 {/* Employee Details */}
 <td style={{ padding:"11px 12px", borderRight:"1px solid #e0d8d0", textAlign:"center" }}>
   {(ticket.empName || ticket.empCode || ticket.hrIssue) ? (
-    <button onClick={() => setEmployeePopup({
-      empType:  ticket.empType,
-      empName:  ticket.empName,
-      empEmail: ticket.empEmail,
-      empPhone: ticket.empPhone,
-      empCode:  ticket.empCode,
-      empDept:  ticket.empDept,
-      location:    ticket.location,
-      designation: ticket.designation,
-      hrIssue:  ticket.hrIssue,
-      modelNo:  ticket.modelNo,
-      serialNo: ticket.serialNo,
-    })}
-    style={{ background:"#fdf2f8", border:"1.5px solid #fbcfe8", borderRadius:8, padding:"5px 10px", cursor:"pointer", fontSize:11, fontWeight:700, color:"#9d174d", fontFamily:"inherit" }}>
+    <div>
       {ticket.empName && <div style={{ fontSize:12, fontWeight:700, color:"#9d174d", marginBottom:4 }}>{ticket.empName}</div>}
-      🧑‍💼 View
-    </button>
+      <button onClick={() => setEmployeePopup({
+        empType:  ticket.empType,
+        empName:  ticket.empName,
+        empEmail: ticket.empEmail,
+        empPhone: ticket.empPhone,
+        empCode:  ticket.empCode,
+        empDept:  ticket.empDept,
+        location:    ticket.location,
+        designation: ticket.designation,
+        hrIssue:  ticket.hrIssue,
+        modelNo:  ticket.modelNo,
+        serialNo: ticket.serialNo,
+      })}
+      style={{ background:"#fdf2f8", border:"1.5px solid #fbcfe8", borderRadius:8, padding:"5px 10px", cursor:"pointer", fontSize:11, fontWeight:700, color:"#9d174d", fontFamily:"inherit" }}>
+        🧑‍💼 View
+      </button>
+    </div>
   ) : (
     <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>
   )}
