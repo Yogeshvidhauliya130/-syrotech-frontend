@@ -1291,6 +1291,7 @@ isRma: issuePopup.firstIsRma || false,
       serialNo: ticket.serialNo,
     })}
     style={{ background:"#fdf2f8", border:"1.5px solid #fbcfe8", borderRadius:8, padding:"5px 10px", cursor:"pointer", fontSize:11, fontWeight:700, color:"#9d174d", fontFamily:"inherit" }}>
+      {ticket.empName && <div style={{ fontSize:12, fontWeight:700, color:"#9d174d", marginBottom:4 }}>{ticket.empName}</div>}
       🧑‍💼 View
     </button>
   ) : (
