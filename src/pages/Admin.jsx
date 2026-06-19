@@ -397,7 +397,8 @@ const loadTickets = async (pageNum = 1, statusFilter = filter) => {
   try {
     const statusParam = statusFilter && statusFilter !== "all" ? `&status=${statusFilter}` : "";
     const typeParam = typeFilter && typeFilter !== "all" ? `&typeFilter=${typeFilter}` : "";
-    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}`);
+    const searchParam = search.trim() && !/^\d+$/.test(search.trim()) ? `&search=${encodeURIComponent(search.trim())}` : "";
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}${searchParam}`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
@@ -431,6 +432,19 @@ useEffect(() => {
     setSearchingTicketNo(false);
   }
 }, [search]);
+
+// ✅ When admin types a name/company/phone (not pure digits), search the WHOLE database
+useEffect(() => {
+  const q = search.trim();
+  if (q && !/^\d+$/.test(q)) {
+    const timer = setTimeout(() => {
+      loadTickets(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  } else if (!q) {
+    loadTickets(1);
+  }
+}, [search, typeFilter]);
 
 useEffect(() => {
   loadTickets(1);
