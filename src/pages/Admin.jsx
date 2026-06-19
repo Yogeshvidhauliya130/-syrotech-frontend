@@ -341,6 +341,7 @@ const [filterDate, setFilterDate]   = useState("");
       category:        editTicket.category,
       subCategory:     editTicket.subCategory,
       model:           editTicket.model,
+      modelNo:         editTicket.modelNo,
       serialNo:        editTicket.serialNo,
       mac:             editTicket.mac,
       description:     editTicket.description,
