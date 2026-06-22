@@ -444,7 +444,7 @@ useEffect(() => {
   } else if (!q) {
     loadTickets(1);
   }
-}, [search, typeFilter]);
+}, [search]);
 
 useEffect(() => {
   loadTickets(1);
