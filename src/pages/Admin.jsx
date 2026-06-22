@@ -291,7 +291,7 @@ function Analytics({ typeFilter = "all" }) {
 
 const handleFilterChange = (newFilter) => {
   setFilter(newFilter);
-  loadTickets(1, newFilter);
+  loadTickets(1, newFilter, sourceFilter);
 };
  const [search, setSearch]             = useState("");
   const [ticketNoSearch, setTicketNoSearch] = useState([]);
@@ -325,7 +325,9 @@ const [filterDate, setFilterDate]   = useState("");
   const [employeePopup, setEmployeePopup] = useState(null);
   const [editTicket, setEditTicket] = useState(null);
 
-
+useEffect(() => {
+  loadTickets(1, filter, sourceFilter);
+}, [sourceFilter]);
 
   const saveEditTicket = () => {
     if (!editTicket) return;
@@ -392,14 +394,27 @@ const [rmaCount, setRmaCount] = useState(0);   // ✅ NEW
 const [reopenedCount, setReopenedCount] = useState(0);   // ✅ NEW
 const [isLoading, setIsLoading] = useState(false);
 
-const loadTickets = async (pageNum = 1, statusFilter = filter) => {
+const loadTickets = async (pageNum = 1, statusFilter = filter, srcFilter = sourceFilter) => {
   setIsLoading(true);
   try {
     const statusParam = statusFilter && statusFilter !== "all" ? `&status=${statusFilter}` : "";
     const typeParam = typeFilter && typeFilter !== "all" ? `&typeFilter=${typeFilter}` : "";
     const isTicketNo = /^\d+$/.test(search.trim()) && search.trim().length < 6;
-const searchParam = search.trim() && !isTicketNo ? `&search=${encodeURIComponent(search.trim())}` : "";
-    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}${searchParam}`);
+    const searchParam = search.trim() && !isTicketNo ? `&search=${encodeURIComponent(search.trim())}` : "";
+
+    // ✅ Build source param for DB filtering
+    let sourceParam = "";
+    if (srcFilter === "customer" || srcFilter === "dealer" || srcFilter === "Service Provider" || srcFilter === "sipartner") {
+      sourceParam = "&source=customer";
+    } else if (srcFilter === "support") {
+      sourceParam = "&source=support";
+    } else if (srcFilter === "hr") {
+      sourceParam = "&source=hr,hradmin";
+    } else if (srcFilter === "sales") {
+      sourceParam = "&source=sales";
+    }
+
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}${searchParam}${sourceParam}`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
@@ -1487,7 +1502,7 @@ firstIsRma: ticket.firstIsRma || false,
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button
-                onClick={() => loadTickets(page - 1)}
+               onClick={() => loadTickets(page - 1, filter, sourceFilter)}
                 disabled={page <= 1 || isLoading}
                 style={{
                   padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db",
@@ -1502,7 +1517,7 @@ firstIsRma: ticket.firstIsRma || false,
                 Page {page} of {totalPages}
               </span>
               <button
-                onClick={() => loadTickets(page + 1)}
+                onClick={() => loadTickets(page + 1, filter, sourceFilter)}
                 disabled={page >= totalPages || isLoading}
                 style={{
                   padding: "7px 18px", borderRadius: 8, border: "1.5px solid #d1d5db",
