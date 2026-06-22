@@ -284,7 +284,7 @@ select.field-input {
 
 .login-left-panel img {
   width: 100%;
-  height: 100%;
+  height: 95%;
    object-fit: cover;  
    object-position: left center;  
   display: block;   /* removes bottom gap under image */
