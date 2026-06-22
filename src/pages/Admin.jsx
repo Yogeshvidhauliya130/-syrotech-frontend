@@ -437,7 +437,7 @@ useEffect(() => {
 // ✅ When admin types a name/company/phone (not pure digits), search the WHOLE database
 useEffect(() => {
   const q = search.trim();
-  if (q && !/^\d+$/.test(q)) {
+  if (q && (!/^\d+$/.test(q) || q.length >= 6)) {
     const timer = setTimeout(() => {
       loadTickets(1);
     }, 400);
@@ -1186,9 +1186,9 @@ isRma: issuePopup.firstIsRma || false,
                 </tr>
               </thead>
               <tbody>
-               {(/^\d+$/.test(search.trim()) ? ticketNoSearch : filtered).length === 0 ? (
+              {(/^\d+$/.test(search.trim()) && search.trim().length < 6 ? ticketNoSearch : filtered).length === 0 ? (
                   <tr><td colSpan={10} style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 14 }}>{searchingTicketNo ? "Searching…" : "No tickets found."}</td></tr>
-                ) : (/^\d+$/.test(search.trim()) ? ticketNoSearch : filtered).map((ticket, idx) => {
+                ) : (/^\d+$/.test(search.trim()) && search.trim().length < 6 ? ticketNoSearch : filtered).map((ticket, idx) => {
                   const s               = (ticket.status || "open").toLowerCase();
                   const isResolved      = s === "resolved";
                   const isSupportRaised = ticket.source === "support";
