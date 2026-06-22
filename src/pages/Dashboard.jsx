@@ -165,11 +165,11 @@ const [itemFilter, setItemFilter]               = useState("all");
   }, []);
 
   // ✅ Auto-assign whenever category/city/country/tickets changes
-  useEffect(() => {
-    if (supportPersons.length === 0 || !form.category) return;
-    const assigned = getAutoAssignByLeastTickets(supportPersons, form.category, form.state, tickets);
-    setForm(prev => ({ ...prev, assignTo: assigned }));
-}, [form.category, form.state, supportPersons, tickets]);
+//   useEffect(() => {
+//     if (supportPersons.length === 0 || !form.category) return;
+//     const assigned = getAutoAssignByLeastTickets(supportPersons, form.category, form.state, tickets);
+//     setForm(prev => ({ ...prev, assignTo: assigned }));
+// }, [form.category, form.state, supportPersons, tickets]);
 
   const getFilteredSupportPersons = () => {
     const product = form.category;
