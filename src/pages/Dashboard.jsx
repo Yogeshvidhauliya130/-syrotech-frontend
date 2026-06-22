@@ -10,6 +10,8 @@ import MyProductionTickets from "./MyProductionTickets";
 
 const BASE_URL = "https://api.syrotech.com";
 
+// ✅ Centralized status styles
+
 const STATUS_COLOR = { open: "#e04e00", pending: "#b45309", resolved: "#1a7a46", rma: "#7c3aed", reopened: "#dc2626" };
 const STATUS_BG    = { open: "#fff4ee", pending: "#fffbeb", resolved: "#edfaf3", rma: "#f5f3ff", reopened: "#fee2e2" };
 const STATUS_ICON  = { open: "🔓", pending: "⏳", resolved: "✅", rma: "🔧" };
