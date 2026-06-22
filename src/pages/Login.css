@@ -277,7 +277,7 @@ select.field-input {
   display: none;
   overflow: hidden;
   
-  min-height: 100vh;
+  min-height: 90vh;
   padding: 0;    /* make sure no padding */
   margin: 0;     /* make sure no margin */
 }
