@@ -397,7 +397,8 @@ const loadTickets = async (pageNum = 1, statusFilter = filter) => {
   try {
     const statusParam = statusFilter && statusFilter !== "all" ? `&status=${statusFilter}` : "";
     const typeParam = typeFilter && typeFilter !== "all" ? `&typeFilter=${typeFilter}` : "";
-    const searchParam = search.trim() && !/^\d+$/.test(search.trim()) ? `&search=${encodeURIComponent(search.trim())}` : "";
+    const isTicketNo = /^\d+$/.test(search.trim()) && search.trim().length < 6;
+const searchParam = search.trim() && !isTicketNo ? `&search=${encodeURIComponent(search.trim())}` : "";
     const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}${searchParam}`);
     const data = await res.json();
     setTickets(data.tickets || []);
@@ -417,7 +418,7 @@ const loadTickets = async (pageNum = 1, statusFilter = filter) => {
 // ✅ When admin types digits, search that ticket number across the WHOLE database
 useEffect(() => {
   const q = search.trim();
-  if (/^\d+$/.test(q)) {
+ if (/^\d+$/.test(q) && q.length < 6) {
     setSearchingTicketNo(true);
     const timer = setTimeout(() => {
       fetch(`${BASE_URL}/tickets?ticketNumber=${q}&limit=50`)
