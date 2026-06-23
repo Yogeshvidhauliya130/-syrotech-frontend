@@ -1889,7 +1889,7 @@ return true;
     "Date Raised","Status","Raised At","Accepted At","Resolved At",
     "Time Taken (hrs)","Time Score","Feedback Bonus","Final Score","Within 24hr SLA",
     "Customer Rating (⭐)","Customer Resolved?","Customer Comment",
-    "Has Product Image","RMA Status","RMA Reason","RMA Center","RMA Center Address",
+    "Has Product Image","RMA Status","RMA Reason","RMA Center","RMA Center Address","Resolution Notes",
   ];
 
   const buildTicketRow = (t) => {
@@ -1921,6 +1921,7 @@ return true;
       t.rmaReason        || "—",
       t.rmaCenterName    ? `${t.rmaCenterName} (${t.rmaCenterCity})` : "—",
       t.rmaCenterAddress || "—",
+t.resolutionNotes  || "—",
     ];
   };
 
