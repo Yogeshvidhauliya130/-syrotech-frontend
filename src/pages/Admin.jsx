@@ -15,7 +15,6 @@ import "./Admin.css";
 
 
 
-
 const BASE_URL = "https://api.syrotech.com";
 
 function getTimeScore(t) {

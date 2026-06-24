@@ -122,17 +122,17 @@ export default function HR() {
       companyName:  "",
       empDept:      form.empDept,
       description:  `${form.issues.join(", ")} | ${form.description}`,
-      assignTo:     currentUser?.name || "IT Team",
+      assignTo:     currentUser?.name || "HR Admin",
       status:       "open",
       source:       "hr",
       raisedBy:     currentUser?.email || "hr@goip.in",
-      raisedByName: currentUser?.name  || "IT Team",
+      raisedByName: currentUser?.name  || "HR Admin",
       date:         new Date().toISOString().slice(0, 10),
       createdAt:    new Date().toISOString(),
       acceptedAt:   new Date().toISOString(),
       firstDescription:  `${form.issues.join(", ")} | ${form.description}`,
       firstCreatedAt:    new Date().toISOString(),
-      firstRaisedByName: currentUser?.name || "IT Team",
+      firstRaisedByName: currentUser?.name || "HR Admin",
       empType:    form.empType,
       empCode:    form.empCode,
       empDept:    form.empDept,
@@ -175,7 +175,7 @@ export default function HR() {
           status: "resolved",
           resolvedAt: new Date().toISOString(),
           resolutionNotes: resolveNote.trim(),
-          resolvedBy: currentUser?.name || "IT Team",
+          resolvedBy: currentUser?.name || "HR Admin",
         }),
       });
       setResolvePopup(null);
@@ -701,7 +701,7 @@ export default function HR() {
                         <td><span className="hr-cell__ticket-type">🧑‍💼 HR Ticket</span></td>
 
                         <td>
-                          <div className="hr-cell__raised-name">{ticket.raisedByName || "IT Team"}</div>
+                          <div className="hr-cell__raised-name">{ticket.raisedByName || "HR Admin"}</div>
                           <div className="hr-cell__raised-email">{ticket.raisedBy || "hr@goip.in"}</div>
                         </td>
 

@@ -82,7 +82,7 @@ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
           status: "resolved",
           resolvedAt: new Date().toISOString(),
           resolutionNotes: resolveNote.trim(),
-          resolvedBy: currentUser?.name || "IT Team",
+          resolvedBy: currentUser?.name || "HR Admin",
           modelNo: resolveModelNo.trim(),
   serialNo: resolveSerialNo.trim(),
         }),
@@ -140,17 +140,17 @@ setResolveSerialNo("");
       companyName:       "",
       empDept:           raiseForm.empDept,
       description:       `${raiseForm.issues.join(", ")} | ${raiseForm.description}`,
-      assignTo:          currentUser?.name || "IT Team",
+      assignTo:          currentUser?.name || "HR Admin",
       status:            "open",
       source: "hradmin",
       raisedBy:          currentUser?.email || "hradmin@goip.in",
-      raisedByName:      currentUser?.name  || "IT Team",
+      raisedByName:      currentUser?.name  || "HR Admin",
       date:              new Date().toISOString().slice(0, 10),
       createdAt:         new Date().toISOString(),
       acceptedAt:        new Date().toISOString(),
       firstDescription:  `${raiseForm.issues.join(", ")} | ${raiseForm.description}`,
       firstCreatedAt:    new Date().toISOString(),
-      firstRaisedByName: currentUser?.name || "IT Team",
+      firstRaisedByName: currentUser?.name || "HR Admin",
       empType:           raiseForm.empType,
       empCode:           raiseForm.empCode,
       empDept:           raiseForm.empDept,
@@ -228,7 +228,7 @@ serialNo:  raiseForm.serialNo,
           <img src="/logo.png" alt="logo" style={{ width: 50, height: 50, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.15)", padding: 2 }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>Syrotech Networks</div>
-            <div style={{ fontSize: 11, opacity: 0.85 }}>🔐 IT Team Panel — {currentUser?.name}</div>
+            <div style={{ fontSize: 11, opacity: 0.85 }}>🔐 HR Admin Panel — {currentUser?.name}</div>
           </div>
         </div>
         <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "white", padding: "6px 16px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>Logout</button>
