@@ -4,8 +4,8 @@ import "./Dashboard.css";
 
 const BASE_URL = "https://api.syrotech.com";
 
-const STATUS_COLOR = { open: "#e04e00", resolved: "#1a7a46" };
-const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3" };
+const STATUS_COLOR = { open: "#e04e00", resolved: "#1a7a46", reopened: "#dc2626" };
+const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", reopened: "#fee2e2" };
 
 export default function RnD() {
   const navigate    = useNavigate();
@@ -620,18 +620,18 @@ export default function RnD() {
 
                           {/* Action */}
                           <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                            {s === "open" && (
+                            {(s === "open" || s === "reopened") && (
                               <button
                                 onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
                                 style={{
-                                  background: showResolve ? "#ecfdf5" : "#10b981",
+                                  background: showResolve ? "#ecfdf5" : s === "reopened" ? "#dc2626" : "#10b981",
                                   color: showResolve ? "#065f46" : "white",
                                   border: showResolve ? "1.5px solid #6ee7b7" : "none",
                                   padding: "6px 14px", borderRadius: 7,
                                   cursor: "pointer", fontSize: 12, fontWeight: 700,
                                   fontFamily: "inherit",
                                 }}>
-                                ✅ {showResolve ? "Cancel" : "Mark Done"}
+                                {showResolve ? "Cancel" : s === "reopened" ? "🔄 Resolve Again" : "✅ Mark Done"}
                               </button>
                             )}
                             {s === "resolved" && (
@@ -641,7 +641,7 @@ export default function RnD() {
                         </tr>
 
                         {/* Resolve Form Row */}
-                        {showResolve && s === "open" && (
+                       {showResolve && (s === "open" || s === "reopened") && (
                           <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                            <td colSpan={11} style={{ padding: "16px 20px" }}>
                               <div style={{ maxWidth: 600, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
