@@ -334,7 +334,18 @@ useEffect(() => {
     if (!editTicket) return;
     const id = editTicket.id;
     setSavingId(id);
-    const body = {
+    const body = editTicket.ticketType === "rnd" ? {
+      empName:         editTicket.empName,
+      empEmail:        editTicket.empEmail,
+      empPhone:        editTicket.empPhone,
+      customer:        editTicket.empName,
+      email:           editTicket.empEmail,
+      phone:           editTicket.empPhone,
+      description:     editTicket.description,
+      firstDescription: editTicket.description,
+      status:          editTicket.status,
+      assignTo:        editTicket.assignTo,
+    } : {
       customer:        editTicket.customer,
       email:           editTicket.email,
       phone:           editTicket.phone,
@@ -917,7 +928,12 @@ isRma: issuePopup.firstIsRma || false,
         <button onClick={() => setEditTicket(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
       </div>
 
-      {[
+    {(editTicket.ticketType === "rnd" ? [
+        ["Employee Name", "empName"],
+        ["Employee Email", "empEmail"],
+        ["Employee Phone", "empPhone"],
+        ["Assigned To", "assignTo"],
+      ] : [
         ["Customer Name", "customer"],
         ["Email", "email"],
         ["Phone", "phone"],
@@ -931,7 +947,7 @@ isRma: issuePopup.firstIsRma || false,
         ["Serial No", "serialNo"],
         ["MAC Address", "mac"],
         ["Assigned To", "assignTo"],
-      ].map(([label, field]) => (
+      ]).map(([label, field]) => (
         <div key={field} style={{ marginBottom:12 }}>
           <label style={{ fontSize:11, fontWeight:700, color:"#6b7280", display:"block", marginBottom:4 }}>{label}</label>
           <input
