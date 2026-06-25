@@ -240,30 +240,40 @@ export default function RnD() {
               );
             })()}
 
-            {/* Status Updates */}
-            {Array.isArray(issuePopup.statusUpdates) && issuePopup.statusUpdates.length > 0 && (
-              <div style={{ marginTop:14 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"#6b7280", textTransform:"uppercase", marginBottom:6 }}>📝 Status Updates</div>
-                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                  {issuePopup.statusUpdates.map((entry, i) => (
-                    <div key={i} style={{ borderRadius:8, border:"1px solid #e5e7eb", overflow:"hidden", fontSize:12 }}>
-                      <div style={{ background:"#eff6ff", padding:"6px 12px", display:"flex", justifyContent:"space-between" }}>
-                        <span style={{ fontWeight:700, color:"#1d4ed8" }}>Update {i+1}</span>
-                        <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.updatedAt).toLocaleString()}</span>
-                      </div>
-                      <div style={{ padding:"8px 12px", background:"white" }}>
-                        <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>By: <strong>{entry.updatedBy}</strong></div>
-                        <div style={{ color:"#374151", lineHeight:1.5 }}>{entry.note}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          
           </div>
         </div>
       )}
 
+{/* Status Updates View Popup */}
+      {statusUpdatePopup && (
+        <div onClick={() => setStatusUpdatePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:500, width:"100%", maxHeight:"80vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #bfdbfe" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <div style={{ fontSize:14, fontWeight:800, color:"#1d4ed8" }}>📝 Status Update History</div>
+              <button onClick={() => setStatusUpdatePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+            </div>
+            {Array.isArray(statusUpdatePopup) && statusUpdatePopup.length > 0 ? (
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {statusUpdatePopup.map((entry, i) => (
+                  <div key={i} style={{ borderRadius:8, border:"1px solid #e5e7eb", overflow:"hidden", fontSize:12 }}>
+                    <div style={{ background:"#eff6ff", padding:"6px 12px", display:"flex", justifyContent:"space-between" }}>
+                      <span style={{ fontWeight:700, color:"#1d4ed8" }}>Update {i+1}</span>
+                      <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.updatedAt).toLocaleString()}</span>
+                    </div>
+                    <div style={{ padding:"8px 12px", background:"white" }}>
+                      <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>By: <strong>{entry.updatedBy}</strong></div>
+                      <div style={{ color:"#374151", lineHeight:1.5 }}>{entry.note}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign:"center", color:"#9ca3af", padding:20 }}>No status updates yet.</div>
+            )}
+          </div>
+        </div>
+      )}
       {/* Status Update Form Popup */}
       {statusUpdateForm?.show && (
         <div onClick={() => setStatusUpdateForm({})} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
@@ -556,7 +566,6 @@ export default function RnD() {
                               resolvedAt: ticket.resolvedAt,
                               resolvedBy: ticket.resolvedBy,
                               issueHistory: ticket.issueHistory,
-                              statusUpdates: ticket.statusUpdates,
                               firstDescription: ticket.firstDescription || ticket.description,
                               firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
                               firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
@@ -576,19 +585,8 @@ export default function RnD() {
 
                           {/* Status Updates */}
                           <td style={{ padding:"12px 14px", borderRight:"1px solid #e0d8d0" }}>
-                            {Array.isArray(ticket.statusUpdates) && ticket.statusUpdates.length > 0 && (
-                              <div onClick={() => setIssuePopup({
-                                description: ticket.description,
-                                resolutionNotes: ticket.resolutionNotes,
-                                issueHistory: ticket.issueHistory,
-                                statusUpdates: ticket.statusUpdates,
-                                firstDescription: ticket.firstDescription || ticket.description,
-                                firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
-                                firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
-                                firstResolvedNotes: ticket.firstResolvedNotes || null,
-                                firstResolvedAt: ticket.firstResolvedAt || null,
-                                firstResolvedBy: ticket.firstResolvedBy || null,
-                              })}
+                          {Array.isArray(ticket.statusUpdates) && ticket.statusUpdates.length > 0 && (
+                              <div onClick={() => setStatusUpdatePopup(ticket.statusUpdates)}
                               style={{ fontSize:10, color:"#1d4ed8", cursor:"pointer", fontWeight:700, background:"#eff6ff", padding:"2px 6px", borderRadius:4, display:"inline-block", marginBottom:6 }}>
                                 📝 {ticket.statusUpdates.length} Update{ticket.statusUpdates.length > 1 ? "s" : ""} — View
                               </div>
