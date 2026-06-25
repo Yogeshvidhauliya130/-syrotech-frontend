@@ -119,7 +119,9 @@ export default function RnD() {
     const notes = resolveForm[ticketId]?.notes || "";
     if (!notes.trim()) { alert("Please describe what was completed."); return; }
     const now = new Date().toISOString();
-    const currentTicket = tickets.find(t => t.id === ticketId);
+    const currentTicket = tickets.find(t => t.id === ticketId) || {};
+const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTicket.issueHistory : [];
+console.log("issueHistory before resolve:", existingHistory);
     const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTicket.issueHistory : [];
     const updatedHistory = existingHistory.map((entry, i) => {
       if (i === existingHistory.length - 1) {
