@@ -17,6 +17,9 @@ export default function RnD() {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [resolveForm, setResolveForm] = useState({});
+  const [issuePopup, setIssuePopup] = useState(null);
+  const [statusUpdateForm, setStatusUpdateForm] = useState({});
+  const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
   const [form, setForm] = useState({
     empName:  "",
     empEmail: "",
@@ -151,6 +154,7 @@ export default function RnD() {
     if (filter === "all")      return true;
     if (filter === "open")     return t.status === "open";
     if (filter === "resolved") return t.status === "resolved";
+    if (filter === "reopened") return t.status === "reopened";
     return true;
   });
 
@@ -158,10 +162,146 @@ export default function RnD() {
     all:      tickets.length,
     open:     tickets.filter(t => t.status === "open").length,
     resolved: tickets.filter(t => t.status === "resolved").length,
+    reopened: tickets.filter(t => t.status === "reopened").length,
   };
 
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8", fontFamily: "DM Sans, sans-serif" }}>
+
+
+{/* History Popup */}
+      {issuePopup && (
+        <div onClick={() => setIssuePopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"24px 28px", maxWidth:520, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #d1fae5", maxHeight:"85vh", overflowY:"auto" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+              <div style={{ fontSize:14, fontWeight:800, color: issuePopup.resolutionNotes ? "#1a7a46" : "#059669" }}>
+                {issuePopup.resolutionNotes ? "✅ Ticket Resolved" : "📋 Task Description"}
+              </div>
+              <button onClick={() => setIssuePopup(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+            </div>
+
+            {/* History Stages */}
+            {(() => {
+              const allHistory = [];
+              allHistory.push({
+                description: issuePopup.firstDescription || issuePopup.description,
+                raisedAt: issuePopup.firstCreatedAt || issuePopup.createdAt,
+                raisedByName: issuePopup.firstRaisedByName || issuePopup.raisedByName,
+                resolvedNotes: issuePopup.firstResolvedNotes || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolutionNotes : null) || null,
+                resolvedAt: issuePopup.firstResolvedAt || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolvedAt : null) || null,
+                resolvedBy: issuePopup.firstResolvedBy || (Array.isArray(issuePopup.issueHistory) && issuePopup.issueHistory.length === 0 ? issuePopup.resolvedBy : null) || null,
+              });
+              if (Array.isArray(issuePopup.issueHistory)) {
+                issuePopup.issueHistory.forEach(h => {
+                  allHistory.push({
+                    description: h.description,
+                    raisedAt: h.raisedAt,
+                    raisedByName: h.raisedByName,
+                    resolvedNotes: h.resolvedNotes || null,
+                    resolvedAt: h.resolvedAt || null,
+                    resolvedBy: h.resolvedBy || null,
+                  });
+                });
+              }
+              return (
+                <div style={{ marginBottom:10 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"#6b7280", textTransform:"uppercase", marginBottom:6 }}>
+                    📋 History — {allHistory.length} Stage{allHistory.length > 1 ? "s" : ""}
+                  </div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                    {allHistory.map((h, i) => (
+                      <div key={i} style={{ borderRadius:8, overflow:"hidden", border:"1px solid #e5e7eb", fontSize:12 }}>
+                        <div style={{ background:"#f9fafb", padding:"7px 10px", borderLeft:"3px solid #6b7280" }}>
+                          <div style={{ fontWeight:700, color:"#374151", marginBottom:2 }}>
+                            🔴 Stage {i + 1}
+                            {h.raisedAt && <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:6 }}>{new Date(h.raisedAt).toLocaleString()}</span>}
+                            {h.raisedByName && <span style={{ fontSize:10, color:"#6b7280", marginLeft:6 }}>· {h.raisedByName}</span>}
+                          </div>
+                          <div style={{ color:"#374151" }}>{h.description || "—"}</div>
+                        </div>
+                        {h.resolvedNotes ? (
+                          <div style={{ background:"#f0fdf4", padding:"6px 10px", borderLeft:"3px solid #10b981" }}>
+                            <div style={{ fontWeight:700, color:"#059669", fontSize:11, marginBottom:2 }}>
+                              ✅ Resolved
+                              {h.resolvedAt && <span style={{ fontSize:10, color:"#9ca3af", fontWeight:400, marginLeft:6 }}>{new Date(h.resolvedAt).toLocaleString()}</span>}
+                              {h.resolvedBy && <span style={{ fontSize:10, color:"#6b7280", marginLeft:6 }}>· {h.resolvedBy}</span>}
+                            </div>
+                            <div style={{ color:"#374151" }}>{h.resolvedNotes}</div>
+                          </div>
+                        ) : (
+                          <div style={{ background:"#fffbeb", padding:"5px 10px", borderLeft:"3px solid #f59e0b" }}>
+                            <div style={{ color:"#92400e", fontSize:11 }}>⏳ Pending...</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Status Updates */}
+            {Array.isArray(issuePopup.statusUpdates) && issuePopup.statusUpdates.length > 0 && (
+              <div style={{ marginTop:14 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#6b7280", textTransform:"uppercase", marginBottom:6 }}>📝 Status Updates</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {issuePopup.statusUpdates.map((entry, i) => (
+                    <div key={i} style={{ borderRadius:8, border:"1px solid #e5e7eb", overflow:"hidden", fontSize:12 }}>
+                      <div style={{ background:"#eff6ff", padding:"6px 12px", display:"flex", justifyContent:"space-between" }}>
+                        <span style={{ fontWeight:700, color:"#1d4ed8" }}>Update {i+1}</span>
+                        <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.updatedAt).toLocaleString()}</span>
+                      </div>
+                      <div style={{ padding:"8px 12px", background:"white" }}>
+                        <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>By: <strong>{entry.updatedBy}</strong></div>
+                        <div style={{ color:"#374151", lineHeight:1.5 }}>{entry.note}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Status Update Form Popup */}
+      {statusUpdateForm?.show && (
+        <div onClick={() => setStatusUpdateForm({})} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"28px 32px", maxWidth:520, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #bfdbfe" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+              <div style={{ fontSize:16, fontWeight:800, color:"#1d4ed8" }}>📝 Status Update</div>
+              <button onClick={() => setStatusUpdateForm({})} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#374151", marginBottom:8 }}>Update Note <span style={{ color:"#ef4444" }}>*</span></div>
+              <textarea rows={5} placeholder="Write what is happening with this ticket..."
+                value={statusUpdateForm.note || ""}
+                onChange={e => setStatusUpdateForm(prev => ({ ...prev, note: e.target.value }))}
+                style={{ width:"100%", padding:"11px 14px", border:"2px solid #bfdbfe", borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", boxSizing:"border-box", color:"#000", lineHeight:1.6 }} />
+            </div>
+            <div style={{ display:"flex", gap:12 }}>
+              <button onClick={() => {
+                const note = statusUpdateForm.note?.trim();
+                if (!note) { alert("Please write an update note."); return; }
+                const ticketId = statusUpdateForm.id;
+                const ticket = tickets.find(t => t.id === ticketId);
+                const newEntry = { note, updatedBy: currentUser?.name, updatedAt: new Date().toISOString() };
+                const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
+                fetch(`${BASE_URL}/tickets/${ticketId}`, {
+                  method:"PATCH", headers:{"Content-Type":"application/json"},
+                  body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note })
+                }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
+              }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
+                ✅ Submit Update
+              </button>
+              <button onClick={() => setStatusUpdateForm({})}
+                style={{ background:"#e2e8f0", border:"none", borderRadius:10, padding:"12px 20px", cursor:"pointer", fontSize:13, color:"#64748b", fontFamily:"inherit" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ background: "linear-gradient(135deg, #059669, #10b981)", color: "white", padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(16,185,129,0.3)" }}>
@@ -317,10 +457,11 @@ export default function RnD() {
           {/* Status Filter */}
           <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280" }}>📋 Status:</span>
-            {[
-              ["all",      "All",         "#374151", "#f3f4f6"],
-              ["open",     "🔓 Open",     "#e04e00", "#fff4ee"],
-              ["resolved", "✅ Resolved", "#1a7a46", "#edfaf3"],
+           {[
+              ["all",      "All",           "#374151", "#f3f4f6"],
+              ["open",     "🔓 Open",       "#e04e00", "#fff4ee"],
+              ["resolved", "✅ Resolved",   "#1a7a46", "#edfaf3"],
+              ["reopened", "🔄 Reopened",   "#dc2626", "#fee2e2"],
             ].map(([key, label, col, bg]) => (
               <button key={key} onClick={() => setFilter(key)} style={{
                 padding: "6px 14px", borderRadius: 16, cursor: "pointer",
@@ -355,7 +496,7 @@ export default function RnD() {
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-                    {["Ticket No", "Ticket Type", "Employee Name", "Employee Email", "Employee Phone", "Task", "Status", "Date", "Action"].map((h, i) => (
+                 {["Ticket No", "Ticket Type", "Employee Name", "Employee Email", "Employee Phone", "Task", "History", "Status Updates", "Status", "Date", "Action"].map((h, i) => (
                       <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
@@ -407,6 +548,59 @@ export default function RnD() {
                             </div>
                           </td>
 
+{/* History */}
+                          <td style={{ padding:"12px 14px", borderRight:"1px solid #e0d8d0" }}>
+                            <div onClick={() => setIssuePopup({
+                              description: ticket.description,
+                              resolutionNotes: ticket.resolutionNotes,
+                              resolvedAt: ticket.resolvedAt,
+                              resolvedBy: ticket.resolvedBy,
+                              issueHistory: ticket.issueHistory,
+                              statusUpdates: ticket.statusUpdates,
+                              firstDescription: ticket.firstDescription || ticket.description,
+                              firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+                              firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
+                              firstResolvedNotes: ticket.firstResolvedNotes || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolutionNotes : null) || null,
+                              firstResolvedAt: ticket.firstResolvedAt || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedAt : null) || null,
+                              firstResolvedBy: ticket.firstResolvedBy || (Array.isArray(ticket.issueHistory) && ticket.issueHistory.length === 0 ? ticket.resolvedBy : null) || null,
+                            })}
+                            style={{ fontSize:10, color:"#059669", cursor:"pointer", fontWeight:700, background:"#ecfdf5", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+                              📋 {(Array.isArray(ticket.issueHistory) ? ticket.issueHistory.length : 0) + 1} History
+                            </div>
+                            {ticket.reopenCount > 0 && (
+                              <div style={{ fontSize:9, color:"#dc2626", fontWeight:700, marginTop:3, background:"#fee2e2", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+                                🔄 Reopened {ticket.reopenCount}x
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Status Updates */}
+                          <td style={{ padding:"12px 14px", borderRight:"1px solid #e0d8d0" }}>
+                            {Array.isArray(ticket.statusUpdates) && ticket.statusUpdates.length > 0 && (
+                              <div onClick={() => setIssuePopup({
+                                description: ticket.description,
+                                resolutionNotes: ticket.resolutionNotes,
+                                issueHistory: ticket.issueHistory,
+                                statusUpdates: ticket.statusUpdates,
+                                firstDescription: ticket.firstDescription || ticket.description,
+                                firstCreatedAt: ticket.firstCreatedAt || ticket.createdAt,
+                                firstRaisedByName: ticket.firstRaisedByName || ticket.raisedByName,
+                                firstResolvedNotes: ticket.firstResolvedNotes || null,
+                                firstResolvedAt: ticket.firstResolvedAt || null,
+                                firstResolvedBy: ticket.firstResolvedBy || null,
+                              })}
+                              style={{ fontSize:10, color:"#1d4ed8", cursor:"pointer", fontWeight:700, background:"#eff6ff", padding:"2px 6px", borderRadius:4, display:"inline-block", marginBottom:6 }}>
+                                📝 {ticket.statusUpdates.length} Update{ticket.statusUpdates.length > 1 ? "s" : ""} — View
+                              </div>
+                            )}
+                            {s === "open" || s === "reopened" ? (
+                              <button onClick={() => setStatusUpdateForm({ show:true, id:ticket.id, note:"" })}
+                                style={{ background:"#1d4ed8", color:"white", border:"none", padding:"4px 10px", borderRadius:6, cursor:"pointer", fontSize:11, fontWeight:600, display:"block", fontFamily:"inherit" }}>
+                                📝 Update
+                              </button>
+                            ) : null}
+                          </td>
+
                           {/* Status */}
                           <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
                             <span style={{ padding: "3px 10px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s] || "#374151", background: STATUS_BG[s] || "#f3f4f6", display: "inline-block" }}>
@@ -449,7 +643,7 @@ export default function RnD() {
                         {/* Resolve Form Row */}
                         {showResolve && s === "open" && (
                           <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                            <td colSpan={9} style={{ padding: "16px 20px" }}>
+                           <td colSpan={11} style={{ padding: "16px 20px" }}>
                               <div style={{ maxWidth: 600, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 12 }}>✅ Mark Task as Done</div>
                                 <div style={{ marginBottom: 14 }}>
