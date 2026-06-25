@@ -119,17 +119,29 @@ export default function RnD() {
     const notes = resolveForm[ticketId]?.notes || "";
     if (!notes.trim()) { alert("Please describe what was completed."); return; }
     const now = new Date().toISOString();
+    const currentTicket = tickets.find(t => t.id === ticketId);
+    const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTicket.issueHistory : [];
+    const updatedHistory = existingHistory.map((entry, i) => {
+      if (i === existingHistory.length - 1) {
+        return { ...entry, resolvedNotes: notes.trim(), resolvedAt: now, resolvedBy: currentUser?.name };
+      }
+      return entry;
+    });
+    const isFirstResolution = existingHistory.length === 0;
     fetch(`${BASE_URL}/tickets/${ticketId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-     body: JSON.stringify({
+      body: JSON.stringify({
         status:          "resolved",
         resolvedAt:      now,
         resolutionNotes: notes.trim(),
         resolvedBy:      currentUser?.name,
-        firstResolvedNotes: notes.trim(),
-        firstResolvedAt:    now,
-        firstResolvedBy:    currentUser?.name,
+        issueHistory:    updatedHistory,
+        ...(isFirstResolution ? {
+          firstResolvedNotes: notes.trim(),
+          firstResolvedAt:    now,
+          firstResolvedBy:    currentUser?.name,
+        } : {}),
       }),
     })
       .then(r => r.json())
@@ -625,14 +637,14 @@ export default function RnD() {
                               <button
                                 onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
                                 style={{
-                                  background: showResolve ? "#ecfdf5" : s === "reopened" ? "#dc2626" : "#10b981",
+                               background: showResolve ? "#ecfdf5" : "#10b981",
                                   color: showResolve ? "#065f46" : "white",
                                   border: showResolve ? "1.5px solid #6ee7b7" : "none",
                                   padding: "6px 14px", borderRadius: 7,
                                   cursor: "pointer", fontSize: 12, fontWeight: 700,
                                   fontFamily: "inherit",
                                 }}>
-                                {showResolve ? "Cancel" : s === "reopened" ? "🔄 Resolve Again" : "✅ Mark Done"}
+                                {showResolve ? "Cancel" : "✅ Mark Done"}
                               </button>
                             )}
                             {s === "resolved" && (
