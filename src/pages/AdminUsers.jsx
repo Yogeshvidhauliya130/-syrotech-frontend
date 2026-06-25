@@ -114,7 +114,7 @@ if (addRole === "customer" && !addForm.city) { setAddError("Please select a city
       setAddSuccess(`✅ ${roleLabel} added and approved successfully!`);
      setAddForm({ name: "", email: "", password: "", phone: "", companyName: "", customerType: "", salesPerson: "", state: "", city: "", country: "", specialization: [], level: 1, zone: "all" });
       fetchUsers();
-      setTimeout(() => { setAddSuccess(""); setShowAddForm(false); }, 3000);
+      setTimeout(() => { setAddSucce+ss(""); setShowAddForm(false); }, 3000);
     } catch { setAddError("Cannot connect to server."); }
     setAdding(false);
   };
