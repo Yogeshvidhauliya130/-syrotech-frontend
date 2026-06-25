@@ -122,11 +122,14 @@ export default function RnD() {
     fetch(`${BASE_URL}/tickets/${ticketId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+     body: JSON.stringify({
         status:          "resolved",
         resolvedAt:      now,
         resolutionNotes: notes.trim(),
         resolvedBy:      currentUser?.name,
+        firstResolvedNotes: notes.trim(),
+        firstResolvedAt:    now,
+        firstResolvedBy:    currentUser?.name,
       }),
     })
       .then(r => r.json())
