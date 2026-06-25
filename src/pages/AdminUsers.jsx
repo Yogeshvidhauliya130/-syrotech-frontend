@@ -127,15 +127,17 @@ const PRODUCTS = Object.keys(PRODUCT_MODELS);
       return { ...p, specialization: curr.includes(product) ? curr.filter(x => x !== product) : [...curr, product] };
     });
   };
-  const pending        = users.filter(u => !u.approved && (u.role === "user" || u.role === "customer"));
-  const approvedUsers  = users.filter(u =>  u.approved && (u.role === "user" || u.role === "customer"));
+  const pending        = users.filter(u => !u.approved && (u.role === "user" || u.role === "customer" || u.role === "rnd"));
+  const approvedUsers  = users.filter(u =>  u.approved && (u.role === "user" || u.role === "customer" || u.role === "rnd"));
   const supportPersons = users.filter(u => u.role === "support")
     .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
 
   const pendingSales    = pending.filter(u => u.role === "user").sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
   const pendingCustomer = pending.filter(u => u.role === "customer").sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+  const pendingRnd      = pending.filter(u => u.role === "rnd").sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
   const approvedSales   = approvedUsers.filter(u => u.role === "user").sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
   const approvedCust    = approvedUsers.filter(u => u.role === "customer").sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
+  const approvedRnd     = approvedUsers.filter(u => u.role === "rnd").sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
 
   const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
@@ -411,6 +413,7 @@ const PRODUCTS = Object.keys(PRODUCT_MODELS);
           <TabSwitch value={pendingTab} onChange={setPendingTab} options={[
             ["user",     `💼 Sales Person (${pendingSales.length})`,    "#1d4ed8"],
             ["customer", `👥 Customer (${pendingCustomer.length})`,      "#7c3aed"],
+            ["rnd",      `🔬 R&D (${pendingRnd.length})`,               "#059669"],
           ]} />
 
           {pendingTab === "user" && (
@@ -475,6 +478,31 @@ const PRODUCTS = Object.keys(PRODUCT_MODELS);
               </div>
             )
           )}
+
+          {pendingTab === "rnd" && (
+            pendingRnd.length === 0 ? <div className="empty-state">✅ No pending R&D requests.</div> : (
+              <div style={tableWrap}>
+                <table style={{ width: "100%", borderCollapse: "collapse", background: "white", minWidth: 560 }}>
+                  <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                    <tr>{["S.No","Name","Email","Phone","Designation","Requested On","Action"].map((h,i) => <th key={i} style={thStyle("#059669")}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {pendingRnd.map((u, idx) => (
+                      <tr key={u.email} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf4" : "white" }}>
+                        <td style={{ ...tdStyle, fontWeight: 700, color: "#6b7280", width: 48 }}>{idx + 1}</td>
+                        <td style={tdStyle}><div style={{ display:"flex", alignItems:"center", gap:10 }}>{avatar(u.name,"linear-gradient(135deg,#059669,#10b981)")}<span style={{ fontWeight:600 }}>{u.name||"—"}</span></div></td>
+                        <td style={{ ...tdStyle, color:"#6b7280" }}>{u.email}</td>
+                        <td style={{ ...tdStyle, color:"#6b7280" }}>{u.phone||"—"}</td>
+                        <td style={{ ...tdStyle, color:"#059669", fontWeight:600 }}>{u.designation||"—"}</td>
+                        <td style={{ ...tdStyle, color:"#6b7280" }}>{fmtDate(u.createdAt)}</td>
+                        <td style={tdStyle}><div style={{ display:"flex", gap:8 }}><button className="btn-approve" onClick={() => approveUser(u.email)}>Approve</button><button className="btn-reject" onClick={() => removeUser(u.email)}>Reject</button></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
         </>
       ) : (
         <div className="empty-state">✅ No pending approvals.</div>
@@ -487,6 +515,7 @@ const PRODUCTS = Object.keys(PRODUCT_MODELS);
           <TabSwitch value={approvedTab} onChange={setApprovedTab} options={[
             ["user",     `💼 Sales Person (${approvedSales.length})`,  "#1d4ed8"],
             ["customer", `👥 Customer (${approvedCust.length})`,        "#7c3aed"],
+            ["rnd",      `🔬 R&D (${approvedRnd.length})`,             "#059669"],
           ]} />
 
           {approvedTab === "user" && (
@@ -660,6 +689,32 @@ const PRODUCTS = Object.keys(PRODUCT_MODELS);
         </>
       )}
 
+
+{approvedTab === "rnd" && (
+            approvedRnd.length === 0 ? <div className="empty-state">No approved R&D users yet.</div> : (
+              <div style={tableWrap}>
+                <table style={{ width: "100%", borderCollapse: "collapse", background: "white", minWidth: 700 }}>
+                  <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                    <tr>{["S.No","Name","Email","Phone","Designation","Joined On","Approved On","Action"].map((h,i) => <th key={i} style={thStyle("#059669")}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {approvedRnd.map((u, idx) => (
+                      <tr key={u.email} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf4" : "white" }}>
+                        <td style={{ ...tdStyle, fontWeight:700, color:"#6b7280", width:48 }}>{idx+1}</td>
+                        <td style={tdStyle}><div style={{ display:"flex", alignItems:"center", gap:10 }}>{avatar(u.name,"linear-gradient(135deg,#059669,#10b981)")}<span style={{ fontWeight:600 }}>{u.name||"—"}</span></div></td>
+                        <td style={{ ...tdStyle, color:"#6b7280" }}>{u.email}</td>
+                        <td style={{ ...tdStyle, color:"#6b7280" }}>{u.phone||"—"}</td>
+                        <td style={{ ...tdStyle, color:"#059669", fontWeight:600 }}>{u.designation||"—"}</td>
+                        <td style={{ ...tdStyle, color:"#6b7280" }}>{fmtDate(u.createdAt)}</td>
+                        <td style={{ ...tdStyle, color:"#059669", fontWeight:600 }}>{fmtDate(u.updatedAt||u.createdAt)}</td>
+                        <td style={tdStyle}><button className="btn-reject" onClick={() => removeUser(u.email)}>Remove</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
       {/* ── SUPPORT PERSONS TABLE ── */}
       <h3 className="section-label" style={{ marginTop: 28 }}>🛠️ Support Persons ({supportPersons.length})</h3>
       <div style={{ background:"white", borderRadius:12, border:"1.5px solid #d1fae5", padding:"14px 16px", marginBottom:14, display:"flex", flexDirection:"column", gap:10 }}>

@@ -7,6 +7,7 @@ import CustomerDashboard from "./pages/CustomerDashboard";
 import HR from "./pages/hr";
 import HrAdmin from "./pages/hrAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RnD from "./pages/RnD";
 import LockinSupport from "./pages/lockinsupport";
 import ProductionSupport from "./pages/productionsupport";
 import Feedback from "./pages/Feedback";
@@ -42,6 +43,9 @@ function App() {
         } />
          <Route path="/productionsupport" element={
           <ProtectedRoute role="support"><ProductionSupport /></ProtectedRoute>
+        } />
+        <Route path="/rnd" element={
+          <ProtectedRoute role="rnd"><RnD /></ProtectedRoute>
         } />
       </Routes>
     </BrowserRouter>

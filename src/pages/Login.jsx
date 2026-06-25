@@ -14,7 +14,7 @@ export default function Login() {
   const [loading, setLoading]           = useState(false);
 const [form, setForm] = useState({
     name: "", email: "", password: "", phone: "", companyName: "", customerType: "",
-    salesPerson: "", salesPersonOther: "", state: "", city: "",
+    salesPerson: "", salesPersonOther: "", state: "", city: "", designation: "",
   });
 
 const [otpInput,    setOtpInput]    = useState(["","","","","",""]);
@@ -75,6 +75,7 @@ else if (data.user.role === "support") {
   }
 }
 else if (data.user.role === "customer") navigate("/customer", { replace: true });
+else if (data.user.role === "rnd")      navigate("/rnd",      { replace: true });
 else                                    navigate("/dashboard",{ replace: true });
     } catch {
       setLoading(false);
@@ -87,6 +88,7 @@ else                                    navigate("/dashboard",{ replace: true })
     if (selectedRole === "customer" && !form.companyName?.trim()) { setError("Enter your company name."); return; }
     if (selectedRole === "customer" && !form.customerType) { setError("Please select your customer type."); return; }
     if (selectedRole === "customer" && !form.salesPerson) { setError("Please select your sales person."); return; }
+    if (selectedRole === "rnd" && !form.designation?.trim()) { setError("Please enter your role/designation."); return; }
     if (selectedRole === "customer" && form.salesPerson === "other" && !form.salesPersonOther?.trim()) { setError("Please enter your sales person name."); return; }
     if (selectedRole !== "customer" && !form.phone?.trim()) { setError("Please enter your phone number."); return; }
    if (!/^\d{10}$/.test((form.phone || "").replace(/\s/g,""))) { setError("Enter a valid 10-digit phone number."); return; }
@@ -127,8 +129,9 @@ const createAccount = async () => {
           phone:        form.phone        || "",
           companyName:  form.companyName  || "",
           customerType: form.customerType || "",
-          salesPerson:  form.salesPerson === "other" ? form.salesPersonOther : form.salesPerson || "",
-          role:         selectedRole === "customer" ? "customer" : "user",
+        salesPerson:  form.salesPerson === "other" ? form.salesPersonOther : form.salesPerson || "",
+          role:         selectedRole === "customer" ? "customer" : selectedRole === "rnd" ? "rnd" : "user",
+          designation:  form.designation || "",
           city:         form.city         || "",
           state:        form.state        || "",
         }),
@@ -230,6 +233,7 @@ const handleResetPassword = async () => {
     { key: "user",     label: "Sales Person",   icon: "💼" },
     { key: "support",  label: "Support Person", icon: "🛠️" },
     { key: "customer", label: "Customer",       icon: "👥" },
+     { key: "rnd",      label: "R&D",            icon: "🔬" },
   ];
 
 
@@ -345,8 +349,8 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
             <p className="switch-text" style={{ marginTop: 20 }}>
               New here?{" "}
               <span className="link" onClick={() => {
-                setSelectedRole("user"); setPage("signup"); setError("");
-                setForm({ name: "", email: "", password: "", phone: "", companyName: "", customerType: "" });
+                setSelectedRole(""); setPage("signup"); setError("");
+                setForm({ name: "", email: "", password: "", phone: "", companyName: "", customerType: "", designation: "" });
               }}>Create account</span>
             </p>
           </div>
@@ -355,21 +359,21 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
         {/* SIGNUP FORM */}
         {page === "signup" && (
           <div className="form-section">
-            <div className="signup-tabs">
-              <button
-                className={`signup-tab ${selectedRole !== "customer" ? "active" : ""}`}
-                onClick={() => { setSelectedRole("user"); setError(""); }}>
-                💼 Sales Person
-              </button>
-              <button
-                className={`signup-tab ${selectedRole === "customer" ? "active" : ""}`}
-                onClick={() => { setSelectedRole("customer"); setError(""); }}>
-                👥 Customer
-              </button>
+           <div className="field-group">
+              <label className="field-label">Register As</label>
+              <select
+                value={selectedRole}
+                onChange={e => { setSelectedRole(e.target.value); setError(""); }}
+                className="field-input">
+                <option value="">-- Select Role --</option>
+                <option value="user">💼 Sales Person</option>
+                <option value="customer">👥 Customer</option>
+                <option value="rnd">🔬 R&D</option>
+              </select>
             </div>
 
             <h2 className="form-title" style={{ marginTop: 16 }}>
-              {selectedRole === "customer" ? "Customer Registration" : "Create Account"}
+              {selectedRole === "customer" ? "Customer Registration" : selectedRole === "rnd" ? "R&D Registration" : "Create Account"}
             </h2>
             <p className="form-subtitle">Fill in your details to register</p>
             {selectedRole === "customer" && (
@@ -456,6 +460,15 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
               </div>
             </div>
 
+{selectedRole === "rnd" && (
+              <div className="field-group">
+                <label className="field-label">Your Role/Designation <span style={{ color: "#ff5a00" }}>*</span></label>
+                <input type="text" name="designation" placeholder="e.g. Hardware Engineer"
+                  value={form.designation} onChange={handleChange} className="field-input" />
+              </div>
+            )}
+
+
            {selectedRole === "customer" && (
   <div className="field-group">
     <label className="field-label">
@@ -489,7 +502,7 @@ const INDIAN_STATES_LOGIN = Object.keys(STATE_CITY_MAP).sort();
 )}
 
             <button className={`btn-primary ${loading ? "btn-loading" : ""}`}
-              style={{ background: selectedRole === "customer" ? "#7c3aed" : "#2563eb" }}
+             style={{ background: selectedRole === "customer" ? "#7c3aed" : selectedRole === "rnd" ? "#059669" : "#2563eb" }}
               onClick={handleSignup} disabled={loading}>
               {loading ? <span className="spinner" /> : "Create Account →"}
             </button>
