@@ -225,6 +225,7 @@ const [analyticsType, setAnalyticsType] = useState("all");
       ["hr",      "🧑‍💼 Internal IT"],
        ["production", "🏭 Production"],
        ["testing",    "🧪 Testing"], 
+       ["rnd",        "🔬 R&D"],
     ].map(([type, label]) => (
       <button key={type}
         onClick={() => { setTab("analytics"); setAnalyticsType(type); setShowAnalyticsMenu(false); }}
@@ -602,11 +603,12 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
     return "📞 Call";
   };
 
-  const getRaisedFromLabel = (ticket) => {
+ const getRaisedFromLabel = (ticket) => {
     if (ticket.source === "customer") return { label: "Customer", customerType: ticket.customerType || "", bg: "#ede9fe", color: "#5b21b6", icon: "👥" };
     if (ticket.source === "support")  return { label: `Support · ${raisedViaLabel(ticket.raisedVia)}`, bg: "#fde68a", color: "#92400e", icon: "📞", border: "1px solid #d97706" };
-   if (ticket.source === "hr")       return { label: "HR", bg: "#fce7f3", color: "#9d174d", icon: "🧑‍💼" };
-if (ticket.source === "hradmin")  return { label: "IT Team", bg: "#dbeafe", color: "#1d4ed8", icon: "💻" };
+    if (ticket.source === "hr")       return { label: "HR", bg: "#fce7f3", color: "#9d174d", icon: "🧑‍💼" };
+    if (ticket.source === "hradmin")  return { label: "IT Team", bg: "#dbeafe", color: "#1d4ed8", icon: "💻" };
+    if (ticket.source === "rnd" || ticket.ticketType === "rnd") return { label: "R&D", bg: "#ecfdf5", color: "#059669", icon: "🔬" };
     return { label: "Sales", bg: "#fff4ee", color: "#e04e00", icon: "🧑‍💼" };
   };
 
