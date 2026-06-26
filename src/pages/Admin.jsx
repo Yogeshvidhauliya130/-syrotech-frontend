@@ -625,6 +625,15 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
 
   const uniqueReassignProducts = [...new Set(tickets.filter(t => !!t.reassignedFrom).map(t => t.category).filter(Boolean))];
 
+  const TYPE_LABELS = {
+  product: "Support Tickets",
+  lockin: "Lockin Software",
+  hr: "Internal IT",
+  production: "Production",
+  testing: "Testing",
+  rnd: "R&D",
+};
+
   return (
     <div style={{ fontFamily: "DM Sans, sans-serif" }}>
 
@@ -1035,8 +1044,12 @@ isRma: issuePopup.firstIsRma || false,
       {/* ── Header ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", margin: 0 }}>Analytics</h2>
-          <p style={{ fontSize: 13, color: "#6b7280", margin: "4px 0 0" }}>All tickets overview</p>
+         <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", margin: 0 }}>
+  Analytics {typeFilter !== "all" && <span style={{ color: "#ff5a00" }}>— {TYPE_LABELS[typeFilter]}</span>}
+</h2>
+<p style={{ fontSize: 13, color: "#6b7280", margin: "4px 0 0" }}>
+  {typeFilter === "all" ? "All tickets overview" : `${TYPE_LABELS[typeFilter]} overview`}
+</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
          {[
