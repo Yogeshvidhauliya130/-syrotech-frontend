@@ -311,7 +311,9 @@ export const PRODUCT_MODELS = {
       "GOXQ-CAB-QSFP28/4SFP28-A1M",
       "GOXQ-CAB-QSFP28/4SFP28-A3M",
       "GOXQ-CAB-QSFP28/4SFP28-A5M"
-    ]
+    ],
+
+    
   },
 
   // ── Networking Switch ───────────────────────
