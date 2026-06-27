@@ -102,6 +102,7 @@ export const ISSUE_LIST = {
       "Low Pon Power Issue",
       "Uplink SFP Rx/Tx Power Issue",
       "Uplink SFP not Getting UP",
+      "Others",
       
     ],
   },

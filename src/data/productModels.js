@@ -313,6 +313,14 @@ export const PRODUCT_MODELS = {
       "GOXQ-CAB-QSFP28/4SFP28-A5M"
     ],
 
+
+     "PON Stick": [
+      "1Ge Epon",
+      "1Ge Gpon",
+      "1Ge Xpon"
+      
+    ],
+
     
   },
 
