@@ -568,8 +568,8 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
 
                           {/* Task */}
                           <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", maxWidth: 220 }}>
-                            <div style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }} title={ticket.description}>
-                              {ticket.description?.length > 50 ? ticket.description.slice(0, 50) + "…" : ticket.description || "—"}
+                            <div style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }} title={ticket.firstDescription || ticket.description}>
+                          {(ticket.firstDescription || ticket.description)?.length > 50 ? (ticket.firstDescription || ticket.description).slice(0, 50) + "…" : (ticket.firstDescription || ticket.description) || "—"}
                             </div>
                           </td>
 
