@@ -1095,7 +1095,7 @@ const filteredMyReassigned = allTickets
           const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
           fetch(`${BASE_URL}/tickets/${ticketId}`, {
             method:"PATCH", headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note, status: "open" })
+body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole: "support" }], latestStatusUpdate: note, status: "open" })
           }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
         }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
           ✅ Submit Update
@@ -1125,7 +1125,13 @@ const filteredMyReassigned = allTickets
                 <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.updatedAt).toLocaleString()}</span>
               </div>
               <div style={{ padding:"8px 12px", background:"white" }}>
-                <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>By: <strong>{entry.updatedBy}</strong></div>
+           <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>
+  By: <strong>{entry.updatedBy}</strong>
+  {entry.updatedByRole === "sales" 
+    ? <span style={{ marginLeft:6, background:"#fff4ee", color:"#e04e00", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:4 }}>🧑‍💼 Sales</span>
+    : <span style={{ marginLeft:6, background:"#ecfdf5", color:"#059669", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:4 }}>🛠️ Support</span>
+  }
+</div>
                 <div style={{ color:"#374151", lineHeight:1.5 }}>{entry.note}</div>
               </div>
             </div>

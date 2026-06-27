@@ -1023,7 +1023,13 @@ isRma: issuePopup.firstIsRma || false,
                 <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.updatedAt).toLocaleString()}</span>
               </div>
              <div style={{ padding:"8px 12px", background:"white" }}>
-  <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>By: <strong>{entry.updatedBy}</strong></div>
+  <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>
+  By: <strong>{entry.updatedBy}</strong>
+  {entry.updatedByRole === "sales" 
+    ? <span style={{ marginLeft:6, background:"#fff4ee", color:"#e04e00", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:4 }}>🧑‍💼 Sales</span>
+    : <span style={{ marginLeft:6, background:"#ecfdf5", color:"#059669", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:4 }}>🛠️ Support</span>
+  }
+</div>
   {entry.status && (
     <div style={{ fontSize:11, fontWeight:700, color:"#1d4ed8", background:"#eff6ff", padding:"2px 8px", borderRadius:4, display:"inline-block", marginBottom:4 }}>
       🔖 {entry.status}

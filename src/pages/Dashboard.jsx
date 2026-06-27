@@ -138,6 +138,7 @@ const [itemFilter, setItemFilter]               = useState("all");
   const [statusFilter, setStatusFilter]     = useState("all");
   const [searchQuery, setSearchQuery]       = useState("");
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
+const [statusUpdateForm, setStatusUpdateForm] = useState({});
   const [filterYear, setFilterYear]         = useState("");  // ✅ Year first
   const [filterMonth, setFilterMonth]       = useState(""); // ✅ Month second
   const [reassignFilter, setReassignFilter] = useState(false); // ✅ reassign filter
@@ -687,7 +688,13 @@ isRma: issuePopup.firstIsRma || false,
                 <span style={{ fontSize:10, color:"#9ca3af" }}>{new Date(entry.updatedAt).toLocaleString()}</span>
               </div>
               <div style={{ padding:"8px 12px", background:"white" }}>
-                <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>By: <strong>{entry.updatedBy}</strong></div>
+          <div style={{ fontSize:11, color:"#6b7280", marginBottom:3 }}>
+  By: <strong>{entry.updatedBy}</strong>
+  {entry.updatedByRole === "sales" 
+    ? <span style={{ marginLeft:6, background:"#fff4ee", color:"#e04e00", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:4 }}>🧑‍💼 Sales</span>
+    : <span style={{ marginLeft:6, background:"#ecfdf5", color:"#059669", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:4 }}>🛠️ Support</span>
+  }
+</div>
                 <div style={{ color:"#374151", lineHeight:1.5 }}>{entry.note}</div>
               </div>
             </div>
@@ -699,6 +706,44 @@ isRma: issuePopup.firstIsRma || false,
     </div>
   </div>
 )}
+
+
+{statusUpdateForm?.show && (
+  <div onClick={() => setStatusUpdateForm({})} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"28px 32px", maxWidth:560, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #bfdbfe" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+        <div style={{ fontSize:16, fontWeight:800, color:"#1d4ed8" }}>📝 Add Update</div>
+        <button onClick={() => setStatusUpdateForm({})} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+      </div>
+      <textarea rows={5} placeholder="Write your update here..."
+        value={statusUpdateForm.note || ""}
+        onChange={e => setStatusUpdateForm(prev => ({ ...prev, note: e.target.value }))}
+        style={{ width:"100%", padding:"11px 14px", border:"2px solid #bfdbfe", borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", boxSizing:"border-box", color:"#000000", lineHeight:1.6 }} />
+      <div style={{ display:"flex", gap:12, marginTop:12 }}>
+        <button onClick={() => {
+          const note = statusUpdateForm.note?.trim();
+          if (!note) { alert("Please write an update."); return; }
+          const ticketId = statusUpdateForm.id;
+          const ticket = tickets.find(t => t.id === ticketId);
+          const newEntry = { note, updatedBy: currentUser?.name, updatedAt: new Date().toISOString(), updatedByRole: "sales" };
+          const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
+          fetch(`${BASE_URL}/tickets/${ticketId}`, {
+            method:"PATCH", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note })
+          }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
+        }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
+          ✅ Submit Update
+        </button>
+        <button onClick={() => setStatusUpdateForm({})}
+          style={{ background:"#e2e8f0", border:"none", borderRadius:10, padding:"12px 20px", cursor:"pointer", fontSize:13, color:"#64748b", fontFamily:"inherit" }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
       {/* Navbar */}
       <div className="dash-navbar">
         <div className="dash-brand">
@@ -1337,8 +1382,14 @@ firstIsRma: ticket.firstIsRma || false,
       style={{ fontSize:10, color:"#1d4ed8", cursor:"pointer", fontWeight:700, background:"#eff6ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
       📝 {ticket.statusUpdates.length} Update{ticket.statusUpdates.length > 1 ? "s" : ""} — View
     </div>
-  ) : (
+ ) : (
     <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>
+  )}
+  {!["resolved","rma"].includes(ticket.status || "open") && (
+    <button onClick={() => setStatusUpdateForm({ show: true, id: ticket.id, note: "" })}
+      style={{ background:"#1d4ed8", color:"white", border:"none", padding:"4px 10px", borderRadius:6, cursor:"pointer", fontSize:11, fontWeight:600, marginTop:4, display:"block" }}>
+      📝 Update
+    </button>
   )}
 </td>
 
