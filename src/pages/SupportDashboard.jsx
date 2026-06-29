@@ -238,6 +238,7 @@ const [assignedCounts, setAssignedCounts] = useState({ all: 0, open: 0, resolved
 const [myRaisedYear, setMyRaisedYear]           = useState("");
 const [myRaisedMonth, setMyRaisedMonth]         = useState("");
 const [myRaisedSort, setMyRaisedSort]           = useState("newest");
+const [myRaisedCount, setMyRaisedCount] = useState(0);
 const [myReassignedSearch, setMyReassignedSearch] = useState("");
 const [myReassignedYear, setMyReassignedYear]   = useState("");
 const [myReassignedMonth, setMyReassignedMonth] = useState("");
@@ -361,14 +362,26 @@ setTickets(mine);
     })
     .catch(err => console.error(err));
 };
+const fetchMyRaisedCount = () => {
+  const email = currentUser?.email || "";
+  if (!email) return;
+  fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&source=support&limit=1`)
+    .then(r => r.json())
+    .then(data => {
+      setMyRaisedCount(data.totalCount || 0);
+    })
+    .catch(err => console.error(err));
+};
 
  useEffect(() => {
     fetchTickets();
-    fetchAssignedCounts();
-    const poll = setInterval(() => {
-      fetchTickets();
-      fetchAssignedCounts();
-    }, 30000);
+fetchAssignedCounts();
+fetchMyRaisedCount();
+const poll = setInterval(() => {
+  fetchTickets();
+  fetchAssignedCounts();
+  fetchMyRaisedCount();
+}, 30000);
     return () => clearInterval(poll);
   }, []);
 
@@ -632,6 +645,7 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
            
            setSuccessMsg("✅ Ticket submitted successfully! Status: OPEN");
 fetchTickets();
+fetchMyRaisedCount();
 setTimeout(() => setActiveTab("myraised"), 500);
             setTimeout(() => setSuccessMsg(""), 4000);
           })
@@ -1209,7 +1223,7 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
       <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
         {[
          ["tickets",      `📋 Assigned Tickets (${counts.all})`],
-          ["myraised",     `📞 My Raised (${myRaisedTickets.length})`],
+         ["myraised",     `📞 My Raised (${myRaisedCount})`],
           ["myreassigned", `🔄 My Reassigned (${myReassignedTickets.length})`],
           ["raise",        "🎫 Raise Ticket"],
           ["producttesting",    "🧪 Product Testing"],
