@@ -225,9 +225,11 @@ const [resolveAction, setResolveAction] = useState({});
   const [raisedByPopup, setRaisedByPopup]         = useState(null);
   const [reassignFilter, setReassignFilter]       = useState(false);
   const [newTicketAlert, setNewTicketAlert] = useState(false);
-  const [statusUpdateForm, setStatusUpdateForm] = useState({});
+ const [statusUpdateForm, setStatusUpdateForm] = useState({});
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const prevCountRef = useRef(0);
+const [updateNotifications, setUpdateNotifications] = useState([]);
+const prevTicketUpdatesRef = useRef({});
 const [assignedCounts, setAssignedCounts] = useState({ all: 0, open: 0, resolved: 0, rma: 0, reopened: 0 });
   // ✅ CHANGE 2: New filter for tickets reassigned OUT by current user
   const [myReassignedFilter, setMyReassignedFilter] = useState(false);
@@ -286,6 +288,30 @@ const [showLookupDropdown, setShowLookupDropdown] = useState(false);
       .then(r => r.json())
       .then(data => {
     const allData = data.tickets || [];
+
+    // Check for new updates from sales
+    const newNotifs = [];
+    allData.forEach(ticket => {
+      const prevCount = prevTicketUpdatesRef.current[ticket.id] ?? null;
+      const currentCount = Array.isArray(ticket.statusUpdates) ? ticket.statusUpdates.length : 0;
+
+      if (prevCount !== null && currentCount > prevCount) {
+        const latestUpdate = ticket.statusUpdates[ticket.statusUpdates.length - 1];
+        if (latestUpdate?.updatedByRole === "sales") {
+          newNotifs.push({
+            id: `${ticket.id}-${currentCount}`,
+            ticketNumber: ticket.ticketNumber,
+            message: `🔔 Ticket #${ticket.ticketNumber} has a new update from Sales — please check`,
+          });
+        }
+      }
+      prevTicketUpdatesRef.current[ticket.id] = currentCount;
+    });
+
+    if (newNotifs.length > 0) {
+      setUpdateNotifications(prev => [...prev, ...newNotifs]);
+    }
+
     setAllTickets(allData);
     const mine = allData.filter(t =>
   (t.assignTo && currentUser?.name &&
@@ -1141,6 +1167,20 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
         <div style={{ textAlign:"center", color:"#9ca3af", padding:20 }}>No status updates yet.</div>
       )}
     </div>
+  </div>
+)}
+
+{updateNotifications.length > 0 && (
+  <div style={{ position:"fixed", top:16, right:16, zIndex:9999, display:"flex", flexDirection:"column", gap:8, maxWidth:420 }}>
+    {updateNotifications.map(notif => (
+      <div key={notif.id} style={{ background:"#fffbeb", border:"1.5px solid #f59e0b", borderRadius:10, padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:"0 4px 12px rgba(0,0,0,0.15)" }}>
+        <span style={{ fontSize:13, fontWeight:700, color:"#92400e" }}>{notif.message}</span>
+        <button onClick={() => setUpdateNotifications(prev => prev.filter(n => n.id !== notif.id))}
+          style={{ background:"#f59e0b", color:"white", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontSize:12, fontWeight:700, marginLeft:12, whiteSpace:"nowrap" }}>
+          ✕
+        </button>
+      </div>
+    ))}
   </div>
 )}
       {/* Header */}

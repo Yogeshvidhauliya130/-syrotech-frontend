@@ -137,8 +137,10 @@ const [subCategoryFilter, setSubCategoryFilter] = useState("all");
 const [itemFilter, setItemFilter]               = useState("all");
   const [statusFilter, setStatusFilter]     = useState("all");
   const [searchQuery, setSearchQuery]       = useState("");
-  const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
+ const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const [statusUpdateForm, setStatusUpdateForm] = useState({});
+const [updateNotifications, setUpdateNotifications] = useState([]);
+const prevTicketUpdatesRef = useRef({});
   const [filterYear, setFilterYear]         = useState("");  // ✅ Year first
   const [filterMonth, setFilterMonth]       = useState(""); // ✅ Month second
   const [reassignFilter, setReassignFilter] = useState(false); // ✅ reassign filter
@@ -155,7 +157,35 @@ const [statusUpdateForm, setStatusUpdateForm] = useState({});
    if (!email) return;
    fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&limit=2000`)
       .then(res => res.json())
-      .then(data => { setTickets(data.tickets || []); })
+     .then(data => {
+        const newTickets = data.tickets || [];
+        
+        // Check for new updates from support
+        const newNotifs = [];
+        newTickets.forEach(ticket => {
+          const prevCount = prevTicketUpdatesRef.current[ticket.id] ?? null;
+          const currentCount = Array.isArray(ticket.statusUpdates) ? ticket.statusUpdates.length : 0;
+          
+          if (prevCount !== null && currentCount > prevCount) {
+            // Check if latest update is from support
+            const latestUpdate = ticket.statusUpdates[ticket.statusUpdates.length - 1];
+            if (latestUpdate?.updatedByRole !== "sales") {
+              newNotifs.push({
+                id: `${ticket.id}-${currentCount}`,
+                ticketNumber: ticket.ticketNumber,
+                message: `🔔 Ticket #${ticket.ticketNumber} has a new update from Support — please check`,
+              });
+            }
+          }
+          prevTicketUpdatesRef.current[ticket.id] = currentCount;
+        });
+
+        if (newNotifs.length > 0) {
+          setUpdateNotifications(prev => [...prev, ...newNotifs]);
+        }
+
+        setTickets(newTickets);
+      })
       .catch(err => console.error("Failed to load tickets:", err));
   };
 
@@ -743,7 +773,19 @@ isRma: issuePopup.firstIsRma || false,
   </div>
 )}
 
-
+{updateNotifications.length > 0 && (
+  <div style={{ position:"fixed", top:16, right:16, zIndex:9999, display:"flex", flexDirection:"column", gap:8, maxWidth:420 }}>
+    {updateNotifications.map(notif => (
+      <div key={notif.id} style={{ background:"#fffbeb", border:"1.5px solid #f59e0b", borderRadius:10, padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:"0 4px 12px rgba(0,0,0,0.15)" }}>
+        <span style={{ fontSize:13, fontWeight:700, color:"#92400e" }}>{notif.message}</span>
+        <button onClick={() => setUpdateNotifications(prev => prev.filter(n => n.id !== notif.id))}
+          style={{ background:"#f59e0b", color:"white", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontSize:12, fontWeight:700, marginLeft:12, whiteSpace:"nowrap" }}>
+          ✕
+        </button>
+      </div>
+    ))}
+  </div>
+)}
       {/* Navbar */}
       <div className="dash-navbar">
         <div className="dash-brand">

@@ -465,8 +465,8 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                 <option value="Backend">Backend</option>
                 <option value="Full Stack">Full Stack</option>
                 <option value="Hardware">Hardware</option>
-                <option value="Hardware">Testing</option>
-                <option value="Hardware">Data Anaylst</option>
+                <option value="Testing">Testing</option>
+                <option value="Data Analyst">Data Analyst</option>
               </select>
               {errors.taskRole && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.taskRole}</span>}
             </div>
@@ -560,7 +560,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-                 {["Ticket No", "Ticket Type", "Employee Name", "Employee Email", "Employee Phone", "Task Role", "Task", "History", "Status Updates", "Status", "Date", "Action"].map((h, i) => (
+               {["Ticket No", "Ticket Type", "Employee Details", "Task Role", "Task", "History", "Status Updates", "Status", "Date", "Action"].map((h, i) => (
                       <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
@@ -590,20 +590,14 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                             </span>
                           </td>
 
-                          {/* Employee Name */}
-                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.empName || ticket.customer || "—"}</div>
-                          </td>
+                        {/* Employee Details */}
+<td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
+  <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.empName || ticket.customer || "—"}</div>
+  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{ticket.empEmail || ticket.email || "—"}</div>
+  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}>{ticket.empPhone || ticket.phone || "—"}</div>
+</td>
 
-                          {/* Employee Email */}
-                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 12, color: "#6b7280" }}>{ticket.empEmail || ticket.email || "—"}</div>
-                          </td>
-
-                          {/* Employee Phone */}
-                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 12, color: "#6b7280" }}>{ticket.empPhone || ticket.phone || "—"}</div>
-                          </td>
+                  
 
                        {/* Task Role */}
                           <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
@@ -702,7 +696,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                         {/* Resolve Form Row */}
                        {showResolve && (s === "open" || s === "reopened") && (
                           <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                           <td colSpan={11} style={{ padding: "16px 20px" }}>
+                           <td colSpan={9} style={{ padding: "16px 20px" }}>
                               <div style={{ maxWidth: 600, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 12 }}>✅ Mark Task as Done</div>
                                 <div style={{ marginBottom: 14 }}>
