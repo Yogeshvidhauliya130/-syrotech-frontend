@@ -560,7 +560,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-               {["Ticket No", "Ticket Type", "Employee Details", "Task Role", "Task", "History", "Status Updates", "Status", "Date", "Action"].map((h, i) => (
+{["Ticket No", "Ticket Type", "Date", "Employee Details", "Task Role", "Task", "Status", "History", "Status Updates", "Action"].map((h, i) => (
                       <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
@@ -590,6 +590,11 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                             </span>
                           </td>
 
+                      {/* Date */}
+                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: 11, color: "#6b7280" }}>{ticket.date || "—"}</div>
+                          </td>
+
                         {/* Employee Details */}
 <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
   <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.empName || ticket.customer || "—"}</div>
@@ -611,6 +616,18 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                             <div style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }} title={ticket.firstDescription || ticket.description}>
                           {(ticket.firstDescription || ticket.description)?.length > 50 ? (ticket.firstDescription || ticket.description).slice(0, 50) + "…" : (ticket.firstDescription || ticket.description) || "—"}
                             </div>
+                          </td>
+
+{/* Status */}
+                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
+                            <span style={{ padding: "3px 10px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s] || "#374151", background: STATUS_BG[s] || "#f3f4f6", display: "inline-block" }}>
+                              {s.toUpperCase()}
+                            </span>
+                            {ticket.resolvedAt && (
+                              <div style={{ fontSize: 10, color: "#10b981", marginTop: 3 }}>
+                                ✅ {new Date(ticket.resolvedAt).toLocaleDateString()}
+                              </div>
+                            )}
                           </td>
 
 {/* History */}
@@ -652,23 +669,6 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                                 📝 Update
                               </button>
                             ) : null}
-                          </td>
-
-                          {/* Status */}
-                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
-                            <span style={{ padding: "3px 10px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s] || "#374151", background: STATUS_BG[s] || "#f3f4f6", display: "inline-block" }}>
-                              {s.toUpperCase()}
-                            </span>
-                            {ticket.resolvedAt && (
-                              <div style={{ fontSize: 10, color: "#10b981", marginTop: 3 }}>
-                                ✅ {new Date(ticket.resolvedAt).toLocaleDateString()}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Date */}
-                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 11, color: "#6b7280" }}>{ticket.date || "—"}</div>
                           </td>
 
                           {/* Action */}
