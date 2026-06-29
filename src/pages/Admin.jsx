@@ -1232,7 +1232,7 @@ isRma: issuePopup.firstIsRma || false,
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1300, background: "white" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-             {["Ticket No","Raised From","Raised By","Product","Item Name","Task Role","Customer / KYC","Employee Details","Issue","History","Status","Image","Sup. Updates","Customer Rating"].map((h, i) => (
+            {["Ticket No","Raised From","Raised By","Product","Task Role","Item Name","Customer / KYC","Employee Details","Issue","History","Status","Image","Sup. Updates","Customer Rating"].map((h, i) => (
                     <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -1297,7 +1297,7 @@ isRma: issuePopup.firstIsRma || false,
                           if (ticket.source === "customer") {
                             setRaisedByPopup({ name: ticket.customer, email: ticket.raisedBy, phone: ticket.phone, city: ticket.city, country: ticket.country, role: "Customer" });
                           } else {
-                            setRaisedByPopup({ name: ticket.raisedByName || "—", email: ticket.raisedBy || raiserPerson?.email || "—", phone: raiserPerson?.phone || "—", city: raiserPerson?.city || "—", country: raiserPerson?.country || "—", role: raiserPerson?.role || (isSupportRaised ? "Support" : "Sales"), specialization: raiserPerson?.specialization ? raiserPerson.specialization.join(", ") : null });
+                            setRaisedByPopup({ name: ticket.raisedByName || "—", email: ticket.raisedBy || raiserPerson?.email || "—", phone: raiserPerson?.phone || "—", city: raiserPerson?.city || "—", country: raiserPerson?.country || "—", role: ticket.ticketType === "rnd" ? "R&D" : raiserPerson?.role || (isSupportRaised ? "Support" : "Sales"), specialization: raiserPerson?.specialization ? raiserPerson.specialization.join(", ") : null });
                           }
                         }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: "#059669", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#6ee7b7" }}>{ticket.raisedByName || "—"}</div>
@@ -1332,8 +1332,8 @@ isRma: issuePopup.firstIsRma || false,
 </td>
 
                       {/* Col 6 — Customer / KYC (with popup) */}
-                      <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: "pointer" }}
-                       onClick={() => setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, email: ticket.email, city: ticket.city, country: ticket.country, companyName: ticket.companyName })}>
+                      <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: ticket.ticketType === "rnd" ? "default" : "pointer" }}
+                       onClick={() => { if(ticket.ticketType === "rnd") return; setCustomerPopup({ customer: ticket.customer, phone: ticket.phone, email: ticket.email, city: ticket.city, country: ticket.country, companyName: ticket.companyName }); }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#93c5fd" }}>{ticket.customer || "—"}</div>
                         {ticket.assignTo && (
                           <div onClick={e => { e.stopPropagation(); setAssigneePopup({ name: ticket.assignTo, phone: assignedPerson?.phone, city: assignedPerson?.city, specialization: assignedPerson?.specialization?.join(", ") }); }}
