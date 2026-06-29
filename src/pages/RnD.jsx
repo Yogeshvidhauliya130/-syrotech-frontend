@@ -465,6 +465,8 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                 <option value="Backend">Backend</option>
                 <option value="Full Stack">Full Stack</option>
                 <option value="Hardware">Hardware</option>
+                <option value="Hardware">Testing</option>
+                <option value="Hardware">Data Anaylst</option>
               </select>
               {errors.taskRole && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.taskRole}</span>}
             </div>
