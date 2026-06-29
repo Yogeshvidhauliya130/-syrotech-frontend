@@ -20,10 +20,11 @@ export default function RnD() {
   const [issuePopup, setIssuePopup] = useState(null);
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
-  const [form, setForm] = useState({
+ const [form, setForm] = useState({
     empName:  "",
     empEmail: "",
     empPhone: "",
+    taskRole: "",
     task:     "",
   });
   const [errors, setErrors] = useState({});
@@ -65,7 +66,8 @@ export default function RnD() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.empEmail)) e.empEmail = "Enter a valid email.";
     if (!form.empPhone.trim()) e.empPhone = "Employee phone is required.";
     else if (!/^\d{10}$/.test(form.empPhone.replace(/\s/g, ""))) e.empPhone = "Enter valid 10-digit phone.";
-    if (!form.task.trim())     e.task     = "Task description is required.";
+    if (!form.taskRole)        e.taskRole = "Task role is required.";
+if (!form.task.trim())     e.task     = "Task description is required.";
     return e;
   };
 
@@ -82,6 +84,7 @@ export default function RnD() {
       empEmail:     form.empEmail.trim(),
       empPhone:     form.empPhone.trim(),
       description:  form.task.trim(),
+       taskRole:     form.taskRole,
       customer:     form.empName.trim(),
       phone:        form.empPhone.trim(),
       email:        form.empEmail.trim(),
@@ -102,7 +105,7 @@ export default function RnD() {
     })
       .then(r => { if (!r.ok) throw new Error("Server error"); return r.json(); })
       .then(() => {
-        setForm({ empName: "", empEmail: "", empPhone: "", task: "" });
+        setForm({ empName: "", empEmail: "", empPhone: "", taskRole: "", task: "" });
         setErrors({});
         setSuccessMsg("✅ Ticket raised successfully!");
         fetchTickets();
@@ -432,6 +435,40 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
               {errors.empPhone && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.empPhone}</span>}
             </div>
 
+
+
+
+
+           {/* Task Role */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Task Role <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <select
+                name="taskRole"
+                value={form.taskRole}
+                onChange={handleChange}
+                style={{
+                  width: "100%",
+                  padding: "11px 14px",
+                  border: `2px solid ${errors.taskRole ? "#ef4444" : "#d1d5db"}`,
+                  borderRadius: 10,
+                  fontSize: 13.5,
+                  boxSizing: "border-box",
+                  outline: "none",
+                  background: errors.taskRole ? "#fff5f5" : "#f9fafb",
+                  fontFamily: "DM Sans, sans-serif",
+                  color: "#111",
+                }}>
+                <option value="">-- Select Task Role --</option>
+                <option value="Frontend">Frontend</option>
+                <option value="Backend">Backend</option>
+                <option value="Full Stack">Full Stack</option>
+                <option value="Hardware">Hardware</option>
+              </select>
+              {errors.taskRole && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.taskRole}</span>}
+            </div>
+
             {/* Task */}
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -521,7 +558,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-                 {["Ticket No", "Ticket Type", "Employee Name", "Employee Email", "Employee Phone", "Task", "History", "Status Updates", "Status", "Date", "Action"].map((h, i) => (
+                 {["Ticket No", "Ticket Type", "Employee Name", "Employee Email", "Employee Phone", "Task Role", "Task", "History", "Status Updates", "Status", "Date", "Action"].map((h, i) => (
                       <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
@@ -564,6 +601,13 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                           {/* Employee Phone */}
                           <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
                             <div style={{ fontSize: 12, color: "#6b7280" }}>{ticket.empPhone || ticket.phone || "—"}</div>
+                          </td>
+
+                       {/* Task Role */}
+                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
+                            <span style={{ background: "#ecfdf5", color: "#059669", border: "1px solid #6ee7b7", padding: "3px 10px", borderRadius: 10, fontSize: 11, fontWeight: 700 }}>
+                              {ticket.taskRole || "—"}
+                            </span>
                           </td>
 
                           {/* Task */}

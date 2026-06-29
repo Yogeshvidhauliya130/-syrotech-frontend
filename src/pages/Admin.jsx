@@ -1232,7 +1232,7 @@ isRma: issuePopup.firstIsRma || false,
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1300, background: "white" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-             {["Ticket No","Raised From","Raised By","Product","Item Name","Customer / KYC","Employee Details","Issue","History","Status","Image","Sup. Updates","Customer Rating"].map((h, i) => (
+             {["Ticket No","Raised From","Raised By","Product","Item Name","Task Role","Customer / KYC","Employee Details","Issue","History","Status","Image","Sup. Updates","Customer Rating"].map((h, i) => (
                     <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -1308,6 +1308,15 @@ isRma: issuePopup.firstIsRma || false,
                      <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0" }}>
   <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{ticket.category || "—"}</div>
 </td>
+
+                      {/* Task Role */}
+                      <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0" }}>
+                        {ticket.taskRole ? (
+                          <span style={{ background: "#ecfdf5", color: "#059669", border: "1px solid #6ee7b7", padding: "3px 10px", borderRadius: 10, fontSize: 11, fontWeight: 700 }}>
+                            {ticket.taskRole}
+                          </span>
+                        ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                      </td>
 
                       {/* Col 5 — Model */}
                 <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: (ticket.source === "hr" || ticket.source === "hradmin") ? "default" : "pointer" }}
