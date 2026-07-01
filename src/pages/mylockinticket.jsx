@@ -23,7 +23,10 @@ const [customerPopup, setCustomerPopup] = useState(null);
 const [issuePopup, setIssuePopup] = useState(null);
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const [statusUpdateForm, setStatusUpdateForm] = useState({});
-const [updateNotifications, setUpdateNotifications] = useState([]);
+const [updateNotifications, setUpdateNotifications] = useState(() => {
+  try { return JSON.parse(localStorage.getItem("mylockin_updateNotifications")) || []; }
+  catch { return []; }
+});
 const prevTicketUpdatesRef = useRef({});
 
 const fetchTickets = () => {
@@ -71,6 +74,10 @@ const fetchTickets = () => {
       return () => clearInterval(id);
     }
   }, [allTickets]);
+
+  useEffect(() => {
+    localStorage.setItem("mylockin_updateNotifications", JSON.stringify(updateNotifications));
+  }, [updateNotifications]);
 
   const displayed = tickets
     .filter((t) => statusFilter === "all" || t.status === statusFilter)

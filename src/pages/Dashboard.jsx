@@ -139,7 +139,10 @@ const [itemFilter, setItemFilter]               = useState("all");
   const [searchQuery, setSearchQuery]       = useState("");
  const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const [statusUpdateForm, setStatusUpdateForm] = useState({});
-const [updateNotifications, setUpdateNotifications] = useState([]);
+const [updateNotifications, setUpdateNotifications] = useState(() => {
+  try { return JSON.parse(localStorage.getItem("sales_updateNotifications")) || []; }
+  catch { return []; }
+});
 const prevTicketUpdatesRef = useRef({});
   const [filterYear, setFilterYear]         = useState("");  // ✅ Year first
   const [filterMonth, setFilterMonth]       = useState(""); // ✅ Month second
@@ -194,6 +197,10 @@ const prevTicketUpdatesRef = useRef({});
     const id = setInterval(fetchTickets, 60000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("sales_updateNotifications", JSON.stringify(updateNotifications));
+  }, [updateNotifications]);
 
   // ✅ Auto-assign whenever category/city/country/tickets changes
 //   useEffect(() => {

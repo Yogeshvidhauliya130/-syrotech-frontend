@@ -74,9 +74,14 @@ export default function LockinSupport() {
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const [activeTab, setActiveTab] = useState("tickets");
   const [dateSort, setDateSort]       = useState("newest");
- const [updateNotifications, setUpdateNotifications] = useState([]);
+const [updateNotifications, setUpdateNotifications] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lockin_updateNotifications")) || []; }
+    catch { return []; }
+  });
   const prevTicketUpdatesRef = useRef({});
-  const [newTicketAlert, setNewTicketAlert] = useState(false);
+  const [newTicketAlert, setNewTicketAlert] = useState(() => {
+    return localStorage.getItem("lockin_newTicketAlert") === "true";
+  });
   const prevCountRef = useRef(0);
 
  const fetchTickets = () => {
@@ -113,11 +118,19 @@ const [activeTab, setActiveTab] = useState("tickets");
   .catch(console.error);
   };
 
-  useEffect(() => {
+ useEffect(() => {
     fetchTickets();
     const id = setInterval(fetchTickets, 30000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("lockin_updateNotifications", JSON.stringify(updateNotifications));
+  }, [updateNotifications]);
+
+  useEffect(() => {
+    localStorage.setItem("lockin_newTicketAlert", newTicketAlert ? "true" : "false");
+  }, [newTicketAlert]);
 
 const handleResolve = async (ticketId) => {
   const rf = resolveForm[ticketId] || {};

@@ -224,11 +224,16 @@ const [resolveAction, setResolveAction] = useState({});
   const [reassignPopup, setReassignPopup]         = useState(null);
   const [raisedByPopup, setRaisedByPopup]         = useState(null);
   const [reassignFilter, setReassignFilter]       = useState(false);
-  const [newTicketAlert, setNewTicketAlert] = useState(false);
+  const [newTicketAlert, setNewTicketAlert] = useState(() => {
+    return localStorage.getItem("support_newTicketAlert") === "true";
+  });
  const [statusUpdateForm, setStatusUpdateForm] = useState({});
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const prevCountRef = useRef(0);
-const [updateNotifications, setUpdateNotifications] = useState([]);
+const [updateNotifications, setUpdateNotifications] = useState(() => {
+  try { return JSON.parse(localStorage.getItem("support_updateNotifications")) || []; }
+  catch { return []; }
+});
 const prevTicketUpdatesRef = useRef({});
 const [assignedCounts, setAssignedCounts] = useState({ all: 0, open: 0, resolved: 0, rma: 0, reopened: 0 });
   // ✅ CHANGE 2: New filter for tickets reassigned OUT by current user
@@ -384,6 +389,14 @@ const poll = setInterval(() => {
 }, 30000);
     return () => clearInterval(poll);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("support_updateNotifications", JSON.stringify(updateNotifications));
+  }, [updateNotifications]);
+
+  useEffect(() => {
+    localStorage.setItem("support_newTicketAlert", newTicketAlert ? "true" : "false");
+  }, [newTicketAlert]);
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
