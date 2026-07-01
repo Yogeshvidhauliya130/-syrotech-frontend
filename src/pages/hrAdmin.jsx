@@ -457,7 +457,7 @@ serialNo:  raiseForm.serialNo,
               <select name="empDept" value={raiseForm.empDept} onChange={handleRaiseChange}
                 style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${raiseErrors.empDept ? "#ef4444" : "#d1d5db"}`, borderRadius: 10, background: raiseErrors.empDept ? "#fff5f5" : "#f9fafb", fontSize: 14, outline: "none", fontFamily: "inherit", color: "#111827", boxSizing: "border-box" }}>
                 <option value="">-- Select Department --</option>
-                {["R&D Department","IT","Marketing","Accounts","Sales","Logistics","RMA","Production-Passive","Production-SFP","Production-Factory"].map(d => (
+                {["R&D Department","IT","Marketing","Accounts","Sales","Logistics","RMA","Production-Passive","Production-SFP","Production-Factory","Admin","SCM"].map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
