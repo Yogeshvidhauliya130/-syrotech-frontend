@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -22,6 +22,9 @@ export default function MyLockinTickets({ tickets: allTickets }) {
 const [customerPopup, setCustomerPopup] = useState(null);
 const [issuePopup, setIssuePopup] = useState(null);
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
+const [statusUpdateForm, setStatusUpdateForm] = useState({});
+const [updateNotifications, setUpdateNotifications] = useState([]);
+const prevTicketUpdatesRef = useRef({});
 
 const fetchTickets = () => {
     const email = currentUser?.email || "";
@@ -35,11 +38,31 @@ const fetchTickets = () => {
   .catch(() => setLoading(false));
   };
 
-  useEffect(() => {
+ useEffect(() => {
     if (allTickets) {
       const mine = allTickets.filter(
         (t) => t.ticketType === "lockin" && t.raisedBy === currentUser?.email
       );
+
+      const newNotifs = [];
+      mine.forEach(ticket => {
+        const tId = ticket.id || ticket._id;
+        const prevCount = prevTicketUpdatesRef.current[tId] ?? null;
+        const currentCount = Array.isArray(ticket.statusUpdates) ? ticket.statusUpdates.length : 0;
+        if (prevCount !== null && currentCount > prevCount) {
+          const latestUpdate = ticket.statusUpdates[ticket.statusUpdates.length - 1];
+          if (latestUpdate?.updatedByRole !== "sales") {
+            newNotifs.push({
+              id: `${tId}-${currentCount}`,
+              ticketNumber: ticket.ticketNumber,
+              message: `🔔 Ticket #${ticket.ticketNumber} has a new update from Lockin Support — please check`,
+            });
+          }
+        }
+        prevTicketUpdatesRef.current[tId] = currentCount;
+      });
+      if (newNotifs.length > 0) setUpdateNotifications(prev => [...prev, ...newNotifs]);
+
       setTickets(mine);
       setLoading(false);
     } else {
@@ -86,6 +109,17 @@ const counts = {
 
   return (
   <>
+  {updateNotifications.length > 0 && (
+    <div style={{ position:"fixed", top:16, right:16, zIndex:9999, display:"flex", flexDirection:"column", gap:8, maxWidth:420 }}>
+      {updateNotifications.map(notif => (
+        <div key={notif.id} style={{ background:"#fffbeb", border:"1.5px solid #f59e0b", borderRadius:10, padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:"0 4px 12px rgba(0,0,0,0.15)" }}>
+          <span style={{ fontSize:13, fontWeight:700, color:"#92400e" }}>{notif.message}</span>
+          <button onClick={() => setUpdateNotifications(prev => prev.filter(n => n.id !== notif.id))}
+            style={{ background:"#f59e0b", color:"white", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontSize:12, fontWeight:700, marginLeft:12, whiteSpace:"nowrap" }}>✕</button>
+        </div>
+      ))}
+    </div>
+  )}
   {productPopup && (
   <div onClick={() => setProductPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
     <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fad8be" }}>
@@ -220,9 +254,49 @@ const counts = {
             </div>
           ))}
         </div>
-      ) : (
+    ) : (
         <div style={{ textAlign:"center", color:"#9ca3af", padding:20 }}>No status updates yet.</div>
       )}
+    </div>
+  </div>
+)}
+
+{statusUpdateForm?.show && (
+  <div onClick={() => setStatusUpdateForm({})} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"white", borderRadius:14, padding:"28px 32px", maxWidth:560, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.3)", border:"2px solid #bfdbfe" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+        <div style={{ fontSize:16, fontWeight:800, color:"#1d4ed8" }}>📝 Add Update</div>
+        <button onClick={() => setStatusUpdateForm({})} style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"4px 10px", cursor:"pointer", fontSize:13, color:"#374151" }}>✕ Close</button>
+      </div>
+      <textarea rows={5} placeholder="Write your update here..."
+        value={statusUpdateForm.note || ""}
+        onChange={e => setStatusUpdateForm(prev => ({ ...prev, note: e.target.value }))}
+        style={{ width:"100%", padding:"11px 14px", border:"2px solid #bfdbfe", borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", boxSizing:"border-box", color:"#000000", lineHeight:1.6 }} />
+      <div style={{ display:"flex", gap:12, marginTop:12 }}>
+        <button onClick={() => {
+          const note = statusUpdateForm.note?.trim();
+          if (!note) { alert("Please write an update."); return; }
+          const ticketId = statusUpdateForm.id;
+          const ticket = tickets.find(t => (t.id || t._id) === ticketId);
+          const newEntry = { note, updatedBy: currentUser?.name, updatedAt: new Date().toISOString(), updatedByRole: "sales" };
+          const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
+          fetch(`${BASE_URL}/tickets/${ticketId}`, {
+            method:"PATCH", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note })
+          })
+          .then(r => r.json())
+          .then(updated => {
+            setTickets(prev => prev.map(t => (t.id || t._id) === ticketId ? { ...t, ...updated } : t));
+            setStatusUpdateForm({});
+          });
+        }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
+          ✅ Submit Update
+        </button>
+        <button onClick={() => setStatusUpdateForm({})}
+          style={{ background:"#e2e8f0", border:"none", borderRadius:10, padding:"12px 20px", cursor:"pointer", fontSize:13, color:"#64748b", fontFamily:"inherit" }}>
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 )}
@@ -542,11 +616,17 @@ const counts = {
 <td style={{ padding:"10px 12px", borderRight:"1px solid #e0d8d0" }}>
   {Array.isArray(t.statusUpdates) && t.statusUpdates.length > 0 ? (
     <div onClick={() => setStatusUpdatePopup(t.statusUpdates)}
-      style={{ fontSize:10, color:"#1d4ed8", cursor:"pointer", fontWeight:700, background:"#eff6ff", padding:"2px 6px", borderRadius:4, display:"inline-block" }}>
+      style={{ fontSize:10, color:"#1d4ed8", cursor:"pointer", fontWeight:700, background:"#eff6ff", padding:"2px 6px", borderRadius:4, display:"inline-block", marginBottom:6 }}>
       📝 {t.statusUpdates.length} Update{t.statusUpdates.length > 1 ? "s" : ""} — View
     </div>
   ) : (
     <span style={{ fontSize:11, color:"#d1d5db" }}>—</span>
+  )}
+  {!["resolved"].includes((t.status || "open").toLowerCase()) && (
+    <button onClick={() => setStatusUpdateForm({ show: true, id: t.id || t._id, note: "" })}
+      style={{ background:"#1d4ed8", color:"white", border:"none", padding:"4px 10px", borderRadius:6, cursor:"pointer", fontSize:11, fontWeight:600, display:"block" }}>
+      📝 Update
+    </button>
   )}
 </td>
                         {/* Resolved By */}

@@ -74,12 +74,33 @@ export default function LockinSupport() {
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const [activeTab, setActiveTab] = useState("tickets");
   const [dateSort, setDateSort]       = useState("newest");
+  const [updateNotifications, setUpdateNotifications] = useState([]);
+  const prevTicketUpdatesRef = useRef({});
 
-  const fetchTickets = () => {
+ const fetchTickets = () => {
  fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(currentUser?.name || "")}&ticketType=lockin&limit=2000`)
   .then((r) => r.json())
   .then((data) => {
-    setTickets(data.tickets || []);
+    const newTickets = data.tickets || [];
+    const newNotifs = [];
+    newTickets.forEach(ticket => {
+      const tId = ticket.id || ticket._id;
+      const prevCount = prevTicketUpdatesRef.current[tId] ?? null;
+      const currentCount = Array.isArray(ticket.statusUpdates) ? ticket.statusUpdates.length : 0;
+      if (prevCount !== null && currentCount > prevCount) {
+        const latestUpdate = ticket.statusUpdates[ticket.statusUpdates.length - 1];
+        if (latestUpdate?.updatedByRole === "sales") {
+          newNotifs.push({
+            id: `${tId}-${currentCount}`,
+            ticketNumber: ticket.ticketNumber,
+            message: `🔔 Ticket #${ticket.ticketNumber} has a new update from Sales — please check`,
+          });
+        }
+      }
+      prevTicketUpdatesRef.current[tId] = currentCount;
+    });
+    if (newNotifs.length > 0) setUpdateNotifications(prev => [...prev, ...newNotifs]);
+    setTickets(newTickets);
   })
   .catch(console.error);
   };
@@ -178,8 +199,19 @@ const handleResolve = async (ticketId) => {
   reopened: tickets.filter((t) => t.status === "reopened").length,
 };
 
-  return (
+ return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8" }}>
+      {updateNotifications.length > 0 && (
+        <div style={{ position:"fixed", top:16, right:16, zIndex:9999, display:"flex", flexDirection:"column", gap:8, maxWidth:420 }}>
+          {updateNotifications.map(notif => (
+            <div key={notif.id} style={{ background:"#fffbeb", border:"1.5px solid #f59e0b", borderRadius:10, padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:"0 4px 12px rgba(0,0,0,0.15)" }}>
+              <span style={{ fontSize:13, fontWeight:700, color:"#92400e" }}>{notif.message}</span>
+              <button onClick={() => setUpdateNotifications(prev => prev.filter(n => n.id !== notif.id))}
+                style={{ background:"#f59e0b", color:"white", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontSize:12, fontWeight:700, marginLeft:12, whiteSpace:"nowrap" }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
       {productPopup && (
   <div onClick={() => setProductPopup(null)} style={{
     position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
@@ -363,7 +395,7 @@ const handleResolve = async (ticketId) => {
           if (!note) { alert("Please write an update note."); return; }
           const ticketId = statusUpdateForm.id;
           const ticket = tickets.find(t => (t.id || t._id) === ticketId);
-          const newEntry = { note, status, updatedBy: currentUser?.name, updatedAt: new Date().toISOString() };
+         const newEntry = { note, status, updatedBy: currentUser?.name, updatedAt: new Date().toISOString(), updatedByRole: "support" };
           const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
           fetch(`${BASE_URL}/tickets/${ticketId}`, {
             method:"PATCH", headers:{"Content-Type":"application/json"},
