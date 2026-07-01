@@ -398,6 +398,8 @@ export default function HR() {
   <option value="Production">Production-Passive</option>
   <option value="Production">Production-SFP</option>
   <option value="Production">Production-Factory</option>
+  <option value="Admin">Admin</option>
+  <option value="SCM">SCM</option>
   
 </select>
                 {errors.empDept && <span className="hr-field__error">{errors.empDept}</span>}
