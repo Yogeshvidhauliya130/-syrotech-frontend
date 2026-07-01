@@ -74,8 +74,10 @@ export default function LockinSupport() {
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const [activeTab, setActiveTab] = useState("tickets");
   const [dateSort, setDateSort]       = useState("newest");
-  const [updateNotifications, setUpdateNotifications] = useState([]);
+ const [updateNotifications, setUpdateNotifications] = useState([]);
   const prevTicketUpdatesRef = useRef({});
+  const [newTicketAlert, setNewTicketAlert] = useState(false);
+  const prevCountRef = useRef(0);
 
  const fetchTickets = () => {
  fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(currentUser?.name || "")}&ticketType=lockin&limit=2000`)
@@ -99,7 +101,13 @@ const [activeTab, setActiveTab] = useState("tickets");
       }
       prevTicketUpdatesRef.current[tId] = currentCount;
     });
-    if (newNotifs.length > 0) setUpdateNotifications(prev => [...prev, ...newNotifs]);
+   if (newNotifs.length > 0) setUpdateNotifications(prev => [...prev, ...newNotifs]);
+
+    if (prevCountRef.current > 0 && newTickets.length > prevCountRef.current) {
+      setNewTicketAlert(true);
+    }
+    prevCountRef.current = newTickets.length;
+
     setTickets(newTickets);
   })
   .catch(console.error);
@@ -210,6 +218,22 @@ const handleResolve = async (ticketId) => {
                 style={{ background:"#f59e0b", color:"white", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontSize:12, fontWeight:700, marginLeft:12, whiteSpace:"nowrap" }}>✕</button>
             </div>
           ))}
+        </div>
+     )}
+      {newTicketAlert && (
+        <div style={{ margin:"16px 28px 0", background:"#fef9c3",
+          border:"1.5px solid #f59e0b", borderRadius:10,
+          padding:"12px 20px", display:"flex",
+          justifyContent:"space-between", alignItems:"center" }}>
+          <span style={{ fontSize:14, fontWeight:700, color:"#92400e" }}>
+            🔔 New lockin ticket raised!
+          </span>
+          <button onClick={() => { setNewTicketAlert(false); setActiveTab("tickets"); }}
+            style={{ background:"#f59e0b", color:"white", border:"none",
+              padding:"6px 16px", borderRadius:8, cursor:"pointer",
+              fontSize:13, fontWeight:700 }}>
+            View Now
+          </button>
         </div>
       )}
       {productPopup && (
