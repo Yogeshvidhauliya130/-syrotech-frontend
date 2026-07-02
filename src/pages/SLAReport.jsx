@@ -129,7 +129,7 @@ const filtered = useMemo(() => {
 const salesData = useMemo(() => {
     const map = {};
     filtered
-      .filter(t => !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr" && t.source !== "hradmin"))
+      .filter(t => t.source !== "rnd" && t.ticketType !== "rnd" && (!t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr" && t.source !== "hradmin")))
       .forEach(t => {
         const name = t.raisedByName || "Unknown";
         const source = t.source || "sales";
