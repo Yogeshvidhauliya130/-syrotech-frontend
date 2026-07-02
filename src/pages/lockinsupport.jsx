@@ -22,15 +22,7 @@ function sendWhatsAppFeedback(ticket, supportName) {
   const fullPhone = phone.startsWith("91") ? phone : `91${phone}`;
   const ticketId = ticket.id || ticket._id;
 
-  fetch(`https://api.syrotech.com/api/feedback/generate-token/${ticketId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  })
-    .then(r => r.json())
-    .then(data => {
-      const token = data.token;
-      const feedbackLink = `https://ticketing.syrotech.com/feedback?ticket=${ticketId}&token=${token}`;
-      const message =
+  const message =
   `🎉 *Issue Resolved Successfully!*\n\n` +
   `Hello *${ticket.customer || "Customer"}* 👋\n\n` +
   `✅ Your *${ticket.category || ""}* issue has been resolved!\n\n` +
@@ -40,9 +32,6 @@ function sendWhatsAppFeedback(ticket, supportName) {
   `👤 Customer   : *${ticket.customer || "—"}*\n` +
   `📦 Product    : *${ticket.category || "—"}*\n` +
   `🎫 Ticket No  : *#${ticket.ticketNumber || "—"}*\n\n` +
-  `⭐ *We'd love your feedback!*\n` +
-  `Please take 30 seconds to rate our service:\n` +
-  `👉 ${feedbackLink}\n\n` +
   `━━━━━━━━━━━━━━━━━━━━\n` +
   `📞 *Need more help?*\n` +
   `━━━━━━━━━━━━━━━━━━━━\n` +
@@ -50,11 +39,7 @@ function sendWhatsAppFeedback(ticket, supportName) {
   `☎️  +91-9870295096\n` +
   `🌐 www.syrotech.com\n\n` +
   `💙 Thank you for choosing *Syrotech Networks!* 🙏`;
-      window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`, "_blank");
-    })
-    .catch(() => {
-      alert("❌ Failed to generate feedback link. Please try again.");
-    });
+  window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`, "_blank");
   return true;
 }
 export default function LockinSupport() {
