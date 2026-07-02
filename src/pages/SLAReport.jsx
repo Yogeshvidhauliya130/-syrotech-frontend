@@ -169,6 +169,36 @@ const salesData = useMemo(() => {
     }).sort((a,b) => b.total - a.total);
   }, [filtered]);
 
+  /* ── R&D person analysis ── */
+  const rndData = useMemo(() => {
+    const map = {};
+    tickets
+      .filter(t => t.ticketType === "rnd" || t.source === "rnd")
+      .filter(t => {
+        const d = new Date(t.createdAt || t.date);
+        if (filterDate)  return d.toDateString() === new Date(filterDate).toDateString();
+        if (filterYear  && d.getFullYear() !== parseInt(filterYear))  return false;
+        if (filterMonth && d.getMonth() + 1 !== parseInt(filterMonth)) return false;
+        return true;
+      })
+      .forEach(t => {
+        const name = t.assignTo || "Unassigned";
+        if (!map[name]) map[name] = { name, total:0, resolved:0, open:0, rma:0, times:[], ratings:[] };
+        map[name].total++;
+        map[name][t.status] = (map[name][t.status] || 0) + 1;
+        if (t.status === "resolved" && t.createdAt && t.resolvedAt) {
+          map[name].times.push((new Date(t.resolvedAt) - new Date(t.createdAt)) / 3600000);
+        }
+        if (t.feedbackRating) map[name].ratings.push(parseInt(t.feedbackRating));
+      });
+    return Object.values(map).map(v => {
+      const avgT = v.times.length ? (v.times.reduce((a,b) => a+b,0) / v.times.length).toFixed(1) : null;
+      const avgR = v.ratings.length ? (v.ratings.reduce((a,b)=>a+b,0)/v.ratings.length).toFixed(1) : null;
+      const resRate = pct((v.resolved || 0) + (v.rma || 0), v.total);
+      return { ...v, avgTime: avgT, avgRating: avgR, resRate };
+    }).sort((a,b) => b.total - a.total);
+  }, [tickets, filterYear, filterMonth, filterDate]);
+
   /* ── Monthly trend (last 6 months) ── */
   const monthlyTrend = useMemo(() => {
     const now = new Date();
@@ -797,45 +827,58 @@ const rate = pct(m.resolved, m.resolved + Math.max(0, open));
     </div>
   </div>
 )}
-      {activeSection === "rnd" && (
-  <div className="sla-section">
-    <div className="sla-card">
-    <div className="sla-card-title">🔬 R&D Tickets — {tickets.filter(t => t.ticketType === "rnd" || t.source === "rnd").length} total</div>
-      <div className="sla-scroll">
-        <table className="sla-table">
-          <thead>
-            <tr>
-              {["Ticket No","Date","Employee","Issue","Assigned To","Status","Resolved By"].map(h => <th key={h}>{h}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.filter(t => {
-  const d = new Date(t.createdAt || t.date);
-  const isRnd = t.ticketType === "rnd" || t.source === "rnd";
-  if (!isRnd) return false;
-  if (filterDate) return d.toDateString() === new Date(filterDate).toDateString();
-  if (filterYear && d.getFullYear() !== parseInt(filterYear)) return false;
-  if (filterMonth && d.getMonth() + 1 !== parseInt(filterMonth)) return false;
-  return true;
-})
-  .sort((a,b) => new Date(b.createdAt||b.date) - new Date(a.createdAt||a.date))
-  .map((t, i) => (
-                <tr key={t.id||t._id} className={i % 2 === 0 ? "even" : ""}>
-                  <td><strong style={{ color:"#059669" }}>#{t.ticketNumber||"—"}</strong></td>
-                  <td>{t.date||"—"}</td>
-                  <td style={{ color:"#9d174d", fontWeight:700 }}>{t.empName||"—"}</td>
-                  <td>{t.description||"—"}</td>
-                  <td style={{ color:"#059669", fontWeight:700 }}>{t.assignTo||"—"}</td>
-                  <td><span style={{ padding:"3px 8px", borderRadius:10, fontSize:10, fontWeight:700, color: t.status==="resolved"?"#1a7a46":"#e04e00", background: t.status==="resolved"?"#edfaf3":"#fff4ee" }}>{(t.status||"open").toUpperCase()}</span></td>
-                  <td style={{ color:"#059669" }}>{t.resolvedBy||"Pending"}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-)}
+     {activeSection === "rnd" && (
+        <div className="sla-section">
+          <div className="sla-card">
+            <div className="sla-card-header">
+              <div className="sla-card-title">🔬 R&D Person — Ticket Activity</div>
+              <div className="sla-card-sub">{rndData.length} persons · sorted by tickets handled</div>
+            </div>
+            {rndData.length === 0 ? (
+              <div className="sla-empty">No R&D data for selected period.</div>
+            ) : (
+              <div className="sla-scroll" style={{ marginTop: 10 }}>
+                <table className="sla-table">
+                  <thead>
+                    <tr>
+                      {["#","Person","Total","Open","Resolved","RMA","Resolution Rate","Avg Time","Avg Rating"].map(h => <th key={h}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rndData.map((s, i) => (
+                      <tr key={s.name} className={i % 2 === 0 ? "even" : ""}>
+                        <td><span className="sla-rank" style={{ background: i < 3 ? ["#059669","#f59e0b","#3b82f6"][i] : "#e5e7eb", color: i < 3 ? "white" : "#555" }}>#{i+1}</span></td>
+                        <td>
+                          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                            <div style={{ width:28, height:28, borderRadius:"50%", background: ["#059669","#3b82f6","#f59e0b","#8b5cf6","#ec4899"][i%5], color:"white", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:12, flexShrink:0 }}>{s.name.charAt(0).toUpperCase()}</div>
+                            <span style={{ fontWeight:700, fontSize:13, color:"#1a1a1a" }}>{s.name}</span>
+                          </div>
+                        </td>
+                        <td><strong style={{ color:"#059669" }}>{s.total}</strong></td>
+                        <td><span className="sla-badge open">{s.open || 0}</span></td>
+                        <td><span className="sla-badge resolved">{s.resolved || 0}</span></td>
+                        <td><span className="sla-badge rma">{s.rma || 0}</span></td>
+                        <td>
+                          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                            <span style={{ fontWeight:700, color:slaColor(s.resRate), fontSize:13 }}>{s.resRate}%</span>
+                            <Bar pct={s.resRate} color={slaColor(s.resRate)} height={5} />
+                          </div>
+                        </td>
+                        <td><span style={{ color: s.avgTime ? (parseFloat(s.avgTime) <= 8 ? "#10b981" : parseFloat(s.avgTime) <= 24 ? "#f59e0b" : "#ef4444") : "#9ca3af", fontWeight:700 }}>{s.avgTime ? `${s.avgTime}h` : "—"}</span></td>
+                        <td>
+                          {s.avgRating ? (
+                            <span style={{ color:"#f59e0b", fontWeight:700 }}>⭐ {s.avgRating}</span>
+                          ) : <span style={{ color:"#d1d5db" }}>—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
