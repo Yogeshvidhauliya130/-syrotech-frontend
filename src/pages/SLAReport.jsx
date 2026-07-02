@@ -126,16 +126,18 @@ const filtered = useMemo(() => {
   }, [filtered]);
 
   /* ── Sales person analysis ── */
- const salesData = useMemo(() => {
+const salesData = useMemo(() => {
     const map = {};
-    filtered.forEach(t => {
-      const name = t.raisedByName || "Unknown";
-      const source = t.source || "sales";
-      if (!map[name]) map[name] = { name, source, total:0, resolved:0, open:0, rma:0 };
-      map[name].total++;
-      map[name][t.status] = (map[name][t.status] || 0) + 1;
-      map[name].source = source;
-    });
+    filtered
+      .filter(t => !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr" && t.source !== "hradmin"))
+      .forEach(t => {
+        const name = t.raisedByName || "Unknown";
+        const source = t.source || "sales";
+        if (!map[name]) map[name] = { name, source, total:0, resolved:0, open:0, rma:0 };
+        map[name].total++;
+        map[name][t.status] = (map[name][t.status] || 0) + 1;
+        map[name].source = source;
+      });
     return Object.values(map)
       .map(v => ({ ...v, resRate: pct((v.resolved || 0) + (v.rma || 0), v.total) }))
       .sort((a,b) => b.total - a.total);
