@@ -225,6 +225,7 @@ const salesData = useMemo(() => {
     { key: "support",   label: "Support SLA",       icon: "🛠️" },
     { key: "trends",    label: "Monthly Trends",    icon: "📈" },
     { key: "production", label: "Production", icon: "🏭" },
+    { key: "rnd", label: "R&D", icon: "🔬" },
   ];
 
   if (loading) return (
@@ -780,12 +781,51 @@ const rate = pct(m.resolved, m.resolved + Math.max(0, open));
 })
   .sort((a,b) => new Date(b.createdAt||b.date) - new Date(a.createdAt||a.date))
   .map((t, i) => (
-                <tr key={t.id||t._id} className={i % 2 === 0 ? "even" : ""}>
+               <tr key={t.id||t._id} className={i % 2 === 0 ? "even" : ""}>
                   <td><strong style={{ color:"#10b981" }}>#{t.ticketNumber||"—"}</strong></td>
                   <td>{t.date||"—"}</td>
                   <td>{t.category||"—"}</td>
                   <td>{t.model||"—"}</td>
                   <td style={{ color:"#059669", fontWeight:700 }}>{t.raisedByName||"—"}</td>
+                  <td><span style={{ padding:"3px 8px", borderRadius:10, fontSize:10, fontWeight:700, color: t.status==="resolved"?"#1a7a46":"#e04e00", background: t.status==="resolved"?"#edfaf3":"#fff4ee" }}>{(t.status||"open").toUpperCase()}</span></td>
+                  <td style={{ color:"#059669" }}>{t.resolvedBy||"Pending"}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+)}
+      {activeSection === "rnd" && (
+  <div className="sla-section">
+    <div className="sla-card">
+    <div className="sla-card-title">🔬 R&D Tickets — {tickets.filter(t => t.ticketType === "rnd" || t.source === "rnd").length} total</div>
+      <div className="sla-scroll">
+        <table className="sla-table">
+          <thead>
+            <tr>
+              {["Ticket No","Date","Employee","Issue","Assigned To","Status","Resolved By"].map(h => <th key={h}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {tickets.filter(t => {
+  const d = new Date(t.createdAt || t.date);
+  const isRnd = t.ticketType === "rnd" || t.source === "rnd";
+  if (!isRnd) return false;
+  if (filterDate) return d.toDateString() === new Date(filterDate).toDateString();
+  if (filterYear && d.getFullYear() !== parseInt(filterYear)) return false;
+  if (filterMonth && d.getMonth() + 1 !== parseInt(filterMonth)) return false;
+  return true;
+})
+  .sort((a,b) => new Date(b.createdAt||b.date) - new Date(a.createdAt||a.date))
+  .map((t, i) => (
+                <tr key={t.id||t._id} className={i % 2 === 0 ? "even" : ""}>
+                  <td><strong style={{ color:"#059669" }}>#{t.ticketNumber||"—"}</strong></td>
+                  <td>{t.date||"—"}</td>
+                  <td style={{ color:"#9d174d", fontWeight:700 }}>{t.empName||"—"}</td>
+                  <td>{t.description||"—"}</td>
+                  <td style={{ color:"#059669", fontWeight:700 }}>{t.assignTo||"—"}</td>
                   <td><span style={{ padding:"3px 8px", borderRadius:10, fontSize:10, fontWeight:700, color: t.status==="resolved"?"#1a7a46":"#e04e00", background: t.status==="resolved"?"#edfaf3":"#fff4ee" }}>{(t.status||"open").toUpperCase()}</span></td>
                   <td style={{ color:"#059669" }}>{t.resolvedBy||"Pending"}</td>
                 </tr>
