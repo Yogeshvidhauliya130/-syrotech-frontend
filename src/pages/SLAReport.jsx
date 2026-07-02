@@ -146,18 +146,20 @@ const salesData = useMemo(() => {
   /* ── Support person SLA ── */
   const supportData = useMemo(() => {
     const map = {};
-    filtered.forEach(t => {
-      const name = t.assignTo || "Unassigned";
-      if (!map[name]) map[name] = { name, total:0, resolved:0, open:0, rma:0, times:[], ratings:[] };
-      map[name].total++;
-      map[name][t.status] = (map[name][t.status] || 0) + 1;
-      if (t.status === "resolved" && t.createdAt && t.resolvedAt) {
-        map[name].times.push((new Date(t.resolvedAt) - new Date(t.createdAt)) / 3600000);
-      }
-      if (t.feedbackRating) map[name].ratings.push(parseInt(t.feedbackRating));
-    });
-    return Object.values(map).map(v => {
-      const within24 = filtered.filter(t => t.assignTo === v.name && t.status === "resolved" && t.createdAt && t.resolvedAt &&
+    filtered
+      .filter(t => t.source !== "rnd" && t.ticketType !== "rnd")
+      .forEach(t => {
+        const name = t.assignTo || "Unassigned";
+        if (!map[name]) map[name] = { name, total:0, resolved:0, open:0, rma:0, times:[], ratings:[] };
+        map[name].total++;
+        map[name][t.status] = (map[name][t.status] || 0) + 1;
+        if (t.status === "resolved" && t.createdAt && t.resolvedAt) {
+          map[name].times.push((new Date(t.resolvedAt) - new Date(t.createdAt)) / 3600000);
+        }
+        if (t.feedbackRating) map[name].ratings.push(parseInt(t.feedbackRating));
+      });
+   return Object.values(map).map(v => {
+      const within24 = filtered.filter(t => t.source !== "rnd" && t.ticketType !== "rnd" && t.assignTo === v.name && t.status === "resolved" && t.createdAt && t.resolvedAt &&
         (new Date(t.resolvedAt) - new Date(t.createdAt)) <= 86400000).length;
       const sla = pct(within24, v.resolved);
       const avgT = v.times.length ? (v.times.reduce((a,b) => a+b,0) / v.times.length).toFixed(1) : null;
