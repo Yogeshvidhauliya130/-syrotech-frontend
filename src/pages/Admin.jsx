@@ -341,6 +341,7 @@ useEffect(() => {
       customer:        editTicket.empName,
       email:           editTicket.empEmail,
       phone:           editTicket.empPhone,
+      taskRole:        editTicket.taskRole,
       description:     editTicket.description,
       firstDescription: editTicket.description,
       status:          editTicket.status,
@@ -966,6 +967,24 @@ isRma: issuePopup.firstIsRma || false,
           />
         </div>
       ))}
+
+     {editTicket.ticketType === "rnd" && (
+        <div style={{ marginBottom:12 }}>
+          <label style={{ fontSize:11, fontWeight:700, color:"#6b7280", display:"block", marginBottom:4 }}>Task Role</label>
+          <select
+            value={editTicket.taskRole || ""}
+            onChange={e => setEditTicket(prev => ({ ...prev, taskRole: e.target.value }))}
+            style={{ width:"100%", padding:"9px 12px", border:"1.5px solid #d1d5db", borderRadius:8, fontSize:13, outline:"none", fontFamily:"inherit", color:"#111", background:"white", boxSizing:"border-box" }}>
+            <option value="">-- Select Task Role --</option>
+            <option value="Frontend">Frontend</option>
+            <option value="Backend">Backend</option>
+            <option value="Full Stack">Full Stack</option>
+            <option value="Hardware">Hardware</option>
+            <option value="Testing">Testing</option>
+            <option value="Data Analyst">Data Analyst</option>
+          </select>
+        </div>
+      )}
 
       <div style={{ marginBottom:12 }}>
         <label style={{ fontSize:11, fontWeight:700, color:"#6b7280", display:"block", marginBottom:4 }}>Status</label>
