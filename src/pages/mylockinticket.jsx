@@ -289,7 +289,7 @@ const counts = {
           const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
           fetch(`${BASE_URL}/tickets/${ticketId}`, {
             method:"PATCH", headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note })
+            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note, pendingUpdateFrom: "sales" })
           })
           .then(r => r.json())
           .then(updated => {
@@ -426,10 +426,10 @@ const counts = {
                   displayed.map((t, idx) => {
                     const s = (t.status || "open").toLowerCase();
                     return (
-                      <tr key={t.id || t._id} style={{
+                     <tr key={t.id || t._id} style={{
                         borderBottom: "1px solid #f0ede8",
-                        background: idx % 2 === 0 ? "#faf7f4" : "white",
-                        borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
+                        background: (t.pendingUpdateFrom === "support" && s !== "resolved") ? "#fee2e2" : (idx % 2 === 0 ? "#faf7f4" : "white"),
+                        borderLeft: `4px solid ${(t.pendingUpdateFrom === "support" && s !== "resolved") ? "#dc2626" : (STATUS_COLOR[s] || "#ccc")}`,
                       }}>
 
                         {/* Ticket No */}

@@ -421,7 +421,7 @@ const handleResolve = async (ticketId) => {
           const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
           fetch(`${BASE_URL}/tickets/${ticketId}`, {
             method:"PATCH", headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: `${status} — ${note}`, status: "open" })
+            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: `${status} — ${note}`, status: "open", pendingUpdateFrom: "support" })
           }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
         }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
           ✅ Submit Update
@@ -621,10 +621,10 @@ const handleResolve = async (ticketId) => {
                   const id = t.id || t._id;
                   return (
                     <>
-                      <tr key={id} style={{
+                     <tr key={id} style={{
                         borderBottom: "1px solid #f0ede8",
-                        background: idx % 2 === 0 ? "#f0f6ff" : "white",
-                        borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}`,
+                        background: (t.pendingUpdateFrom === "sales" && s !== "resolved") ? "#fee2e2" : (idx % 2 === 0 ? "#f0f6ff" : "white"),
+                        borderLeft: `4px solid ${(t.pendingUpdateFrom === "sales" && s !== "resolved") ? "#dc2626" : (STATUS_COLOR[s] || "#ccc")}`,
                       }}>
                         <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>
                           <div style={{ fontSize: 11, fontWeight: 800, color: "#3b82f6" }}>
