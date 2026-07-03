@@ -766,7 +766,7 @@ isRma: issuePopup.firstIsRma || false,
           const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
           fetch(`${BASE_URL}/tickets/${ticketId}`, {
             method:"PATCH", headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note })
+            body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: note, pendingUpdateFrom: "sales" })
           }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
         }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
           ✅ Submit Update
@@ -1291,8 +1291,8 @@ isRma: issuePopup.firstIsRma || false,
                             p.name.toLowerCase().trim() === ticket.assignTo.toLowerCase().trim()
                           );
 
-                          acc.push(
-                            <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#faf7f4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
+                         acc.push(
+                            <tr key={ticket.id} style={{ borderBottom: "1px solid #f0ede8", background: (ticket.pendingUpdateFrom === "support" && !["resolved","rma"].includes(s)) ? "#fee2e2" : (idx % 2 === 0 ? "#faf7f4" : "white"), borderLeft: `4px solid ${(ticket.pendingUpdateFrom === "support" && !["resolved","rma"].includes(s)) ? "#dc2626" : (STATUS_COLOR[s] || "#ccc")}` }}>
                               {/* ✅ Ticket No — no Row number */}
                               <td style={tdStyle({ padding: "12px 10px", whiteSpace: "nowrap", verticalAlign: "middle" })}>
                                 <div style={{ fontSize: 12, fontWeight: 800, color: "#ff5a00" }}>{ticket.ticketNumber || "—"}</div>

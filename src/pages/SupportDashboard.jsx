@@ -1148,7 +1148,7 @@ const filteredMyReassigned = allTickets
           const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
           fetch(`${BASE_URL}/tickets/${ticketId}`, {
             method:"PATCH", headers:{"Content-Type":"application/json"},
-body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole: "support" }], latestStatusUpdate: note, status: "open" })
+body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole: "support" }], latestStatusUpdate: note, status: "open", pendingUpdateFrom: "support" })
           }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
         }} style={{ flex:1, background:"linear-gradient(135deg,#1d4ed8,#3b82f6)", color:"white", border:"none", padding:"12px 24px", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:800, fontFamily:"inherit" }}>
           ✅ Submit Update
@@ -2543,13 +2543,15 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
 
                     return (
                       <>
-                        <tr key={ticket.id} style={{
+                       <tr key={ticket.id} style={{
                           borderBottom: "1px solid #f0ede8",
-                          background: isSupportRaised
+                          background: (ticket.pendingUpdateFrom === "sales" && !["resolved","rma"].includes(s))
+                            ? "#fee2e2"
+                            : isSupportRaised
                             ? "#fef9c3"
                             : isCustomerRaised ? "#f5f3ff"
                             : (s === "rma" ? "#faf5ff" : isReassigned ? "#fffdf0" : idx % 2 === 0 ? "#f9f9f9" : "white"),
-                          borderLeft: `6px solid ${isSupportRaised ? "#d97706" : isCustomerRaised ? "#7c3aed" : (s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc"))}`,
+                          borderLeft: `6px solid ${(ticket.pendingUpdateFrom === "sales" && !["resolved","rma"].includes(s)) ? "#dc2626" : isSupportRaised ? "#d97706" : isCustomerRaised ? "#7c3aed" : (s === "rma" ? "#7c3aed" : isReassigned ? "#f59e0b" : (STATUS_COLOR[s] || "#ccc"))}`,
                         }}>
 
                           {/* Column 1 — Ticket No */}
