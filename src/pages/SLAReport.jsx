@@ -98,7 +98,7 @@ const filtered = useMemo(() => {
     const map = {};
     filtered.forEach(t => {
       if (!t.category) return;
-      if (t.source === "hr") return;
+      if (t.source === "hr" || t.source === "hradmin") return;
       if (!map[t.category]) map[t.category] = { total:0, resolved:0, open:0, rma:0,  issues:[] };
       map[t.category].total++;
       map[t.category][t.status]  = (map[t.category][t.status] || 0) + 1;
@@ -110,10 +110,10 @@ const filtered = useMemo(() => {
   }, [filtered]);
 
   /* ── City analysis ── */
-  const cityData = useMemo(() => {
+ const cityData = useMemo(() => {
     const map = {};
     filtered.forEach(t => {
-      if (t.source === "hr") return;
+      if (t.source === "hr" || t.source === "hradmin") return;
       const city = (t.city || "Unknown").trim();
       if (!map[city]) map[city] = { total:0, resolved:0, open:0, rma:0 };
       map[city].total++;
@@ -232,8 +232,8 @@ const salesData = useMemo(() => {
   const sourceBreakdown = useMemo(() => {
     const customer = filtered.filter(t => t.source === "customer").length;
     const support  = filtered.filter(t => t.source === "support").length;
-    const hr       = filtered.filter(t => t.source === "hr").length;
-    const sales    = filtered.filter(t => !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr")).length;
+    const hr       = filtered.filter(t => t.source === "hr" || t.source === "hradmin").length;
+    const sales    = filtered.filter(t => !t.source || (t.source !== "customer" && t.source !== "support" && t.source !== "hr" && t.source !== "hradmin")).length;
     return [
       { label: "Customer Portal", count: customer, color: "#7c3aed", icon: "👥" },
       { label: "Sales Team",      count: sales,    color: "#ff5a00", icon: "🧑‍💼" },
@@ -337,7 +337,7 @@ const salesData = useMemo(() => {
               { label: "Avg Resolution",   value: kpi.avg ? `${kpi.avg}h` : "—", icon: "⏱️", color: "#6d28d9", bg: "#f5f3ff", sub: "Mean time to resolve" },
               { label: "Avg Rating",       value: kpi.avgRating ? `${kpi.avgRating}⭐` : "—", icon: "💬", color: "#d97706", bg: "#fffbeb", sub: `${kpi.withFeedback} reviews` },
               { label: "Reassigned",       value: kpi.reassigned,  icon: "🔄", color: "#c2410c", bg: "#fff7ed",  sub: "Tickets reassigned" },
-              { label: "HR Tickets",       value: filtered.filter(t => t.source === "hr").length, icon: "🧑‍💼", color: "#1d4ed8", bg: "#dbeafe", sub: "Raised by HR team" },
+              { label: "HR Tickets",       value: filtered.filter(t => t.source === "hr" || t.source === "hradmin").length, icon: "🧑‍💼", color: "#1d4ed8", bg: "#dbeafe", sub: "Raised by HR team" },
             ].map(k => (
               <div key={k.label} className="sla-kpi-card" style={{ borderTop: `3px solid ${k.color}`, background: k.bg }}>
                 <div className="sla-kpi-icon">{k.icon}</div>
