@@ -278,9 +278,12 @@ const PAGE_SIZE = 100;
     );
   };
 
-  const getSourceLabel = (ticket) => {
+ const getSourceLabel = (ticket) => {
     if (ticket.source === "customer") return { label: ticket.customerType ? ticket.customerType.toUpperCase() : "Customer", bg: "#ede9fe", color: "#5b21b6" };
     if (ticket.source === "support")  return { label: "Support", bg: "#fde68a", color: "#92400e" };
+    if (ticket.source === "rnd" || ticket.ticketType === "rnd") return { label: "R&D", bg: "#ecfdf5", color: "#059669" };
+    if (ticket.source === "hr")      return { label: "HR", bg: "#fce7f3", color: "#9d174d" };
+    if (ticket.source === "hradmin") return { label: "IT Team", bg: "#dbeafe", color: "#1d4ed8" };
     return { label: "Sales", bg: "#fff4ee", color: "#e04e00" };
   };
 
