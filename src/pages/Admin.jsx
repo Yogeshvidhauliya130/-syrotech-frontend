@@ -1950,7 +1950,7 @@ return true;
   const TICKET_HEADER = [
     "Ticket ID","Raised By (Name)","Raised By (Email)","Customer Name",
     "Customer Email","Contact Number","Product","Serial Number",
-    "MAC Address","City","Country","Issue Description","Assigned To",
+    "MAC Address","City","Country","Issue Type","Issue Description","Assigned To",
     "Date Raised","Status","Raised At","Accepted At","Resolved At",
     "Time Taken (hrs)","Time Score","Feedback Bonus","Final Score","Within 24hr SLA",
     "Customer Rating (⭐)","Customer Resolved?","Customer Comment",
@@ -1959,6 +1959,12 @@ return true;
 
   const buildTicketRow = (t) => {
     let timeTaken="—", timeScore="—", feedbackBonus="—", finalScore="—", sla="—";
+    let issueType = "—", issueDesc = t.description || "—";
+    if (t.description && t.description.includes(" | ")) {
+      const splitIndex = t.description.indexOf(" | ");
+      issueType = t.description.slice(0, splitIndex) || "—";
+      issueDesc = t.description.slice(splitIndex + 3) || "—";
+    }
     if (t.createdAt && t.resolvedAt) {
       const ms  = new Date(t.resolvedAt) - new Date(t.createdAt);
       const hrs = ms / (1000 * 60 * 60);
@@ -1972,7 +1978,7 @@ return true;
     return [
       t.id||"—", t.raisedByName||"—", t.raisedBy||"—", t.customer||"—",
       t.email||"—", t.phone||"—", t.category||"—", t.serialNo||"—",
-      t.mac||"—", t.city||"—", t.country||"—", t.description||"—", t.assignTo||"—",
+      t.mac||"—", t.city||"—", t.country||"—", issueType, issueDesc, t.assignTo||"—",
       t.date||"—", (t.status || "open").toUpperCase(),
       t.createdAt  ? new Date(t.createdAt).toLocaleString()  : "—",
       t.acceptedAt ? new Date(t.acceptedAt).toLocaleString() : "—",
