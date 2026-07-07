@@ -330,6 +330,11 @@ useEffect(() => {
   loadTickets(1, filter, sourceFilter);
 }, [sourceFilter]);
 
+// ✅ NEW: Reload from server when product filter changes
+useEffect(() => {
+  loadTickets(1, filter, sourceFilter);
+}, [filterCat, filterSub, filterItem]);
+
   const saveEditTicket = () => {
     if (!editTicket) return;
     const id = editTicket.id;
@@ -427,7 +432,12 @@ const loadTickets = async (pageNum = 1, statusFilter = filter, srcFilter = sourc
       sourceParam = "&source=sales";
     }
 
-    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}${searchParam}${sourceParam}`);
+    // ✅ NEW: Build product filter params for DB filtering
+    const categoryParam    = filterCat  && filterCat  !== "all" ? `&category=${encodeURIComponent(filterCat)}`    : "";
+    const subCategoryParam = filterSub  && filterSub  !== "all" ? `&subCategory=${encodeURIComponent(filterSub)}` : "";
+    const modelParam       = filterItem && filterItem !== "all" ? `&model=${encodeURIComponent(filterItem)}`      : "";
+
+    const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}${searchParam}${sourceParam}${categoryParam}${subCategoryParam}${modelParam}`);
     const data = await res.json();
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
