@@ -1,6 +1,6 @@
 import ProductFilterBar from "../components/ProductFilterBar";
 import { useProductFilter } from "../hooks/useProductFilter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -272,6 +272,7 @@ const [analyticsType, setAnalyticsType] = useState("all");
    ANALYTICS TAB
 ═══════════════════════════════════════════════════ */
 function Analytics({ typeFilter = "all" }) {
+  const latestRequestId = useRef(0);   // ✅ NEW: to ignore stale/out-of-order responses
   const [tickets, setTickets]           = useState([]);
   const [reassignedTickets, setReassignedTickets] = useState([]);
   const [reassignedPage, setReassignedPage] = useState(1);
@@ -413,6 +414,7 @@ const [reopenedCount, setReopenedCount] = useState(0);   // ✅ NEW
 const [isLoading, setIsLoading] = useState(false);
 
 const loadTickets = async (pageNum = 1, statusFilter = filter, srcFilter = sourceFilter) => {
+  const requestId = ++latestRequestId.current;   // ✅ NEW: tag this request
   setIsLoading(true);
   try {
     const statusParam = statusFilter && statusFilter !== "all" ? `&status=${statusFilter}` : "";
@@ -439,6 +441,10 @@ const loadTickets = async (pageNum = 1, statusFilter = filter, srcFilter = sourc
 
     const res = await fetch(`${BASE_URL}/tickets?page=${pageNum}&limit=100${statusParam}${typeParam}${searchParam}${sourceParam}${categoryParam}${subCategoryParam}${modelParam}`);
     const data = await res.json();
+
+    // ✅ NEW: ignore this response if a newer request has already started
+    if (requestId !== latestRequestId.current) return;
+
     setTickets(data.tickets || []);
     setTotalPages(data.totalPages || 1);
     setTotalCount(data.totalCount || 0);
@@ -450,7 +456,7 @@ const loadTickets = async (pageNum = 1, statusFilter = filter, srcFilter = sourc
   } catch (err) {
     console.error(err);
   } finally {
-    setIsLoading(false);
+    if (requestId === latestRequestId.current) setIsLoading(false);   // ✅ NEW: only clear loading for the latest request
   }
 };
 // ✅ When admin types digits, search that ticket number across the WHOLE database
