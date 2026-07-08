@@ -120,7 +120,7 @@ if (!form.task.trim())     e.task     = "Task description is required.";
       acceptedAt:   new Date().toISOString(),
       fileBase64:   attachFile || "",
       fileName:     attachFileName || "",
-      productImage: attachImage || "",
+      productImages: attachImage ? [attachImage] : [],
     };
     fetch(`${BASE_URL}/tickets`, {
       method: "POST",
@@ -670,11 +670,11 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
 
                           {/* Image */}
                           <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", textAlign: "center" }}>
-                            {ticket.productImage ? (
-                              <img src={ticket.productImage} alt="attachment" style={{ maxHeight: 36, maxWidth: 60, objectFit: "contain", borderRadius: 4, cursor: "pointer" }}
+                            {ticket.productImages?.length > 0 ? (
+                              <img src={ticket.productImages[0]} alt="attachment" style={{ maxHeight: 36, maxWidth: 60, objectFit: "contain", borderRadius: 4, cursor: "pointer" }}
                                 onClick={() => {
                                   const win = window.open("", "_blank");
-                                  win.document.write(`<body style="margin:0;background:#111;display:flex;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box;"><img src="${ticket.productImage}" style="max-width:100%;height:auto;border-radius:8px;" /></body>`);
+                                  win.document.write(`<body style="margin:0;background:#111;display:flex;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box;"><img src="${ticket.productImages[0]}" style="max-width:100%;height:auto;border-radius:8px;" /></body>`);
                                   win.document.close();
                                 }} />
                             ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
