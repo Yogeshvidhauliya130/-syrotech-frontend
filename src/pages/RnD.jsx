@@ -20,6 +20,9 @@ export default function RnD() {
   const [issuePopup, setIssuePopup] = useState(null);
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
+  const [attachFile, setAttachFile] = useState(null);
+  const [attachFileName, setAttachFileName] = useState("");
+  const [attachImage, setAttachImage] = useState("");
  const [form, setForm] = useState({
     empName:  "",
     empEmail: "",
@@ -53,10 +56,28 @@ export default function RnD() {
     navigate("/", { replace: true });
   };
 
-  const handleChange = (e) => {
+ const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const handleAttachFileChange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { alert("File must be less than 5MB"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => { setAttachFile(ev.target.result); setAttachFileName(f.name); };
+    reader.readAsDataURL(f);
+  };
+
+  const handleAttachImageChange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 3 * 1024 * 1024) { alert("Image must be less than 3MB"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => { setAttachImage(ev.target.result); };
+    reader.readAsDataURL(f);
   };
 
   const validate = () => {
@@ -97,6 +118,9 @@ if (!form.task.trim())     e.task     = "Task description is required.";
       date:         new Date().toISOString().slice(0, 10),
       createdAt:    new Date().toISOString(),
       acceptedAt:   new Date().toISOString(),
+      fileBase64:   attachFile || "",
+      fileName:     attachFileName || "",
+      productImage: attachImage || "",
     };
     fetch(`${BASE_URL}/tickets`, {
       method: "POST",
@@ -105,7 +129,10 @@ if (!form.task.trim())     e.task     = "Task description is required.";
     })
       .then(r => { if (!r.ok) throw new Error("Server error"); return r.json(); })
       .then(() => {
-        setForm({ empName: "", empEmail: "", empPhone: "", taskRole: "", task: "" });
+       setForm({ empName: "", empEmail: "", empPhone: "", taskRole: "", task: "" });
+        setAttachFile(null);
+        setAttachFileName("");
+        setAttachImage("");
         setErrors({});
         setSuccessMsg("✅ Ticket raised successfully!");
         fetchTickets();
@@ -484,7 +511,30 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                 onChange={handleChange}
                 style={{ ...inputStyle("task"), resize: "vertical", lineHeight: 1.6 }}
               />
-              {errors.task && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.task}</span>}
+             {errors.task && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.task}</span>}
+            </div>
+
+            {/* Optional Attachment */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Attach File / Image <span style={{ fontSize: 10, color: "#9ca3af", textTransform: "none" }}>(optional)</span>
+              </label>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <label style={{ background: "#f9fafb", border: "2px dashed #d1d5db", borderRadius: 10, padding: "10px 16px", cursor: "pointer", fontSize: 12.5, color: "#374151", fontWeight: 600 }}>
+                  📎 {attachFileName ? attachFileName.slice(0, 16) : "Choose File"}
+                  <input type="file" onChange={handleAttachFileChange} style={{ display: "none" }} />
+                </label>
+                <label style={{ background: "#f9fafb", border: "2px dashed #d1d5db", borderRadius: 10, padding: "10px 16px", cursor: "pointer", fontSize: 12.5, color: "#374151", fontWeight: 600 }}>
+                  🖼️ {attachImage ? "Image Selected ✓" : "Choose Image"}
+                  <input type="file" accept="image/*" onChange={handleAttachImageChange} style={{ display: "none" }} />
+                </label>
+              </div>
+              {(attachFileName || attachImage) && (
+                <div style={{ marginTop: 8, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                  {attachFileName && <span style={{ fontSize: 11, color: "#059669" }}>✅ {attachFileName} <span onClick={() => { setAttachFile(null); setAttachFileName(""); }} style={{ color: "#dc2626", cursor: "pointer", marginLeft: 6 }}>✕</span></span>}
+                  {attachImage && <span style={{ fontSize: 11, color: "#059669" }}>✅ Image attached <span onClick={() => setAttachImage("")} style={{ color: "#dc2626", cursor: "pointer", marginLeft: 6 }}>✕</span></span>}
+                </div>
+              )}
             </div>
 
             <button
@@ -560,7 +610,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-{["Ticket No", "Ticket Type", "Date", "Employee Details", "Task Role", "Task", "Status", "History", "Status Updates", "Action"].map((h, i) => (
+{["Ticket No", "Ticket Type", "Date", "Employee Details", "Task Role", "Task", "Image", "File", "Status", "History", "Status Updates", "Action"].map((h, i) => (
                       <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
@@ -616,6 +666,27 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                             <div style={{ fontSize: 12, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }} title={ticket.firstDescription || ticket.description}>
                           {(ticket.firstDescription || ticket.description)?.length > 50 ? (ticket.firstDescription || ticket.description).slice(0, 50) + "…" : (ticket.firstDescription || ticket.description) || "—"}
                             </div>
+                          </td>
+
+                          {/* Image */}
+                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", textAlign: "center" }}>
+                            {ticket.productImage ? (
+                              <img src={ticket.productImage} alt="attachment" style={{ maxHeight: 36, maxWidth: 60, objectFit: "contain", borderRadius: 4, cursor: "pointer" }}
+                                onClick={() => {
+                                  const win = window.open("", "_blank");
+                                  win.document.write(`<body style="margin:0;background:#111;display:flex;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box;"><img src="${ticket.productImage}" style="max-width:100%;height:auto;border-radius:8px;" /></body>`);
+                                  win.document.close();
+                                }} />
+                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                          </td>
+
+                          {/* File */}
+                          <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", textAlign: "center" }}>
+                            {ticket.fileName ? (
+                              <a href={ticket.fileBase64} download={ticket.fileName} style={{ fontSize: 11, color: "#2563eb", fontWeight: 600, textDecoration: "underline" }}>
+                                📎 {ticket.fileName.length > 12 ? ticket.fileName.slice(0, 12) + "…" : ticket.fileName}
+                              </a>
+                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                           </td>
 
 {/* Status */}
@@ -696,7 +767,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                         {/* Resolve Form Row */}
                        {showResolve && (s === "open" || s === "reopened") && (
                           <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                           <td colSpan={9} style={{ padding: "16px 20px" }}>
+                           <td colSpan={11} style={{ padding: "16px 20px" }}>
                               <div style={{ maxWidth: 600, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 12 }}>✅ Mark Task as Done</div>
                                 <div style={{ marginBottom: 14 }}>

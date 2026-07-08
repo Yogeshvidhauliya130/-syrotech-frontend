@@ -1267,7 +1267,7 @@ isRma: issuePopup.firstIsRma || false,
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1300, background: "white" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-            {["Ticket No","Raised From","Raised By","Product","Task Role","Item Name","Customer / KYC","Employee Details","Issue","History","Status","Image","Sup. Updates","Customer Rating"].map((h, i) => (
+            {["Ticket No","Raised From","Raised By","Product","Task Role","Item Name","Customer / KYC","Employee Details","Issue","History","Status","Image","File","Sup. Updates","Customer Rating"].map((h, i) => (
                     <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -1537,7 +1537,14 @@ firstIsRma: ticket.firstIsRma || false,
                         ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                       </td>
 
-
+                      {/* File */}
+                      <td style={{ padding: "11px 10px", textAlign: "center", borderRight: "1px solid #e0d8d0" }}>
+                        {ticket.fileName ? (
+                          <a href={ticket.fileBase64} download={ticket.fileName} style={{ fontSize: 11, color: "#2563eb", fontWeight: 600, textDecoration: "underline" }}>
+                            📎 {ticket.fileName.length > 12 ? ticket.fileName.slice(0, 12) + "…" : ticket.fileName}
+                          </a>
+                        ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                      </td>
 
 {/* Sup. Updates */}
 <td style={{ padding:"11px 12px", borderRight:"1px solid #e0d8d0" }}>
