@@ -767,7 +767,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
                         {/* Resolve Form Row */}
                        {showResolve && (s === "open" || s === "reopened") && (
                           <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                           <td colSpan={11} style={{ padding: "16px 20px" }}>
+                           <td colSpan={12} style={{ padding: "16px 20px" }}>
                               <div style={{ maxWidth: 600, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 12 }}>✅ Mark Task as Done</div>
                                 <div style={{ marginBottom: 14 }}>
