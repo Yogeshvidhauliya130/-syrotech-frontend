@@ -2,8 +2,22 @@ import React, { useState } from "react";
 import { useProducts } from "../hooks/useProducts";
 
 const BASE_URL = "https://api.syrotech.com";
+const CATEGORY_ASSIGNEE_EMAIL = {
+  "OLT": "nitesh.kumar1@syrotech.com",
+  "ONT": "nitesh.kumar1@syrotech.com",
+  "Wireless Access Point": "tushar.panchal@goip.in",
+  "EMS/NMS": "nitesh.kumar1@syrotech.com",
+  "Media Converter": "baidyanath.mishra1@goip.in",
+  "Optical Transceivers": "mohit.mittal1@goip.in",
+  "Networking Switch": "baidyanath.mishra1@goip.in",
+  "Entrance Product": "gagandeep.sodhi@goip.in",
+  "CCTV": "run.singh@goip.in",
+  "Passive Products": "archna.verma@goip.in",
+  "Grandstream UC": "tushar.panchal@goip.in",
+  "Grandstream Networking": "tushar.panchal@goip.in",
+};
 
-export default function ProductTesting({ currentUser }) {
+export default function ProductTesting({ currentUser, supportPersons = [], autoAssign = false }) {
   const { getCategories, getSubCategories, getItems } = useProducts();
   const [form, setForm] = useState({
     category: "", subCategory: "", model: "",
@@ -50,6 +64,26 @@ export default function ProductTesting({ currentUser }) {
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setSubmitting(true);
     const mac = form.macPrefix && form.macSuffix ? `${form.macPrefix}:${form.macSuffix}` : "";
+
+    let assignTo  = currentUser?.name || "";
+    let source    = "support";
+    let raisedVia = "direct-call";
+
+    if (autoAssign) {
+      const targetEmail = CATEGORY_ASSIGNEE_EMAIL[form.category];
+      const person = supportPersons.find(
+        p => p.email && targetEmail && p.email.toLowerCase().trim() === targetEmail.toLowerCase().trim()
+      );
+      if (!person) {
+        setFormErrors({ submit: "❌ No testing specialist mapped for this category. Please contact admin." });
+        setSubmitting(false);
+        return;
+      }
+      assignTo  = person.name;
+      source    = "sales";
+      raisedVia = "sales";
+    }
+
     const ticket = {
       category: form.category,
       subCategory: form.subCategory,
@@ -61,10 +95,10 @@ export default function ProductTesting({ currentUser }) {
       dcNumber: form.dcNumber,
         productDescription: form.productDescription || "",
      ticketType: "product_testing",
-      source: "support",
-      raisedVia: "direct-call",
+      source,
+      raisedVia,
       status: "open",
-      assignTo: currentUser?.name || "",
+      assignTo,
       raisedBy: currentUser?.email || "",
       raisedByName: currentUser?.name || "",
       date: new Date().toISOString().slice(0, 10),

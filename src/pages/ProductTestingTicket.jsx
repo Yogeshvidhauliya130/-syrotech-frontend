@@ -4,7 +4,7 @@ const BASE_URL = "https://api.syrotech.com";
 const STATUS_COLOR = { open: "#e04e00", resolved: "#1a7a46" };
 const STATUS_BG = { open: "#fff4ee", resolved: "#edfaf3" };
 
-export default function ProductTestingTickets({ currentUser }) {
+export default function ProductTestingTickets({ currentUser, viewMode = "assigned" }) {
   const [tickets, setTickets] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -14,20 +14,34 @@ export default function ProductTestingTickets({ currentUser }) {
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 
 const fetchTickets = () => {
-    const name = currentUser?.name || "";
-    if (!name) return;
-    fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(name)}&ticketType=product_testing&limit=2000`)
-      .then(r => r.json())
-      .then(data => {
-        const all = data.tickets || [];
-        const mine = all.filter(t =>
-          t.ticketType === "product_testing" &&
-          t.assignTo?.toLowerCase().trim() === currentUser?.name?.toLowerCase().trim()
-        );
+    const name  = currentUser?.name  || "";
+    const email = currentUser?.email || "";
 
-        setTickets(mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-      })
-      .catch(console.error);
+    if (viewMode === "raised") {
+      if (!email) return;
+      fetch(`${BASE_URL}/tickets?raisedBy=${encodeURIComponent(email)}&ticketType=product_testing&limit=2000`)
+        .then(r => r.json())
+        .then(data => {
+          const mine = (data.tickets || []).filter(t =>
+            t.ticketType === "product_testing" &&
+            t.raisedBy?.toLowerCase().trim() === email.toLowerCase().trim()
+          );
+          setTickets(mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+        })
+        .catch(console.error);
+    } else {
+      if (!name) return;
+      fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(name)}&ticketType=product_testing&limit=2000`)
+        .then(r => r.json())
+        .then(data => {
+          const mine = (data.tickets || []).filter(t =>
+            t.ticketType === "product_testing" &&
+            t.assignTo?.toLowerCase().trim() === name.toLowerCase().trim()
+          );
+          setTickets(mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+        })
+        .catch(console.error);
+    }
   };
   
 
@@ -236,7 +250,7 @@ const fetchTickets = () => {
                             📝 {ticket.statusUpdates.length} Update{ticket.statusUpdates.length > 1 ? "s" : ""} — View
                           </div>
                         )}
-                        {s === "open" && (
+                        {viewMode === "assigned" && s === "open" && (
                           <button onClick={() => setStatusUpdateForm({ show: true, id: ticket.id, note: "" })}
                             style={{ background:"#1d4ed8", color:"white", border:"none", padding:"4px 10px", borderRadius:6, cursor:"pointer", fontSize:11, fontWeight:600, display:"block" }}>
                             📝 Update
@@ -245,7 +259,7 @@ const fetchTickets = () => {
                       </td>
 
                       <td style={{ padding: "12px 14px" }}>
-                        {s === "open" && (
+                        {viewMode === "assigned" && s === "open" && (
                           <button onClick={() => setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: !prev[ticket.id]?.show } }))}
                             style={{ background: showResolve ? "#ecfdf5" : "#10b981", color: showResolve ? "#065f46" : "white", border: showResolve ? "1.5px solid #6ee7b7" : "none", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
                             ✅ {showResolve ? "Cancel" : "Resolve"}
@@ -259,7 +273,7 @@ const fetchTickets = () => {
                       </td>
                     </tr>
 
-                    {showResolve && s === "open" && (
+                    {viewMode === "assigned" && showResolve && s === "open" && (
                       <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
                         <td colSpan={11}style={{ padding: "16px 20px" }}>
                           <div style={{ maxWidth: 700, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>

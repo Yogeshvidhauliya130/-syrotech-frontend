@@ -7,6 +7,8 @@ import RaiseLockinTicket from "./raiselockinticket";
 import MyLockinTickets from "./mylockinticket";
 import RaiseProductionTicket from "./RaiseProductionTicket";
 import MyProductionTickets from "./MyProductionTickets";
+import ProductTesting from "./ProductTesting";
+import ProductTestingTickets from "./ProductTestingTicket";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -835,6 +837,8 @@ isRma: issuePopup.firstIsRma || false,
     ["mylockin",    "🔒 My Lockin Tickets"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
     ["myproduction",     "🏭 My Production Tickets"],
+    ["producttesting",   "🧪 Product Testing"],
+    ["mytestingtickets", "🧪 My Testing Tickets"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)}
       className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
@@ -1540,9 +1544,19 @@ firstIsRma: ticket.firstIsRma || false,
           <RaiseProductionTicket onSuccess={() => setActiveTab("myproduction")} />
         )}
 
-        {/* MY PRODUCTION TICKETS */}
+      {/* MY PRODUCTION TICKETS */}
         {activeTab === "myproduction" && (
           <MyProductionTickets tickets={tickets} />
+        )}
+
+        {/* RAISE PRODUCT TESTING TICKET */}
+        {activeTab === "producttesting" && (
+          <ProductTesting currentUser={currentUser} supportPersons={supportPersons} autoAssign={true} />
+        )}
+
+        {/* MY PRODUCT TESTING TICKETS (raised by me) */}
+        {activeTab === "mytestingtickets" && (
+          <ProductTestingTickets currentUser={currentUser} viewMode="raised" />
         )}
 
       </div>
