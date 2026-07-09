@@ -185,7 +185,14 @@ const fetchTickets = () => {
           <p style={{ marginTop: 12 }}>No product testing tickets found.</p>
         </div>
       ) : (
-        <div style={{ overflowX: "auto", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+        <div style={{
+  overflowX: "auto",
+  overflowY: "auto",
+  maxHeight: "82vh",
+  borderRadius: 12,
+  border: "1.5px solid #e0d8d0",
+  boxShadow: "0 2px 12px rgba(0,0,0,0.06)"
+}}>
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #059669, #10b981)", position: "sticky", top: 0, zIndex: 2 }}>
