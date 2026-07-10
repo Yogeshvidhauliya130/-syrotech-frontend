@@ -406,6 +406,19 @@ export const ISSUE_LIST = {
     ],
   },
 
+
+   "Firewall/SDWAN": {
+    "_common": [
+      "Others",
+    ],
+  },
+
+  "Anroid Box": {
+    "_common": [
+      "Others",
+    ],
+  },
+
 };
 
 

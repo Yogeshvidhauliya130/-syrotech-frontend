@@ -886,7 +886,20 @@ export const PRODUCT_MODELS = {
       "GWN7831",
       "GWN7832"
     ]
-  }
+  },
+
+
+   "Firewall/SDWAN": {
+    "Others": ["Other"],
+    "Others": ["Other"]
+    
+  },
+
+  "Anroid Box": {
+    "Others": ["Other"],
+    "Others": ["Other"]
+    
+  },
 
 };
 
@@ -920,7 +933,9 @@ export const SALES_PRODUCT_MODELS = {
   "Passive Products":                           PRODUCT_MODELS["Passive Products"],
   "Grandstream UC":                             PRODUCT_MODELS["Grandstream UC"],
   "Grandstream Networking":                     PRODUCT_MODELS["Grandstream Networking"],
-  "CCTV":                                         PRODUCT_MODELS["CCTV"]
+  "CCTV":                                         PRODUCT_MODELS["CCTV"],
+  "Firewall/SDWAN":                                    PRODUCT_MODELS["Firewall/SDWAN"],
+  "Anroid Box":                                        PRODUCT_MODELS["Anroid Box"]  
 };
 export const SALES_CATEGORIES = Object.keys(SALES_PRODUCT_MODELS);
 
