@@ -15,6 +15,8 @@ const CATEGORY_ASSIGNEE_EMAIL = {
   "Passive Products": "archna.verma@goip.in",
   "Grandstream UC": "tushar.panchal@goip.in",
   "Grandstream Networking": "tushar.panchal@goip.in",
+  "Firewall/SDWAN":"naman.gupta@goip.in",
+  "Anroid Box":"naman.gupta@goip.in"
 };
 
 export default function ProductTesting({ currentUser, supportPersons = [], autoAssign = false }) {
