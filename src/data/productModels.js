@@ -445,12 +445,12 @@ export const PRODUCT_MODELS = {
 
   // ── Passive Products ────────────────────────
   "Passive Products": {
-    "Unarmoured Fiber Cable": ["SY-CATV-2F-UNARM-GYP( Coil)", "SY-CATV-4F-UNARM-GYP ( Coil)", "SY-CATV-6F-UNARM-GYP( Coil)", "SY-CATV-12F-UNARM-GYP( Coil)"],
+    "Unarmoured Fiber Cable": ["SY-CATV-2F-UNARM-GYP( Coil)", "SY-CATV-4F-UNARM-GYP ( Coil)", "SY-CATV-6F-UNARM-GYP( Coil)", "SY-CATV-12F-UNARM-GYP( Coil)","other"],
     "Armoured Fiber Cable": ["SY-CATV-6F-ARM-OM2", "SY-CATV-12F-ARM-OM2", "SY-CATV-6F-ARM-OM3", "SY-CATV-12F-ARM-OM3","SY-CATV-2F-ARM-GYP", "SY-CATV-4F-ARM-GYP","SY-CATV-6F-ARM-GYP", "SY-CATV-12F-ARM-GYP","SY-CATV-24F-ARM-GYP","other"],
-    "Drop Cable": ["SY-DROP2FR-A1-IND", "SY-DROP2FF-A1-IND", "SY-DROP1FF-A1-IND"],
-    "CAT6 Cable": ["SY-CAT6-UTP-305M-23A  ", "SY-CAT6-UTP-305M-24A", "SY-CAT6-SFTP-305M-24A", " SY-CAT6-SFTP-305M-23A"],
+    "Drop Cable": ["SY-DROP2FR-A1-IND", "SY-DROP2FF-A1-IND", "SY-DROP1FF-A1-IND","other"],
+    "CAT6 Cable": ["SY-CAT6-UTP-305M-23A  ", "SY-CAT6-UTP-305M-24A", "SY-CAT6-SFTP-305M-24A", " SY-CAT6-SFTP-305M-23A","other"],
 
-    "Accessories": ["SY-SPS-60", "SY-FTTH-M-015-FP"],
+    "Accessories": ["SY-SPS-60", "SY-FTTH-M-015-FP","other"],
     "Adaptor": [
       "SY-FA-SCPC",
       "SY-FA-SCAPC",
@@ -470,7 +470,8 @@ export const PRODUCT_MODELS = {
       "SY-FA-SCPC-MM",
       "SY-FA-LCP-LCP-MM",
       "SY-FA-STP-STP-MM",
-      "SY-FA-FCP-FCP-MM"
+      "SY-FA-FCP-FCP-MM",
+      "other"
     ],
     "Attenutor": [
       "SY-FAT-LCPM-LCPF-1",
@@ -502,7 +503,8 @@ export const PRODUCT_MODELS = {
       "SY-FAT-FCPF-FCPF-5",
       "SY-FAT-FCPF-FCPF-7",
       "SY-FAT-FCPF-FCPF-10",
-      "SY-FAT-FCPF-FCPF-15"
+      "SY-FAT-FCPF-FCPF-15",
+      "other"
     ],
     "Steel Tube PLC Splitter": [
       "SY-PLC-ST-1X2-WC-1A",
@@ -514,15 +516,17 @@ export const PRODUCT_MODELS = {
       "SY-PLC-ST-2X2-WC-1A",
       "SY-PLC-ST-2X4-WC-1A",
       "SY-PLC-ST-2X8-WC-1A",
-      "SY-PLC-ST-2X16-WC-1A"
+      "SY-PLC-ST-2X16-WC-1A",
+      "other"
     ],
-    "ABS PLC Splitter ": ["SY-PLC-ABS-1X2-WC-1A"],
+    "ABS PLC Splitter ": ["SY-PLC-ABS-1X2-WC-1A","other"],
     "ABS PLC Splitter": [
       "SY-PLC-ABS-1X4-WC-1A",
       "SY-PLC-ABS-1X8-WC-1A",
       "SY-PLC-ABS-1X16-WC-1A",
       "SY-PLC-ABS-1X32-WC-1A",
-      "SY-PLC-ABS-1X64-WC-1A"
+      "SY-PLC-ABS-1X64-WC-1A",
+      "other"
     ],
     "LGX PLC Splitter": [
       "SY-PLC-LGX-1X2-SCP/SCA",
@@ -530,7 +534,8 @@ export const PRODUCT_MODELS = {
       "SY-PLC-LGX-1X8-SCP/SCA",
       "SY-PLC-LGX-1X16-SCP/SCA",
       "SY-PLC-LGX-1X32-SCP/SCA",
-      "SY-PLC-LGX-1X64-SCP/SCA"
+      "SY-PLC-LGX-1X64-SCP/SCA",
+      "other"
     ],
     "Triple Window Coupler": [
       "STWC-1x2-99-01-WC",
@@ -543,36 +548,40 @@ export const PRODUCT_MODELS = {
       "STWC-1x2-65-35-WC",
       "STWC-1x2-60-40-WC",
       "STWC-1x2-55-45-WC",
-      "STWC-1x2-50-50-WC"
+      "STWC-1x2-50-50-WC",
+      "other"
     ],
-    "Fiber Splitter Box( FSB) W/O Loadded": ["SY-FSB-1x4", "SY-FSB-1x8", "SY-FSB-1x16", "SY-FSB-1x32"],
-    "Fiber Splitter Box with LGX": ["SY-FSB-1x4-XXX LGX", "SY-FSB-1x8-XXX LGX", "SY-FSB-1x16-XXX LGX", "SY-FSB-1x32-XXX LGX"],
-    "Fiber Splitter Box with Steel Tuber Splitter": ["SY-FSB-1x4-XXX ST", "SY-FSB-1x8-XXX ST", "SY-FSB-1x16-XXX ST", "SY-FSB-1x32-XXX ST"],
-    "Fiber Distribution BOX W/O Loaded": ["SY-FDB-6F", "SY-FDB-12F", "SY-FDB-24F", "SY-FDB-48F"],
-    "Fiber Splittter Box With Loaded": ["SY-FDB-6F-XXX", "SY-FDB-12F-XXX", "SY-FDB-24F-XXX", "SY-FDB-48F-XXX"],
+    "Fiber Splitter Box( FSB) W/O Loadded": ["SY-FSB-1x4", "SY-FSB-1x8", "SY-FSB-1x16", "SY-FSB-1x32","other"],
+    "Fiber Splitter Box with LGX": ["SY-FSB-1x4-XXX LGX", "SY-FSB-1x8-XXX LGX", "SY-FSB-1x16-XXX LGX", "SY-FSB-1x32-XXX LGX","other"],
+    "Fiber Splitter Box with Steel Tuber Splitter": ["SY-FSB-1x4-XXX ST", "SY-FSB-1x8-XXX ST", "SY-FSB-1x16-XXX ST", "SY-FSB-1x32-XXX ST","other"],
+    "Fiber Distribution BOX W/O Loaded": ["SY-FDB-6F", "SY-FDB-12F", "SY-FDB-24F", "SY-FDB-48F","other"],
+    "Fiber Splittter Box With Loaded": ["SY-FDB-6F-XXX", "SY-FDB-12F-XXX", "SY-FDB-24F-XXX", "SY-FDB-48F-XXX","other"],
     "FTTH Wall Outlet": [
       "SY-FTTHS-BOX",
       "SY-FTTH-BOX-4WAY",
       "SY-FTTH-BOX-1F",
       "SY-FTTH-BOX-1F-XXX",
-      "SY-FTTH-BOX-2F-XXX"
+      "SY-FTTH-BOX-2F-XXX",
+      "other"
     ],
-    "Fast Connector": ["SY-FFC-SCPC", "SY-FFC-SCAPC"],
-    "Rack Mount Non-Sliding  LIU Unloaded ": ["SY-LIU-6F-NS-FMS", "SY-LIU-12F-NS-FMS", "SY-LIU-24F-NS-FMS", "SY-LIU-48F-NS-FMS"],
+    "Fast Connector": ["SY-FFC-SCPC", "SY-FFC-SCAPC","other"],
+    "Rack Mount Non-Sliding  LIU Unloaded ": ["SY-LIU-6F-NS-FMS", "SY-LIU-12F-NS-FMS", "SY-LIU-24F-NS-FMS", "SY-LIU-48F-NS-FMS","other"],
     // "Rack Mount Non-Sliding  LIU Loaded ": ["SY-LIU-6R-FMS-XXX-1U", "SY-LIU-12R-FMS-XXX-1U", "SY-LIU-24R-FMS-XXX-1U", "SY-LIU-48R-FMS-XXX-1U"],
-    "RackMount -Sliding Type-Unloaded": ["SY-LIU-24F-RS"],
+    "RackMount -Sliding Type-Unloaded": ["SY-LIU-24F-RS","other"],
     "RackMount -Sliding Type-Single Mode Simplex- SC/PC or SC/APC LIU/FMS": [
       "SY-LIU-6F-RS-XXXX",
       "SY-LIU-12F-RS-XXXX",
       "SY-LIU-24F-RS-XXXX",
       "SY-LIU-48F-RS-XXXX",
-      "SY-LIU-96F-RS-XXXX"
+      "SY-LIU-96F-RS-XXXX",
+      "other"
     ],
     "RackMount Non-Sliding Type-Single Mode Simplex- SC/PC or SC/APC LIU/FMS":[
     "SY-LIU-6F-NS-XXXX",
     "SY-LIU-12F-NS-XXXX",
     "SY-LIU-24F-NS-XXXX",
     "SY-LIU-48F-NS-XXXX",
+    "other"
 
     ]
     ,
@@ -582,7 +591,8 @@ export const PRODUCT_MODELS = {
       "SY-LIU-12F-RS-XXXX-MM",
       "SY-LIU-24F-RS-XXXX-MM",
       "SY-LIU-48F-RS-XXXX-MM",
-      "SY-LIU-96F-RS-XXXX-MM"
+      "SY-LIU-96F-RS-XXXX-MM",
+      "other"
     ],
     "RackMount -Sliding Type-Single Mode Duplex- SC/PC or SC/APC  LIU/FMS": ["SY-LIU-6F-RS-XXXX-DX", "SY-LIU-12F-RS-XXXX-DX", "SY-LIU-24F-RS-XXXX-DX", "SY-LIU-48F-RS-XXXX-DX"],
     "RackMount -Sliding Type-MultiMode Duplex- SC/PC LIU/FMS": ["SY-LIU-6F-RS-XXXX-MM-DX", "SY-LIU-12F-RS-XXXX-MM-DX", "SY-LIU-24F-RS-XXXX-MM-DX", "SY-LIU-48F-RS-XXXX-MM-DX"],
@@ -608,7 +618,8 @@ export const PRODUCT_MODELS = {
       "FSMS-STP-STP-XM",
       "FSMS-STP-FCP-XM",
       "FSMS-FCP-FCP-XM",
-      "FSMS-FCP-LCP-XM"
+      "FSMS-FCP-LCP-XM",
+      "other"
     ],
     "SM Duplex Customized Patch Cords": [
       "FSMD-SCP-SCP-XM",
@@ -623,7 +634,8 @@ export const PRODUCT_MODELS = {
       "FSMD-STP-STP-XM",
       "FSMD-STP-FCP-XM",
       "FSMD-FCP-FCP-XM",
-      "FSMD-FCP-LCP-XM"
+      "FSMD-FCP-LCP-XM",
+      "other"
     ],
     "OM1 Duplex Customized Patch Cords": [
       "FOM1D-SCP-SCP-XM",
@@ -631,29 +643,33 @@ export const PRODUCT_MODELS = {
       "FOM1D-LCP-LCP-XM",
       "FOM1D-STP-STP-XM",
       "FOM1D-FCP-FCP-XM",
-      "FOM2D-SCP-SCP-XM"
+      "FOM2D-SCP-SCP-XM",
+      "other"
     ],
-    "OM2 Duplex Customized Patch Cords": ["FOM2D-SCP-LCP-XM", "FOM2D-LCP-LCP-XM", "FOM2D-STP-STP-XM", "FOM2D-FCP-FCP-XM"],
+    "OM2 Duplex Customized Patch Cords": ["FOM2D-SCP-LCP-XM", "FOM2D-LCP-LCP-XM", "FOM2D-STP-STP-XM", "FOM2D-FCP-FCP-XM","other"],
     "OM3 Duplex Customized Patch Cords": [
       "FOM3D-SCP-SCP-XM",
       "FOM3D-SCP-LCP-XM",
       "FOM3D-LCP-LCP-XM",
       "FOM3D-STP-STP-XM",
-      "FOM3D-FCP-FCP-XM"
+      "FOM3D-FCP-FCP-XM",
+      "other"
     ],
     "OM4 Duplex Customized Patch Cords": [
       "FOM4D-SCP-SCP-XM",
       "FOM4D-SCP-LCP-XM",
       "FOM4D-LCP-LCP-XM",
       "FOM4D-STP-STP-XM",
-      "FOM4D-FCP-FCP-XM"
+      "FOM4D-FCP-FCP-XM",
+      "other"
     ],
     "OM5 Duplex Customized Patch Cords": [
       "FOM5D-SCP-SCP-XM",
       "FOM5D-SCP-LCP-XM",
       "FOM5D-LCP-LCP-XM",
       "FOM5D-STP-STP-XM",
-      "FOM5D-FCP-FCP-XM"
+      "FOM5D-FCP-FCP-XM",
+      "other"
     ],
     "SM Pigtail Customized": [
       "FPT-SM-SCP-XM",
@@ -661,11 +677,12 @@ export const PRODUCT_MODELS = {
       "FPT-SM-LCA-XM",
       "FPT-SM-SCA-XM",
       "FPT-SM-FCP-XM",
-      "FPT-SM-STP-XM"
+      "FPT-SM-STP-XM",
+      "other"
     ],
-    "MM OM1  Pigtail Customized": ["FPT-OM1-SCP-XM", "FPT-OM1-LCP-XM", "FPT-OM1-FCP-XM", "FPT-OM1-STP-XM"],
-    "MM OM2  Pigtail Customized": ["FPT-OM2-SCP-XM", "FPT-OM2-LCP-XM", "FPT-OM2-FCP-XM", "FPT-OM2-STP-XM"],
-    "MM OM3  Pigtail Customized": ["FPT-OM3-SCP-XM", "FPT-OM3-LCP-XM", "FPT-OM3-FCP-XM", "FPT-OM3-STP-XM"]
+    "MM OM1  Pigtail Customized": ["FPT-OM1-SCP-XM", "FPT-OM1-LCP-XM", "FPT-OM1-FCP-XM", "FPT-OM1-STP-XM","other"],
+    "MM OM2  Pigtail Customized": ["FPT-OM2-SCP-XM", "FPT-OM2-LCP-XM", "FPT-OM2-FCP-XM", "FPT-OM2-STP-XM","other"],
+    "MM OM3  Pigtail Customized": ["FPT-OM3-SCP-XM", "FPT-OM3-LCP-XM", "FPT-OM3-FCP-XM", "FPT-OM3-STP-XM","other"]
   },
 
   // ── Grandstream UC ──────────────────────────
@@ -678,7 +695,8 @@ export const PRODUCT_MODELS = {
       "HT814V2",
       "HT818V2",
       "HT841",
-      "HT881"
+      "HT881",
+      "other"
     ],
     "Gateways": [
       "GXW4216",
@@ -688,7 +706,8 @@ export const PRODUCT_MODELS = {
       "GXW4216V2",
       "GXW4224V2",
       "GXW4232V2",
-      "GXW4248V2"
+      "GXW4248V2",
+      "other"
     ],
     "IP-PBX": [
       "UCM6301",
@@ -698,7 +717,8 @@ export const PRODUCT_MODELS = {
       "UCM6300A",
       "UCM6302A",
       "UCM6304A",
-      "UCM6308A"
+      "UCM6308A",
+      "other"
     ],
     "Wireless IP Phones": [
       "DP720",
@@ -717,7 +737,8 @@ export const PRODUCT_MODELS = {
       "WP825",
       "WP826",
       "WP836",
-      "WP856"
+      "WP856",
+      "other"
     ],
     "HD IP Phones & Headsets": [
       "GHP610",
@@ -781,17 +802,19 @@ export const PRODUCT_MODELS = {
       "GRP_WM_B",
       "GRP_WM_C",
       "GRP_WM_D",
-      "GUV3000 (LAST CALL)"
+      "GUV3000 (LAST CALL)",
+      "other"
     ],
-    "IP Video/Audio Conferencing": ["GMD1208", "GAC2500", "GAC2570", "GVC3220"],
-    "IP Video / Multimedia Phones": ["GXV3380_WM", "GXV3450", "GXV3470", "GXV3480"],
+    "IP Video/Audio Conferencing": ["GMD1208", "GAC2500", "GAC2570", "GVC3220","other"],
+    "IP Video / Multimedia Phones": ["GXV3380_WM", "GXV3450", "GXV3470", "GXV3480","other"],
     "SIP Intercom Speaker": [
       "GSC3506 V2",
       "GSC3506_CB",
       "GSC3516",
       "GSC3518HS",
       "GSC3560 (NEW, GA 2H May)",
-      "GSC3565 (NEW, GA 1H Jun)"
+      "GSC3565 (NEW, GA 1H Jun)",
+      "other"
     ],
     "Access Control Products": [
       "GDS3725",
@@ -804,7 +827,8 @@ export const PRODUCT_MODELS = {
       "GDS37xx NFC CARD (G-AD2)",
       "GSC3570",
       "GSC3574",
-      "GSC3575"
+      "GSC3575",
+      "other"
     ]
   },
 
@@ -821,7 +845,8 @@ export const PRODUCT_MODELS = {
       "GCC-UC-Extra-50-EXT Upgrade",
       "GCC-UC-Extra-4-Call Upgrade",
       "GCC-UC-Extra-100-EXT Upgrade for GCC602x only",
-      "GCC-UC-Extra-16-Call Upgrade for GCC602x only"
+      "GCC-UC-Extra-16-Call Upgrade for GCC602x only",
+      "other"
     ],
     "Multiwan Router": [
       "GWN7001",
@@ -830,7 +855,8 @@ export const PRODUCT_MODELS = {
       "GWN7062E",
       "GWN7062ET",
       "GWN7062M (NEW)",
-      "GWN7072 (NEW, GA 2H Jun)"
+      "GWN7072 (NEW, GA 2H Jun)",
+      "other"
     ],
     "Wireless AP": [
       "GWN7302",
@@ -864,7 +890,8 @@ export const PRODUCT_MODELS = {
       "GWN7674",
       "GWN7664E",
       "GWN7664ELR",
-      "GWN7665"
+      "GWN7665",
+      "other"
     ],
     "Unmanaged Switch": [
       "GWN7700",
@@ -878,7 +905,8 @@ export const PRODUCT_MODELS = {
       "GWN7702",
       "GWN7702P",
       "GWN7703",
-      "GWN7706"
+      "GWN7706",
+      "other"
     ],
     "L2 Managed Switch": [
       "GWN7710R",
@@ -901,7 +929,8 @@ export const PRODUCT_MODELS = {
       "GWN7803PL Pro",
       "GWN7803PH Pro",
       "GWN7806PL Pro",
-      "GWN7806PH Pro"
+      "GWN7806PH Pro",
+      "other"
     ],
     "L3 Managed Switch": [
       "GWN7811",
@@ -915,7 +944,8 @@ export const PRODUCT_MODELS = {
       "GWN7822P",
       "GWN7830",
       "GWN7831",
-      "GWN7832"
+      "GWN7832",
+      "other"
     ]
   },
 
