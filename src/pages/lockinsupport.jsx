@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import RaiseLockinTicket from "./raiselockinticket";
 import { useNavigate } from "react-router-dom";
+import ProductTesting from "./ProductTesting";
+import ProductTestingTickets from "./ProductTestingTicket";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -68,6 +70,14 @@ const [updateNotifications, setUpdateNotifications] = useState(() => {
     return localStorage.getItem("lockin_newTicketAlert") === "true";
   });
   const prevCountRef = useRef(0);
+  const [supportPersons, setSupportPersons] = useState([]);
+
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/users`)
+      .then(r => r.json())
+      .then(users => setSupportPersons(users.filter(u => u.role === "support" && u.approved)))
+      .catch(console.error);
+  }, []);
 
  const fetchTickets = () => {
  fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(currentUser?.name || "")}&ticketType=lockin&limit=2000`)
@@ -503,6 +513,8 @@ const handleResolve = async (ticketId) => {
   {[
     ["tickets", "🔒 My Lockin Tickets"],
     ["raise",   "Raise Lockin Ticket"],
+    ["producttesting", "🧪 Product Testing"],
+    ["mytestingtickets", "🧪 My Testing Tickets"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)} style={{
       padding: "14px 22px", fontSize: 13,
@@ -518,6 +530,16 @@ const handleResolve = async (ticketId) => {
   <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
     <RaiseLockinTicket onSuccess={() => setActiveTab("tickets")} />
   </div>
+)}
+
+{activeTab === "producttesting" && (
+  <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
+    <ProductTesting currentUser={currentUser} supportPersons={supportPersons} autoAssign={true} />
+  </div>
+)}
+
+{activeTab === "mytestingtickets" && (
+  <ProductTestingTickets currentUser={currentUser} viewMode="raised" />
 )}
 
 {activeTab === "tickets" && (
