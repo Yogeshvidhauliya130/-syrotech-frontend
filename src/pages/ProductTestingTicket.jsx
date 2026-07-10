@@ -210,7 +210,7 @@ const fetchTickets = () => {
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900, background: "white" }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #059669, #10b981)", position: "sticky", top: 0, zIndex: 2 }}>
-                {["Ticket No", "Date", "Product", "Item Name", "Serial No", "OEM", "Sample Date", "DC No", "Status", "Status Update", "Actions"].map((h, i) => (
+                {["Ticket No", "Date", "Category", "Item Name", "Serial No", "OEM", "Sample Date", "DC No", "Raised By", "Status", "Status Update", "Actions"].map((h, i) => (
                   <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -234,7 +234,8 @@ const fetchTickets = () => {
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5", fontSize: 12, color: "#374151" }}>{ticket.serialNo || "—"}</td>
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5", fontSize: 12, color: "#374151" }}>{ticket.oemName || "—"}</td>
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5", fontSize: 12, color: "#374151", whiteSpace: "nowrap" }}>{ticket.sampleReceiveDate || "—"}</td>
-                      <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5", fontSize: 12, color: "#374151" }}>{ticket.dcNumber || "—"}</td>
+                     <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5", fontSize: 12, color: "#374151" }}>{ticket.dcNumber || "—"}</td>
+                      <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5", fontSize: 12, fontWeight: 600, color: "#374151", whiteSpace: "nowrap" }}>{ticket.raisedByName || "—"}</td>
                       <td style={{ padding: "12px 14px", borderRight: "1px solid #d1fae5" }}>
                         <span style={{ padding: "3px 8px", borderRadius: 10, fontSize: 9, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", whiteSpace: "nowrap" }}>
                           {s.toUpperCase()}
@@ -275,7 +276,7 @@ const fetchTickets = () => {
 
                     {viewMode === "assigned" && showResolve && s === "open" && (
                       <tr key={`resolve-${ticket.id}`} style={{ background: "#f0fdf4" }}>
-                        <td colSpan={11}style={{ padding: "16px 20px" }}>
+                        <td colSpan={12}style={{ padding: "16px 20px" }}>
                           <div style={{ maxWidth: 700, background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "18px 20px" }}>
                             <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 12 }}>✅ Resolve Testing Ticket</div>
                             <div style={{ marginBottom: 14 }}>
