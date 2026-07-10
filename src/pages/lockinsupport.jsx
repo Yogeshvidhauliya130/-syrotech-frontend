@@ -539,7 +539,7 @@ const handleResolve = async (ticketId) => {
 )}
 
 {activeTab === "mytestingtickets" && (
-  <ProductTestingTickets currentUser={currentUser} viewMode="raised" />
+  <ProductTestingTickets currentUser={currentUser} />
 )}
 
 {activeTab === "tickets" && (
