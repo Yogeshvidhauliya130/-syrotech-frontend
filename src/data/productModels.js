@@ -12,7 +12,8 @@ export const PRODUCT_MODELS = {
     "SY-GOPON-4OLT-L3-ECO",
     "SY-GOPON-4OLT-L3-DC",
     "SY-GOPON-8OLT-L3",
-    "SY-GOPON-8OLT-L3-ECO"
+    "SY-GOPON-8OLT-L3-ECO",
+    "other"
   ],
 
   "GPON OLT": [
@@ -20,27 +21,31 @@ export const PRODUCT_MODELS = {
     "SY-GPON-2OLT",
     "SY-GPON-4OLT",
     "SY-GPON-8OLT",
-    "SY-GPON-16OLT"
+    "SY-GPON-16OLT",
+    "other"
   ],
 
   "EPON OLT PS": [
     "SY-GOPON-4OLT-L3-AC-PS",
     "SY-GOPON-4OLT-L3-DC-PS",
     "SY-GOPON-8OLT-L3-AC-PS",
-    "SY-GOPON-16OLT-L3-AC-PS"
+    "SY-GOPON-16OLT-L3-AC-PS",
+    "other"
   ],
 
   "GPON OLT PS": [
     "SY-GPON-4OLT-AC-PS",
     "SY-GPON-8OLT-AC-PS",
-    "SY-GPON-16OLT-AC-PS"
+    "SY-GPON-16OLT-AC-PS",
+    "other"
   ],
 
   "PON EDFA": [
     "Locking-Unlocking",
     "Pump Module",
     "SMPS",
-    "Parameter"
+    "Parameter",
+    "other"
   ],
 
   "Splicing Machine": [
@@ -78,6 +83,7 @@ export const PRODUCT_MODELS = {
     "SY-GPON-1111-WDONT",
     "SY-GPON-4000-WDAONT",
     "SY-GPON-4020-WDONT",
+    "other"
   ]
 },
 
@@ -121,7 +127,8 @@ export const PRODUCT_MODELS = {
       "GOMC-1312-20",
       "GOMC-BI3512-20",
       "GOMC-BI5312-20",
-      "GOMC-1312-SFP"
+      "GOMC-1312-SFP",
+      "other"
     ]
   },
 
@@ -142,7 +149,8 @@ export const PRODUCT_MODELS = {
       "GOXS- BI4503-80D",
       "GOXS- BI5403-80D",
       "GOXS- BI4503-120D",
-      "GOXS- BI5403-120D"
+      "GOXS- BI5403-120D",
+      "other"
     ],
     "1.25G SFP": [
       "GOXS-8512-02D",
@@ -167,35 +175,40 @@ export const PRODUCT_MODELS = {
       "GOXS-BI4512-80D",
       "GOXS-BI5412-80D",
       "GOXS-BI4512-120D",
-      "GOXS-BI5412-120D"
+      "GOXS-BI5412-120D",
+      "other"
     ],
     "STM1 SFP": [
       "GOXS-1303-02STM1",
       "GOXS-1303-20STM1",
       "GOXS-1303-40STM1",
       "GOXS-1503-40STM1",
-      "GOXS-1503-80STM1"
+      "GOXS-1503-80STM1",
+      "other"
     ],
     "STM4 SFP": [
       "GOXS-1306-02STM4",
       "GOXS-1306-20STM4",
       "GOXS-1306-40STM4",
       "GOXS-1506-40STM4",
-      "GOXS-1506-80STM4"
+      "GOXS-1506-80STM4",
+      "other"
     ],
     "SFP 16 SFP": [
       "GOXS-1324-02STM16",
       "GOXS-1324-20STM16",
       "GOXS-1324-40STM16",
       "GOXS-1524-40STM16",
-      "GOXS-1524-80STM16"
+      "GOXS-1524-80STM16",
+      "other"
     ],
     "STM 64 SFP": [
       "GOXP-1396-02STM64",
       "GOXP-1396-20STM64",
       "GOXP-1396-40STM64",
       "GOXP-1596-40STM64",
-      "GOXP-1596-80STM64"
+      "GOXP-1596-80STM64",
+      "other"
     ],
     "10G SFP+": [
       "GOXP-8596-02",
@@ -214,11 +227,12 @@ export const PRODUCT_MODELS = {
       "GOXP-BI2396-80",
       "GOXP-BI3296-80",
       "GOXP-BI4596-80",
-      "GOXP-BI5496-80"
+      "GOXP-BI5496-80",
+      "other"
     ],
-    "1.25G CWDM SFP": ["GOXS-CWDM4612-80", "GOXP-CWDM4696-80"],
-    "10G DWDM SFP+": ["GOXP-DWDM96-80"],
-    "CWMDM-Mux/DeMux": ["SY-CWDM-04MD1355", "SY-CWDM-08MD4761-ESR", "SY-CWDM-16MD1261-R"],
+    "1.25G CWDM SFP": ["GOXS-CWDM4612-80", "GOXP-CWDM4696-80","other"],
+    "10G DWDM SFP+": ["GOXP-DWDM96-80","other"],
+    "CWMDM-Mux/DeMux": ["SY-CWDM-04MD1355", "SY-CWDM-08MD4761-ESR", "SY-CWDM-16MD1261-R","other"],
     "DWDM-Mux/DeMux": [
       "SY-DWDM-8M27342-R",
       "SY-DWDM-8D2734-R",
@@ -229,7 +243,8 @@ export const PRODUCT_MODELS = {
       "SY-DWDM-32M2157-R",
       "SY-DWDM-32M2157-R",
       "SY-DWDM-40M21602-R",
-      "SY-DWDM-40M2160-R"
+      "SY-DWDM-40M2160-R",
+      "other"
     ],
     "10G XFP": [
       "GOXX-8596-02",
@@ -239,14 +254,16 @@ export const PRODUCT_MODELS = {
       "GOXX-BI2396-20",
       "GOXX-BI3296-20",
       "GOXX-BI2396-40",
-      "GOXX-BI3296-40"
+      "GOXX-BI3296-40",
+      "other"
     ],
     "25G SFP28": [
       "GOXP-8528-02",
       "GOXP-1328-10",
       "GOXP-1328-40",
       "GOXP-8528-02 IND",
-      "GOXP-1328-10 IND"
+      "GOXP-1328-10 IND",
+      "other"
     ],
     "40G QSFP+": [
       "GOXQ-8540G-02SR4",
@@ -255,7 +272,8 @@ export const PRODUCT_MODELS = {
       "GOXQ-1340G-20LR4",
       "GOXQ-1340G-ER4L",
       "GOXQ-1340G-ER4",
-      "GOXQ-1340G-ZR4"
+      "GOXQ-1340G-ZR4",
+      "other"
     ],
     "100G QSFP28": [
       "GOXQ28-85100G-SR4",
@@ -263,7 +281,8 @@ export const PRODUCT_MODELS = {
       "GOXQ28-13100G-LR4",
       "GOXQ28-13100G-20LR4",
       "GOXQ28-13100G-ER4",
-      "GOXQ28-13100G-ZR4"
+      "GOXQ28-13100G-ZR4",
+      "other"
     ],
     "100G QSFP28 BIDI": [
       "GOXQ28-BI23100G-LR4",
@@ -275,20 +294,22 @@ export const PRODUCT_MODELS = {
       "GOXQ28-BI49100G-ER",
       "/GOXQ28-BI94100G-ER",
       "GOXQ28-BI49100G-ZR",
-      "GOXQ28-BI94100G-ZR"
+      "GOXQ28-BI94100G-ZR",
+      "other"
     ],
-    "10G DAC Cable": ["G0XP-CAB-10GSFP-P1M", "G0XP-CAB-10GSFP-P3M", "G0XP-CAB-10GSFP-P5M"],
-    "25G DAC Cable": ["GOXP-CAB-SFP28-P1M", "GOXP-CAB-SFP28-P3M", "GOXP-CAB-SFP28-P5M"],
-    "40G QSFP AOC Cable": ["GOXQ-CAB-QSFP-A1M", "GOXQ-CAB-QSFP-A3M", "GOXQ-CAB-QSFP-A5M", "GOXQ-CAB-QSFP+-A10M"],
-    "PON SFP": ["GOXS-BI4312-20PON4+", "GOXS-BI4312-20PONC4+", "GOXS-BI4312-20PONC5+"],
-    "10G AOC Cable": ["G0XP-CAB-10GSFP-A1M", "GOXP-CAB-10GSFP-A3M", "G0XP-CAB-10GSFP-A5M", "G0XP-CAB-10GSFP-A10M"],
-    "25G AOC Cable": ["GOXP-CAB-SFP28-A1M", "GOXP-CAB-SFP28-A3M", "GOXP-CAB-SFP28-A5M", "GOXP-CAB-SFP28-A10M"],
+    "10G DAC Cable": ["G0XP-CAB-10GSFP-P1M", "G0XP-CAB-10GSFP-P3M", "G0XP-CAB-10GSFP-P5M","other"],
+    "25G DAC Cable": ["GOXP-CAB-SFP28-P1M", "GOXP-CAB-SFP28-P3M", "GOXP-CAB-SFP28-P5M","other"],
+    "40G QSFP AOC Cable": ["GOXQ-CAB-QSFP-A1M", "GOXQ-CAB-QSFP-A3M", "GOXQ-CAB-QSFP-A5M", "GOXQ-CAB-QSFP+-A10M","other"],
+    "PON SFP": ["GOXS-BI4312-20PON4+", "GOXS-BI4312-20PONC4+", "GOXS-BI4312-20PONC5+","other"],
+    "10G AOC Cable": ["G0XP-CAB-10GSFP-A1M", "GOXP-CAB-10GSFP-A3M", "G0XP-CAB-10GSFP-A5M", "G0XP-CAB-10GSFP-A10M","other"],
+    "25G AOC Cable": ["GOXP-CAB-SFP28-A1M", "GOXP-CAB-SFP28-A3M", "GOXP-CAB-SFP28-A5M", "GOXP-CAB-SFP28-A10M","other"],
     "100G AOC Cable": [
       "GOXQ-CAB-QSFP28-A1M",
       "GOXQ-CAB-QSFP28-A3M",
       "GOXQ-CAB-QSFP28-A5M",
       "GOXQ-CAB-QSFP28-A10M",
-      "GOXQ-CAB-QSFP28-A30M"
+      "GOXQ-CAB-QSFP28-A30M",
+      "other"
     ],
     "40G QSFP DAC Cable": [
       "GOXQ-CAB-QSFP-P1M",
@@ -299,7 +320,8 @@ export const PRODUCT_MODELS = {
       "GOXQ-CAB-QSFP/4SFP+-P5M",
       "GOXQ-CAB-QSFP/4SFP+-A1M",
       "GOXQ-CAB-QSFP/4SFP+-A3M",
-      "GOXQ-CAB-QSFP/4SFP+-A5M"
+      "GOXQ-CAB-QSFP/4SFP+-A5M",
+      "other"
     ],
     "100G DAC Cable": [
       "GOXQ-CAB-QSFP28-P1M",
@@ -310,14 +332,16 @@ export const PRODUCT_MODELS = {
       "GOXQ-CAB-QSFP28/4SF28-P5M",
       "GOXQ-CAB-QSFP28/4SFP28-A1M",
       "GOXQ-CAB-QSFP28/4SFP28-A3M",
-      "GOXQ-CAB-QSFP28/4SFP28-A5M"
+      "GOXQ-CAB-QSFP28/4SFP28-A5M",
+      "other"
     ],
 
 
      "PON Stick": [
       "1Ge Epon",
       "1Ge Gpon",
-      "1Ge Xpon"
+      "1Ge Xpon",
+      "other"
       
     ],
 
@@ -332,13 +356,15 @@ export const PRODUCT_MODELS = {
       "SY-4000P-1T-2S-AI",
       "SY-8000P-2T-AI",
       "SY-8000P-2T-2S-AI",
-      "SY-2400P-2T-2S-AI"
+      "SY-2400P-2T-2S-AI",
+      "other"
       
     ],
     "Manage Poe Switch": [
       "SY-8000P-2S-150W L2",
       "SY-2400P-4S-400W L2",
-      "SY-2400P-4X-400W L2"
+      "SY-2400P-4X-400W L2",
+      "other"
       
     ],
 
@@ -347,7 +373,8 @@ export const PRODUCT_MODELS = {
       "SY-8000-4X L2",
       "SY-2400-4X L2",
       "SY-2400S-4X DP",
-      "SY-2400X-2Q28 L3"  
+      "SY-2400X-2Q28 L3"  ,
+      "other"
     ],
 
     "Industrial Manage POE & Non-POE": [
@@ -357,7 +384,8 @@ export const PRODUCT_MODELS = {
       "SY-1016P-4S-IND",
       "SY-1024P-8CS-4X-IND",
       "SY-4000-2S IND L2",
-      "SY-8000-2S IND L2"
+      "SY-8000-2S IND L2",
+      "other"
     ],
 
 //Indutrial Unmanage POE & Non_poe
@@ -365,12 +393,14 @@ export const PRODUCT_MODELS = {
  "Industrial Unmanage POE & Non_poe": [
       "SY-4000-2S-IND-UM",
       "SY-4000P-2S-IND-UM",
-      "SY-8000P-2S-IND_UM"
+      "SY-8000P-2S-IND_UM",
+      "other"
     ],
 
 // Desktop 
  "Desktop": [
       "SY-10008",
+      "other"
     ],  
 
 
@@ -379,6 +409,7 @@ export const PRODUCT_MODELS = {
       "SY-SMPS48-50DR",
       "SY-SMPS48-10DR",
       "SY-SMPS48-25DR",
+      "other"
     ], 
   },
 
@@ -397,7 +428,7 @@ export const PRODUCT_MODELS = {
     "UHF RFID TCP IP PCB-6 mtr": ["SY-U60019001 RJ (PCB)"],
     "UHF RFID W/G PCB-15 mtr": ["SY-U1500 1200-PCB"],
     "UHF RFID W/G PCB-6 mtr": ["SY-U60019001  (PCB)"],
-    "UHF ADAPTOR": ["ADAPTOR-12V-3A(UHP ADAPTOR)"]
+    "UHF ADAPTOR": ["ADAPTOR-12V-3A(UHP ADAPTOR)"],
   },
 
   // CCTV
