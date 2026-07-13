@@ -997,6 +997,7 @@ isRma: issuePopup.firstIsRma || false,
             <option value="Full Stack">Full Stack</option>
             <option value="Hardware">Hardware</option>
             <option value="Testing">Testing</option>
+            <option value="TR069 ACS Server Testing">TR069 ACS Server Testing </option>
             <option value="Data Analyst">Data Analyst</option>
           </select>
         </div>
