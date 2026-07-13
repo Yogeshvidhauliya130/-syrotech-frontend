@@ -182,7 +182,7 @@ export default function ProductTesting({ currentUser, supportPersons = [], autoA
             <div style={{ display: "flex", gap: 8 }}>
               <select value={form.macPrefix} onChange={e => setForm(prev => ({ ...prev, macPrefix: e.target.value, mac: `${e.target.value}:${prev.macSuffix}` }))} style={{ ...inputStyle("mac"), width: "45%" }}>
                 <option value="">Select Prefix</option>
-                {["38:94:E0","7C:A9:6B","54:47:E8","A8:E2:07","B8:B7:DB","98:9D:B2","74:61:D1"].map(p => <option key={p} value={p}>{p}</option>)}
+                {["38:94:E0","7C:A9:6B","54:47:E8","A8:E2:07","B8:B7:DB","98:9D:B2","74:61:D1","other"].map(p => <option key={p} value={p}>{p}</option>)}
               </select>
               <input placeholder="11:22:33" value={form.macSuffix} onChange={e => { const v = e.target.value.toUpperCase(); setForm(prev => ({ ...prev, macSuffix: v, mac: `${prev.macPrefix}:${v}` })); }} style={{ ...inputStyle("mac"), width: "55%" }} />
             </div>
