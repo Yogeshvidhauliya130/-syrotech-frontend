@@ -1885,6 +1885,7 @@ const [levelFilter, setLevelFilter] = useState(initialLevel);
 useEffect(() => { setLevelFilter(initialLevel); }, [initialLevel]);
 const [sourceViaFilter, setSourceViaFilter] = useState("all");
 const [supportOnly, setSupportOnly] = useState(false);
+const [perfTypeFilter, setPerfTypeFilter] = useState("all");
 
  useEffect(() => {
     fetch(`${BASE_URL}/tickets?page=1&limit=100000`)
@@ -1930,7 +1931,21 @@ if (filterMonth) return d.getMonth() + 1 === parseInt(filterMonth);
 return true;
 })
 .filter(t => !supportOnly || t.source === "support")
-.filter(t => sourceViaFilter === "all" || t.raisedVia === sourceViaFilter));
+.filter(t => sourceViaFilter === "all" || t.raisedVia === sourceViaFilter)
+.filter(t => {
+  if (perfTypeFilter === "all") return true;
+  if (perfTypeFilter === "product") {
+    const isHr = t.source === "hr" || t.source === "hradmin";
+    const isOtherType = ["lockin", "product_testing", "rnd", "production"].includes(t.ticketType);
+    return !isHr && !isOtherType;
+  }
+  if (perfTypeFilter === "lockin")     return t.ticketType === "lockin";
+  if (perfTypeFilter === "production") return t.ticketType === "production";
+  if (perfTypeFilter === "testing")    return t.ticketType === "product_testing";
+  if (perfTypeFilter === "rnd")        return t.ticketType === "rnd";
+  if (perfTypeFilter === "hr")         return t.source === "hr" || t.source === "hradmin";
+  return true;
+}));
   const agents          = [...new Set(filteredTickets.map(t => t.assignTo).filter(Boolean))];
   const filteredAgents  = agents
   .filter(a => a.toLowerCase().includes(agentFilter.toLowerCase()))
@@ -2270,6 +2285,27 @@ t.resolutionNotes || "—",
 
       {agents.length > 0 && (
         <div style={{ marginBottom: 14 }}>
+        <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10, flexWrap:"wrap" }}>
+          <span style={{ fontSize:12, fontWeight:700, color:"#6b7280" }}>🎫 Ticket Type:</span>
+          {[
+            ["all",        "All"],
+            ["product",    "📦 Support"],
+            ["lockin",     "🔒 Lockin"],
+            ["production", "🏭 Production"],
+            ["testing",    "🧪 Testing"],
+            ["rnd",        "🔬 R&D"],
+            ["hr",         "🧑‍💼 Internal IT"],
+          ].map(([key, label]) => (
+            <button key={key} onClick={() => setPerfTypeFilter(key)} style={{
+              padding:"6px 14px", borderRadius:16, fontSize:12, cursor:"pointer",
+              border: perfTypeFilter === key ? "2px solid #ff5a00" : "1px solid #d1d5db",
+              background: perfTypeFilter === key ? "#fff4ee" : "white",
+              color: perfTypeFilter === key ? "#ff5a00" : "#555",
+              fontWeight: perfTypeFilter === key ? 700 : 400,
+              fontFamily: "inherit",
+            }}>{label}</button>
+          ))}
+        </div>
         <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10 }}>
           <button onClick={() => { setSupportOnly(p => !p); setSourceViaFilter("all"); }} style={{
   padding:"6px 14px", borderRadius:16, fontSize:12, cursor:"pointer",
