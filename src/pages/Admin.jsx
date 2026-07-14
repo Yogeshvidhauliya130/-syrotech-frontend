@@ -1888,7 +1888,7 @@ const [supportOnly, setSupportOnly] = useState(false);
 const [perfTypeFilter, setPerfTypeFilter] = useState("all");
 
  useEffect(() => {
-    fetch(`${BASE_URL}/tickets?page=1&limit=100000`)
+   fetch(`${BASE_URL}/api/tickets/performance-lite`)
       .then(r => r.json())
       .then(data => {
         const tickets = data.tickets || [];
