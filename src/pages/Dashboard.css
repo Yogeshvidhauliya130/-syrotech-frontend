@@ -78,8 +78,7 @@ body { font-family: 'DM Sans', sans-serif; }
    TABS
 ══════════════════════════════════════════ */
 .dash-layout-wrapper {
-  display: flex;
-  align-items: flex-start;
+  display: block;
 }
 
 .dash-tabs {
@@ -128,8 +127,6 @@ body { font-family: 'DM Sans', sans-serif; }
   max-width: 1600px;
   margin: 32px auto 60px 240px;
   padding: 0 20px 60px;
-  flex: 1;
-  min-width: 0;
 }
 
 /* ══════════════════════════════════════════
