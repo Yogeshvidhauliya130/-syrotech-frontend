@@ -22,8 +22,11 @@ body { font-family: 'DM Sans', sans-serif; }
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 28px rgba(180, 50, 0, 0.5);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
   z-index: 100;
 }
 
@@ -79,6 +82,7 @@ body { font-family: 'DM Sans', sans-serif; }
 ══════════════════════════════════════════ */
 .dash-layout-wrapper {
   display: block;
+  margin-top: 64px;
 }
 
 .dash-tabs {
