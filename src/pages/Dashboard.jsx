@@ -817,7 +817,7 @@ isRma: issuePopup.firstIsRma || false,
       {/* <div className="dash-tabs">
         {[
           ["raise",     "🎫 Raise Ticket"],
-          ["mytickets", `📋 My Support Tickets (${myTickets.length})`],
+          ["mytickets", `📋 My Tickets (${myTickets.length})`],
         ].map(([key, label]) => (
           <button key={key} onClick={() => setActiveTab(key)}
             className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
@@ -832,7 +832,7 @@ isRma: issuePopup.firstIsRma || false,
 <div className="dash-tabs">
   {[
     ["raise",       "🎫 Raise Ticket"],
-    ["mytickets",   `📋 My Tickets (${myTickets.length})`],
+    ["mytickets",   `📋 My  Support Tickets (${myTickets.length})`],
     ["raiselockin", "🔒 Raise Lockin Ticket"],
     ["mylockin",    "🔒 My Lockin Tickets"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
