@@ -831,14 +831,14 @@ isRma: issuePopup.firstIsRma || false,
 {/* Lockin  to replace above  */}
 <div className="dash-tabs">
   {[
-    ["raise",       "🎫 Raise Ticket"],
     ["mytickets",   `📋 My  Support Tickets (${myTickets.length})`],
-    ["raiselockin", "🔒 Raise Lockin Ticket"],
     ["mylockin",    "🔒 My Lockin Tickets"],
-     ["raiseproduction",  "🏭 Raise Production Ticket"],
     ["myproduction",     "🏭 My Production Tickets"],
-    ["producttesting",   "🧪 Product Testing"],
     ["mytestingtickets", "🧪 My Testing Tickets"],
+    ["raise",       "🎫 Raise Support Ticket"],
+    ["raiselockin", "🔒 Raise Lockin Ticket"],
+     ["raiseproduction",  "🏭 Raise Production Ticket"],
+    ["producttesting",   "🧪 Product Testing"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)}
       className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
