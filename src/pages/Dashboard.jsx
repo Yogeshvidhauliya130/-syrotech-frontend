@@ -847,8 +847,7 @@ isRma: issuePopup.firstIsRma || false,
   ))}
 </div>
 
-
-
+<div className="dash-layout-wrapper">
 
       <div className="dash-body">
 
@@ -1559,7 +1558,9 @@ firstIsRma: ticket.firstIsRma || false,
           <ProductTestingTickets currentUser={currentUser} viewMode="raised" />
         )}
 
-      </div>
+     </div>
+
+</div>
     </div>
   );
 }
