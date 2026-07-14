@@ -40,7 +40,7 @@ function sendWhatsAppFeedback(ticket, supportName) {
   `📧 support@syrotech.com\n` +
   `☎️  +91-9870295096\n` +
   `🌐 www.syrotech.com\n\n` +
-  `💙 Thank you for choosing *Syrotech Networks!* 🙏`;
+  `💙 Thank you for choosing *Syrotech Networks!/GO IP Global Services* 🙏`;
   window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`, "_blank");
   return true;
 }
