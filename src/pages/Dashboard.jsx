@@ -836,13 +836,13 @@ isRma: issuePopup.firstIsRma || false,
     ["mytickets",   `📋 My  Support Tickets (${myTickets.length})`],
     ["mylockin",    "🔒 My Lockin Tickets"],
     ["myproduction",     "🏭 My Production Tickets"],
-    ["mytestingtickets", "🧪 My Testing Tickets"],
+    ["mytestingtickets", "🧪 My Product Testing Tickets"],
+    ["myrma",   "🔧 My RMA Tickets"],
     ["raise",       "🎫 Raise Support Ticket"],
     ["raiselockin", "🔒 Raise Lockin Ticket"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
     ["producttesting",   "🧪 Raise Product Testing Ticket"],
-    ["myrma",   "🔧 My RMA Tickets"],
-    ["raiserma", "🔧 Raise RMA Ticket"],
+   ["raiserma", "🔧 Raise RMA Ticket"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)}
       className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
