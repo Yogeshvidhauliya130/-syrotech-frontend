@@ -853,7 +853,7 @@ isRma: issuePopup.firstIsRma || false,
       {key === "myrma" && (
         <div
           style={{
-            height: 1,
+            height: 2,
             background: "rgba(255,255,255,0.3)",
             margin: "8px 4px",
             flexShrink: 0,
