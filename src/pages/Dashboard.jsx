@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "../hooks/useProducts";
 import { getIssues } from "../data/issueList";
@@ -838,16 +838,29 @@ isRma: issuePopup.firstIsRma || false,
     ["myproduction",     "🏭 My Production Tickets"],
     ["mytestingtickets", "🧪 My Product Testing Tickets"],
     ["myrma",   "🔧 My RMA Tickets"],
+    
     ["raise",       "🎫 Raise Support Ticket"],
     ["raiselockin", "🔒 Raise Lockin Ticket"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
     ["producttesting",   "🧪 Raise Product Testing Ticket"],
    ["raiserma", "🔧 Raise RMA Ticket"],
-  ].map(([key, label]) => (
-    <button key={key} onClick={() => setActiveTab(key)}
-      className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
-      {label}
-    </button>
+ ].map(([key, label]) => (
+    <Fragment key={key}>
+      <button onClick={() => setActiveTab(key)}
+        className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
+        {label}
+      </button>
+      {key === "myrma" && (
+        <div
+          style={{
+            height: 1,
+            background: "rgba(255,255,255,0.3)",
+            margin: "8px 4px",
+            flexShrink: 0,
+          }}
+        />
+      )}
+    </Fragment>
   ))}
 </div>
 
