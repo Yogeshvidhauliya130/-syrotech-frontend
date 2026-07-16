@@ -838,7 +838,7 @@ isRma: issuePopup.firstIsRma || false,
     ["raise",       "🎫 Raise Support Ticket"],
     ["raiselockin", "🔒 Raise Lockin Ticket"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
-    ["producttesting",   "🧪 Raise Product Testing"],
+    ["producttesting",   "🧪 Raise Product Testing Ticket"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)}
       className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
