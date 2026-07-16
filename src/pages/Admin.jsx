@@ -226,6 +226,7 @@ const [analyticsType, setAnalyticsType] = useState("all");
        ["production", "🏭 Production"],
        ["testing",    "🧪 Testing"], 
        ["rnd",        "🔬 R&D"],
+       ["rma",        "🔧 RMA"],
     ].map(([type, label]) => (
       <button key={type}
         onClick={() => { setTab("analytics"); setAnalyticsType(type); setShowAnalyticsMenu(false); }}
@@ -649,6 +650,7 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
   production: "Production",
   testing: "Testing",
   rnd: "R&D",
+  rma: "RMA Tickets",
 };
 
   return (
@@ -1934,15 +1936,16 @@ return true;
 .filter(t => sourceViaFilter === "all" || t.raisedVia === sourceViaFilter)
 .filter(t => {
   if (perfTypeFilter === "all") return true;
-  if (perfTypeFilter === "product") {
-    const isHr = t.source === "hr" || t.source === "hradmin";
-    const isOtherType = ["lockin", "product_testing", "rnd", "production"].includes(t.ticketType);
-    return !isHr && !isOtherType;
-  }
-  if (perfTypeFilter === "lockin")     return t.ticketType === "lockin";
-  if (perfTypeFilter === "production") return t.ticketType === "production";
-  if (perfTypeFilter === "testing")    return t.ticketType === "product_testing";
-  if (perfTypeFilter === "rnd")        return t.ticketType === "rnd";
+ if (perfTypeFilter === "product") {
+  const isHr = t.source === "hr" || t.source === "hradmin";
+  const isOtherType = ["lockin", "product_testing", "rnd", "production", "rma"].includes(t.ticketType);
+  return !isHr && !isOtherType;
+}
+if (perfTypeFilter === "lockin")     return t.ticketType === "lockin";
+if (perfTypeFilter === "production") return t.ticketType === "production";
+if (perfTypeFilter === "testing")    return t.ticketType === "product_testing";
+if (perfTypeFilter === "rnd")        return t.ticketType === "rnd";
+if (perfTypeFilter === "rma")        return t.ticketType === "rma";
   if (perfTypeFilter === "hr")         return t.source === "hr" || t.source === "hradmin";
   return true;
 }));
@@ -2295,6 +2298,7 @@ t.resolutionNotes || "—",
             ["testing",    "🧪 Testing"],
             ["rnd",        "🔬 R&D"],
             ["hr",         "🧑‍💼 Internal IT"],
+            ["rma",        "🔧 RMA"],
           ].map(([key, label]) => (
             <button key={key} onClick={() => setPerfTypeFilter(key)} style={{
               padding:"6px 14px", borderRadius:16, fontSize:12, cursor:"pointer",

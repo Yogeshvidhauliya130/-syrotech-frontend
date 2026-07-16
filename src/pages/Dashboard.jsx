@@ -7,6 +7,8 @@ import RaiseLockinTicket from "./raiselockinticket";
 import MyLockinTickets from "./mylockinticket";
 import RaiseProductionTicket from "./RaiseProductionTicket";
 import MyProductionTickets from "./MyProductionTickets";
+import RaiseRmaTicket from "./RaiseRmaTicket";
+import MyRmaTickets from "./MyRmaTickets";
 import ProductTesting from "./ProductTesting";
 import ProductTestingTickets from "./ProductTestingTicket";
 
@@ -839,6 +841,8 @@ isRma: issuePopup.firstIsRma || false,
     ["raiselockin", "🔒 Raise Lockin Ticket"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
     ["producttesting",   "🧪 Raise Product Testing Ticket"],
+    ["myrma",   "🔧 My RMA Tickets"],
+    ["raiserma", "🔧 Raise RMA Ticket"],
   ].map(([key, label]) => (
     <button key={key} onClick={() => setActiveTab(key)}
       className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
@@ -1542,6 +1546,16 @@ firstIsRma: ticket.firstIsRma || false,
         {activeTab === "raiseproduction" && (
           <RaiseProductionTicket onSuccess={() => setActiveTab("myproduction")} />
         )}
+
+
+ {/* MY RMA  TICKETS */}
+
+        {activeTab === "raiserma" && (
+  <RaiseRmaTicket onSuccess={() => setActiveTab("myrma")} />
+)}
+{activeTab === "myrma" && (
+  <MyRmaTickets tickets={tickets} />
+)}
 
       {/* MY PRODUCTION TICKETS */}
         {activeTab === "myproduction" && (
