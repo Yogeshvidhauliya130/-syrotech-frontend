@@ -1366,7 +1366,7 @@ isRma: issuePopup.firstIsRma || false,
   const hrs = ticket.resolvedAt
     ? (Date.now() - new Date(ticket.resolvedAt).getTime()) / (1000*60*60)
     : 999;
-  if (hrs > 48) return null;
+  if (hrs > 168) return null;
   return (
     <div>
       <div onClick={() => {
