@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RnD from "./pages/RnD";
 import LockinSupport from "./pages/lockinsupport";
 import ProductionSupport from "./pages/productionsupport";
+import RmaSupport from "./pages/rmasupport";
 import Feedback from "./pages/Feedback";
 function App() {
   return (
@@ -44,6 +45,11 @@ function App() {
          <Route path="/productionsupport" element={
           <ProtectedRoute role="support"><ProductionSupport /></ProtectedRoute>
         } />
+
+        <Route path="/rmasupport" element={
+  <ProtectedRoute role="support"><RmaSupport /></ProtectedRoute>
+} />
+
         <Route path="/rnd" element={
           <ProtectedRoute role="rnd"><RnD /></ProtectedRoute>
         } />

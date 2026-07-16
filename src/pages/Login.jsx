@@ -70,6 +70,8 @@ else if (data.user.role === "support") {
     navigate("/lockinsupport", { replace: true });
   } else if (data.user.email === "nishant.gupta@goip.in") {
     navigate("/productionsupport", { replace: true });
+  } else if (data.user.email === "ravi.kumar@goip.in") {
+    navigate("/rmasupport", { replace: true });
   } else {
     navigate("/support", { replace: true });
   }
