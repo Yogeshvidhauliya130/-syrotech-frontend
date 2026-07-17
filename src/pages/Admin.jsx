@@ -1989,9 +1989,9 @@ if (perfTypeFilter === "rma")        return t.ticketType === "rma";
     };
   };
 
-  const TICKET_HEADER = [
+ const TICKET_HEADER = [
     "Ticket No","Ticket ID","Raised By (Name)","Raised By (Email)","Customer Name",
-    "Customer Email","Contact Number","Product","Serial Number",
+    "Customer Email","Contact Number","Product","Sub Category","Item Name","Serial Number",
     "MAC Address","City","Country","Issue Type","Issue Description","Assigned To",
     "Date Raised","Status","Raised At","Accepted At","Resolved At",
     "Time Taken (hrs)","Time Score","Feedback Bonus","Final Score","Within 24hr SLA",
@@ -2019,7 +2019,7 @@ if (perfTypeFilter === "rma")        return t.ticketType === "rma";
     } else if (t.createdAt && !t.resolvedAt) { sla = "OPEN"; }
     return [
       t.ticketNumber||"—", t.id||"—", t.raisedByName||"—", t.raisedBy||"—", t.customer||"—",
-      t.email||"—", t.phone||"—", t.category||"—", t.serialNo||"—",
+      t.email||"—", t.phone||"—", t.category||"—", t.subCategory||"—", t.model||"—", t.serialNo||"—",
       t.mac||"—", t.city||"—", t.country||"—", issueType, issueDesc, t.assignTo||"—",
       t.date||"—", (t.status || "open").toUpperCase(),
       t.createdAt  ? new Date(t.createdAt).toLocaleString()  : "—",
@@ -2058,7 +2058,7 @@ t.resolutionNotes  || "—",
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
     ws1["!cols"] = [{ wch: 40 }, { wch: 26 }];
     XLSX.utils.book_append_sheet(wb, ws1, "Summary");
-    const cw = [10,12,20,24,18,24,14,14,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30].map(w=>({wch:w}));
+    const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30].map(w=>({wch:w}));
     const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...stats.agentTickets.map(buildTicketRow)]);
     ws2["!cols"] = cw; XLSX.utils.book_append_sheet(wb, ws2, "All Tickets");
     const ws3 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...stats.resolvedList.map(buildTicketRow)]);
@@ -2087,7 +2087,7 @@ t.resolutionNotes  || "—",
     const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
     ws1["!cols"] = [20,10,10,10,10,10,12,10,12,16,10,14,12].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, "All Agents Summary");
-    const cw = [10,12,20,24,18,24,14,14,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30].map(w=>({wch:w}));
+    const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30].map(w=>({wch:w}));
     const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...filteredTickets.map(buildTicketRow)]);
     ws2["!cols"] = cw; XLSX.utils.book_append_sheet(wb, ws2, "All Tickets Combined");
     agents.forEach(agent => {
