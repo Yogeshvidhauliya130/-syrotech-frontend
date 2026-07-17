@@ -486,6 +486,7 @@ const sent = sendRMAWhatsApp({ ...ticket, rmaNote: rf.note || "" }, rf.reason);
       method: "PATCH", headers: { "Content-Type": "application/json" },
      body: JSON.stringify({
   status: "rma", rmaStatus: true, rmaReason: rf.reason,
+  rmaAssignedTo: "Ravi Kumar",
   rmaSentAt: new Date().toISOString(), rmaSentBy: currentUser?.name, resolvedAt: null,
   firstIsRma: !(Array.isArray(ticket?.issueHistory) && ticket.issueHistory.length > 0),
   issueHistory: (() => {
