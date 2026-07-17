@@ -34,7 +34,7 @@ export default function RmaSupport() {
   const [expandedImage, setExpandedImage] = useState(null);
 
   const fetchTickets = () => {
-    fetch(`${BASE_URL}/tickets?rmaHandler=${encodeURIComponent("Ravi Kumar")}&ticketType=rma&limit=2000`)
+    fetch(`${BASE_URL}/tickets?rmaHandler=${encodeURIComponent("Ravi Kumar")}&limit=2000`)
       .then(r => r.json())
       .then(data => {
         setTickets(data.tickets || []);
