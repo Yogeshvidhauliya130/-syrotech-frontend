@@ -292,8 +292,8 @@ export default function RmaSupport() {
                 const newEntry = { note, status, updatedBy: currentUser?.name, updatedAt: new Date().toISOString() };
                 const existing = Array.isArray(ticket?.statusUpdates) ? ticket.statusUpdates : [];
                 fetch(`${BASE_URL}/tickets/${ticketId}`, {
-                  method: "PATCH", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: `${status} — ${note}`, status: "open" })
+                  method:"PATCH", headers:{"Content-Type":"application/json"},
+                  body: JSON.stringify({ statusUpdates: [...existing, newEntry], latestStatusUpdate: `${status} — ${note}` })
                 }).then(() => { setStatusUpdateForm({}); fetchTickets(); });
               }} style={{ flex: 1, background: "linear-gradient(135deg,#5b21b6,#7c3aed)", color: "white", border: "none", padding: "12px 24px", borderRadius: 10, cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: "inherit" }}>
                 ✅ Submit Update

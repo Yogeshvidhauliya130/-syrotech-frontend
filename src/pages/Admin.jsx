@@ -770,7 +770,8 @@ isRma: issuePopup.firstIsRma || false,
               <div style={{ fontSize: 14, fontWeight: 700, color: "#374151" }}>{rmaPopup.rmaReason || "—"}</div>
             </div>
             
-            {rmaPopup.rmaSentAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
+            {rmaPopup.rmaSentBy && <div style={{ fontSize: 12, color: "#5b21b6", fontWeight: 700, marginTop: 8 }}>🙋 Sent to RMA by: {rmaPopup.rmaSentBy}</div>}
+{rmaPopup.rmaSentAt && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>📅 Sent on: {new Date(rmaPopup.rmaSentAt).toLocaleString()}</div>}
           </div>
         </div>
       )}
@@ -1467,12 +1468,12 @@ firstIsRma: ticket.firstIsRma || false,
 
 
                       <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0" }}>
-                        <span onClick={() => { if (s === "rma") setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt }); }}
+                        <span onClick={() => { if (s === "rma") setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt, rmaSentBy: ticket.rmaSentBy }); }}
                           style={{ padding: "3px 9px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block", cursor: s === "rma" ? "pointer" : "default", border: s === "rma" ? "1.5px solid #c4b5fd" : "none" }}>
                           {s.toUpperCase()}
                         </span>
                         {s === "rma" && (
-                          <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt })}
+                          <div onClick={() => setRmaPopup({ rmaReason: ticket.rmaReason, rmaCenterName: ticket.rmaCenterName, rmaCenterCity: ticket.rmaCenterCity, rmaCenterAddress: ticket.rmaCenterAddress, rmaCenterPhone: ticket.rmaCenterPhone, rmaSentAt: ticket.rmaSentAt, rmaSentBy: ticket.rmaSentBy })}
                             style={{ fontSize: 9, color: "#7c3aed", marginTop: 3, cursor: "pointer", fontWeight: 600 }}>🔧 View RMA</div>
                         )}
                         {isReassigned && (

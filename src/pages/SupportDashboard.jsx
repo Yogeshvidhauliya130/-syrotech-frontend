@@ -698,7 +698,9 @@ const resolutionPct = activeTotal === 0 ? 0 : Math.round(((counts.resolved + cou
 const filtered = (filter === "all" ? tickets : tickets.filter(t =>
   filter === "reopened"
     ? (t.status === "reopened" || t.previousStatus === "reopened")
-    : t.status === filter
+    : filter === "rma"
+    ? !!t.rmaStatus
+    : (t.status === filter && !t.rmaStatus)
 ))
     .filter(t => {
       if (sourceFilter === "all") return true;
@@ -2523,8 +2525,8 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((ticket, idx) => {
-                    const s            = (ticket.status || "open").toLowerCase();
+                 {filtered.map((ticket, idx) => {
+                    const s            = ticket.rmaStatus ? "rma" : (ticket.status || "open").toLowerCase();
                     const isReassigned = !!ticket.reassignedFrom;
                     const isSupportRaised  = ticket.source === "support";
                     const isCustomerRaised = ticket.source === "customer";
