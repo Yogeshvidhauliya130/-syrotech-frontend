@@ -376,7 +376,7 @@ export default function RmaSupport() {
       {/* Raise Tab */}
       {activeTab === "raise" && (
         <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
-          <RaiseRmaTicket onSuccess={() => setActiveTab("tickets")} />
+          <RaiseRmaTicket onSuccess={() => { fetchTickets(); setActiveTab("tickets"); }} />
         </div>
       )}
 
