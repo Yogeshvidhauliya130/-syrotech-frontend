@@ -1564,7 +1564,7 @@ firstIsRma: ticket.firstIsRma || false,
  {/* MY RMA  TICKETS */}
 
         {activeTab === "raiserma" && (
-  <RaiseRmaTicket onSuccess={() => setActiveTab("myrma")} />
+  <RaiseRmaTicket onSuccess={() => { fetchTickets(); setActiveTab("myrma"); }} />
 )}
 {activeTab === "myrma" && (
   <MyRmaTickets tickets={tickets} />
