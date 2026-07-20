@@ -1557,8 +1557,8 @@ firstIsRma: ticket.firstIsRma || false,
 )}
   {/* RAISE PRODUCTION TICKET */}
         {activeTab === "raiseproduction" && (
-          <RaiseProductionTicket onSuccess={() => setActiveTab("myproduction")} />
-        )}
+  <RaiseProductionTicket onSuccess={() => { fetchTickets(); setActiveTab("myproduction"); }} />
+)}
 
 
  {/* MY RMA  TICKETS */}
