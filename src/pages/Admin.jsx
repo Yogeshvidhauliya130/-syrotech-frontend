@@ -569,7 +569,7 @@ useEffect(() => {
   );
   return matchedPersons.some(p => p.level === parseInt(levelFilter));
 })
-.filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.customer, t.phone, t.email, t.category, t.subCategory, t.model, t.serialNo, String(t.ticketNumber || "")]
+.filter(t => [t.raisedByName, t.raisedBy, t.assignTo, t.rmaAssignedTo, t.customer, t.phone, t.email, t.category, t.subCategory, t.model, t.serialNo, String(t.ticketNumber || "")]
   .some(f => (f || "").toLowerCase().includes(search.toLowerCase())))
 
 
@@ -1950,7 +1950,10 @@ if (perfTypeFilter === "rma")        return t.ticketType === "rma";
   if (perfTypeFilter === "hr")         return t.source === "hr" || t.source === "hradmin";
   return true;
 }));
-  const agents          = [...new Set(filteredTickets.map(t => t.assignTo).filter(Boolean))];
+  const agents          = [...new Set([
+    ...filteredTickets.map(t => t.assignTo).filter(Boolean),
+    ...filteredTickets.map(t => t.rmaAssignedTo).filter(Boolean),
+  ])];
   const filteredAgents  = agents
   .filter(a => a.toLowerCase().includes(agentFilter.toLowerCase()))
   .filter(a => {
@@ -1966,7 +1969,7 @@ if (perfTypeFilter === "rma")        return t.ticketType === "rma";
   };
 
   const getAgentStats = (agent, allTickets = []) => {
-    const agentTickets    = filteredTickets.filter(t => t.assignTo === agent);
+    const agentTickets    = filteredTickets.filter(t => t.assignTo === agent || t.rmaAssignedTo === agent);
     const resolvedList    = agentTickets.filter(t => t.status === "resolved" && t.createdAt && t.resolvedAt);
     const rmaList         = agentTickets.filter(t => t.status === "rma");
     const within24        = resolvedList.filter(t => (new Date(t.resolvedAt) - new Date(t.createdAt)) <= 24 * 60 * 60 * 1000).length;
@@ -2465,10 +2468,10 @@ const resolutionRate = activeTotal > 0
   {globalRating > 0 ? (
     <div style={{ background: "#fffbeb", border: "1.5px solid #f59e0b", borderRadius: 8, padding: "6px 10px" }}>
       <div style={{ fontSize: 20, fontWeight: 800, color: "#d97706" }}>
-        {filteredTickets.filter(t =>
-          t.assignTo === agent &&
-          parseInt(t.feedbackRating) === globalRating
-        ).length}
+       {filteredTickets.filter(t =>
+  (t.assignTo === agent || t.rmaAssignedTo === agent) &&
+  parseInt(t.feedbackRating) === globalRating
+).length}
       </div>
       <div style={{ fontSize: 10, color: "#92400e" }}>
         {"★".repeat(globalRating)} tickets
@@ -2477,7 +2480,7 @@ const resolutionRate = activeTotal > 0
   ) : (
     <div style={{ display:"flex", flexDirection:"column", gap:4, alignItems:"center" }}>
       {[5,4,3,2,1].map(star => {
-        const count = filteredTickets.filter(t => t.assignTo === agent && parseInt(t.feedbackRating) === star).length;
+        const count = filteredTickets.filter(t => (t.assignTo === agent || t.rmaAssignedTo === agent) && parseInt(t.feedbackRating) === star).length;
         return count > 0 ? (
           <div key={star} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11 }}>
             <span style={{ color:"#f59e0b" }}>{"★".repeat(star)}</span>
@@ -2485,7 +2488,7 @@ const resolutionRate = activeTotal > 0
           </div>
         ) : null;
       })}
-      {filteredTickets.filter(t => t.assignTo === agent && t.feedbackRating).length === 0 &&
+      {filteredTickets.filter(t => (t.assignTo === agent || t.rmaAssignedTo === agent) && t.feedbackRating).length === 0 &&
         <span style={{ fontSize:11, color:"#d1d5db" }}>No ratings</span>}
     </div>
   )}
