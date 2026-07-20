@@ -269,10 +269,9 @@ export default function RmaSupport() {
               <select value={statusUpdateForm.status || ""} onChange={e => setStatusUpdateForm(p => ({ ...p, status: e.target.value }))}
                 style={{ width: "100%", padding: "11px 14px", border: "2px solid #ddd6fe", borderRadius: 10, fontSize: 14, outline: "none", fontFamily: "inherit", background: "white", cursor: "pointer", color: "#111" }}>
                 <option value="">-- Select Status --</option>
-                <option value="Under Discussion">Under Discussion</option>
                 <option value="Under Process">Under Process</option>
-                <option value="With OEM">With OEM</option>
-              </select>
+               
+              </select>~
             </div>
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Update Note <span style={{ color: "#ef4444" }}>*</span></div>
