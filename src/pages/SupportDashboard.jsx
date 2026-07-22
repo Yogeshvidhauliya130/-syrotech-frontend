@@ -474,7 +474,8 @@ const poll = setInterval(() => {
     .catch(err => { console.error("Reassign failed:", err); setReassigning(null); });
 };
 
-  const handleRMASubmit = (ticketId) => {
+const handleRMASubmit = (ticketId) => {
+    if (submittingRma === ticketId) return;   // 👈 NEW LINE — stops double-submit
     const rf     = rmaForm[ticketId] || {};
    const ticket = allTickets.find(t => t.id === ticketId);
     if (!rf.reason) { alert("Please select a reason for RMA."); return; }
