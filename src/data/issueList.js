@@ -42,9 +42,7 @@ export const ISSUE_LIST = {
     "Others",
   ],
 
-  "Power Supply":[
-   "others"
-  ],
+  
 
   // OLT subcategories
   "EPON OLT": [],
