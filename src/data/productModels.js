@@ -54,7 +54,27 @@ export const PRODUCT_MODELS = {
     "Service",
     "Arc Correction",
     "others"
-  ]
+  ],
+
+    "Power Supply": [
+    "1 voltage",
+    "2 voltage",
+    "3 voltage",
+    "4 voltage",
+    "5 voltage",
+    "6 voltage",
+    "7 voltage",
+    "8 voltage",
+    "9 voltage",
+    "10 voltage",
+    "11 voltage",
+    "12 voltage",
+    
+    "others",
+   
+  ],
+
+
 
  
 },
