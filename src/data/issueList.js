@@ -73,6 +73,10 @@ export const ISSUE_LIST = {
     "Product General Info",
     "Others",
   ],
+
+  "Power Adaptor":[
+    "others"
+  ]
 },
 
 
