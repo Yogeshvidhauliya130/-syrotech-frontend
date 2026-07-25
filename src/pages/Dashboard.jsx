@@ -837,13 +837,13 @@ isRma: issuePopup.firstIsRma || false,
     ["mylockin",    "🔒 My Lockin Tickets"],
     ["myproduction",     "🏭 My Production Tickets"],
     ["mytestingtickets", "🧪 My Product Testing Tickets"],
-    ["myrma",   "🔧 My RMA Tickets"],
+    ["myrma",   "🔧 My Return RMA Tickets"],
     
     ["raise",       "🎫 Raise Support Ticket"],
     ["raiselockin", "🔒 Raise Lockin Ticket"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
     ["producttesting",   "🧪 Raise Product Testing Ticket"],
-   ["raiserma", "🔧 Raise RMA Ticket"],
+   ["raiserma", "🔧 Raise Return RMA Ticket"],
  ].map(([key, label]) => (
     <Fragment key={key}>
       <button onClick={() => setActiveTab(key)}
