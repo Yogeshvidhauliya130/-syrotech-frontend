@@ -53,7 +53,7 @@ export default function SLAReport() {
 
  useEffect(() => {
     setLoading(true);
-    fetch(`${BASE_URL}/tickets?page=1&limit=100000`)
+    fetch(`${BASE_URL}/api/tickets/performance-lite`)
       .then(r => r.json())
       .then(data => { setTickets(data.tickets || []); setLoading(false); })
       .catch(() => setLoading(false));
