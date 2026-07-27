@@ -5,6 +5,7 @@ import { useProducts } from "../hooks/useProducts";
 import { getIssues } from "../data/issueList";
 import ProductTesting from "./ProductTesting";
 import ProductTestingTickets from "./ProductTestingTicket";
+import RaiseProductionTicket from "./RaiseProductionTicket";
 
 
 const BASE_URL = "https://api.syrotech.com";
@@ -266,7 +267,14 @@ const [myReassignedProductFilter, setMyReassignedProductFilter] = useState("all"
 const [myReassignedSubFilter, setMyReassignedSubFilter]         = useState("all");
 const [myReassignedItemFilter, setMyReassignedItemFilter]       = useState("all");
 
-  const [activeTab, setActiveTab] = useState("tickets");
+ const [activeTab, setActiveTab] = useState("tickets");
+
+  // ✅ Production tickets — new state
+  const [productionSearch, setProductionSearch] = useState("");
+  const [productionStatusFilter, setProductionStatusFilter] = useState("all");
+  const [productionSort, setProductionSort] = useState("newest");
+  const [productionResolveForm, setProductionResolveForm] = useState({});
+  const [productionExpandedImage, setProductionExpandedImage] = useState(null);
 
   // ✅ CHANGE 4: Added city, state, cityCustom, stateCustom to form
   const [form, setForm] = useState({
@@ -542,12 +550,36 @@ const handleResolveSubmit = (ticketId) => {
       })
     })
       .then(r => r.json())
-      .then(updated => {
+     .then(updated => {
   setTickets(prev => prev.map(t => t.id === ticketId ? updated : t));
   setAllTickets(prev => prev.map(t => t.id === ticketId ? updated : t));
   setResolveForm(prev => { const n = { ...prev }; delete n[ticketId]; return n; });
 })
       .catch(err => console.error("Resolve failed:", err));
+  };
+
+  // ✅ Production ticket resolve — simple, NO WhatsApp message to customer
+  const handleProductionResolve = (ticketId) => {
+    const rf = productionResolveForm[ticketId] || {};
+    if (!rf.notes?.trim()) { alert("Please describe what was resolved."); return; }
+    const now = new Date().toISOString();
+    fetch(`${BASE_URL}/tickets/${ticketId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "resolved",
+        resolvedAt: now,
+        resolvedBy: currentUser?.name,
+        resolutionNotes: rf.notes.trim(),
+      })
+    })
+      .then(r => r.json())
+      .then(updated => {
+        setAllTickets(prev => prev.map(t => t.id === ticketId ? updated : t));
+        setProductionResolveForm(prev => { const n = { ...prev }; delete n[ticketId]; return n; });
+        fetchTickets();
+      })
+      .catch(err => console.error("Production resolve failed:", err));
   };
 
   const markWhatsAppSent = (ticketId) => {
@@ -704,6 +736,7 @@ const filtered = (filter === "all" ? tickets : tickets.filter(t =>
     ? !!t.rmaStatus
     : (t.status === filter && !t.rmaStatus)
 ))
+    .filter(t => t.ticketType !== "production")
     .filter(t => {
       if (sourceFilter === "all") return true;
       if (sourceFilter === "customer")    return t.source === "customer";
@@ -750,8 +783,9 @@ const filtered = (filter === "all" ? tickets : tickets.filter(t =>
       return dateSort === "newest" ? db - da : da - db;
     });
 
-      const filteredMyRaised = allTickets
+     const filteredMyRaised = allTickets
   .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
+  .filter(t => t.ticketType !== "production")
   .filter(t => myRaisedStatusFilter === "all" || (t.status || "open").toLowerCase() === myRaisedStatusFilter)
   .filter(t => myRaisedViaFilter === "all" || t.raisedVia === myRaisedViaFilter)
 .filter(t => myRaisedProductFilter === "all" || t.category === myRaisedProductFilter)
@@ -831,8 +865,40 @@ const filteredMyReassigned = allTickets
 
   const myRaisedTickets = allTickets
     .filter(t => t.raisedBy === currentUser?.email && t.source === "support")
+    .filter(t => t.ticketType !== "production")
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+  // ✅ Production tickets relevant to this support user — assigned to them OR raised by them
+  const myProductionTickets = allTickets
+    .filter(t => t.ticketType === "production")
+    .filter(t =>
+      (t.assignTo && currentUser?.name && t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
+      (t.raisedBy && currentUser?.email && t.raisedBy.toLowerCase().trim() === currentUser.email.toLowerCase().trim())
+    )
+    .slice()
+    .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+  const filteredMyProduction = myProductionTickets
+    .filter(t => productionStatusFilter === "all" || (t.status || "open").toLowerCase() === productionStatusFilter)
+    .filter(t => {
+      if (!productionSearch.trim()) return true;
+      const q = productionSearch.toLowerCase();
+      return (
+        (t.category    || "").toLowerCase().includes(q) ||
+        (t.model       || "").toLowerCase().includes(q) ||
+        (t.serialNo    || "").toLowerCase().includes(q) ||
+        (t.raisedByName|| "").toLowerCase().includes(q) ||
+        (t.assignTo    || "").toLowerCase().includes(q) ||
+        (t.ticketNumber?.toString() || "").includes(q)
+      );
+    })
+    .slice()
+    .sort((a, b) => {
+      const da = new Date(a.createdAt || a.date).getTime();
+      const db = new Date(b.createdAt || b.date).getTime();
+      return productionSort === "newest" ? db - da : da - db;
+    });
 
   const raisedViaLabel = (via) => {
     if (via === "support-email") return "📧 Support Email";
@@ -1239,12 +1305,14 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
       </div>
 
       {/* Tabs — ✅ CHANGE 2: Added "My Reassigned" tab */}
-      <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
+     <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
         {[
          ["tickets",      `📋 Assigned Tickets (${counts.all})`],
          ["myraised",     `📞 My Raised (${myRaisedCount})`],
           ["myreassigned", `🔄 My Reassigned (${myReassignedTickets.length})`],
           ["raise",        "🎫 Raise Ticket"],
+          ["myproduction",     "🏭 My Production Tickets"],
+          ["raiseproduction",  "🏭 Raise Production Ticket"],
           ["producttesting",    "🧪 Product Testing"],
 ["mytestingtickets",  "🧪 My Testing Tickets"],
         ].map(([key, label]) => (
@@ -1642,10 +1710,184 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
               </div>
             </div>
 
-            <button onClick={handleSubmit} disabled={submitting} className={`submit-btn ${submitting ? "submit-btn-loading" : ""}`}>
+           <button onClick={handleSubmit} disabled={submitting} className={`submit-btn ${submitting ? "submit-btn-loading" : ""}`}>
               {submitting ? <><span className="btn-spinner" /> Submitting...</> : "🎫 Submit Ticket"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ══ RAISE PRODUCTION TICKET TAB ══ */}
+      {activeTab === "raiseproduction" && (
+        <div style={{ maxWidth: 700, margin: "28px auto", padding: "0 16px" }}>
+          <RaiseProductionTicket onSuccess={() => { fetchTickets(); setActiveTab("myproduction"); }} />
+        </div>
+      )}
+
+      {/* ══ MY PRODUCTION TICKETS TAB ══ */}
+      {activeTab === "myproduction" && (
+        <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#374151", margin: 0 }}>🏭 My Production Tickets</h2>
+              <p style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>Production tickets assigned to you or raised by you</p>
+            </div>
+            <button onClick={() => setActiveTab("raiseproduction")} style={{ background: "#10b981", color: "white", border: "none", padding: "8px 18px", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 13 }}>+ Raise Production Ticket</button>
+          </div>
+
+          {myProductionTickets.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 60, background: "white", borderRadius: 14, color: "#aaa" }}>
+              <div style={{ fontSize: 48 }}>🏭</div>
+              <p style={{ marginTop: 12 }}>No production tickets yet.</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
+                {[["all","All"],["open","🔓 Open"],["resolved","✅ Resolved"],["reopened","🔄 Reopened"]].map(([key, label]) => (
+                  <button key={key} onClick={() => setProductionStatusFilter(key)} style={{
+                    padding: "6px 14px", borderRadius: 18,
+                    border: productionStatusFilter === key ? "none" : "1px solid #d1d5db",
+                    background: productionStatusFilter === key ? "#10b981" : "white",
+                    color: productionStatusFilter === key ? "white" : "#555",
+                    fontWeight: productionStatusFilter === key ? 700 : 400,
+                    fontSize: 12, cursor: "pointer"
+                  }}>{label}</button>
+                ))}
+                <div style={{ width: 1, height: 20, background: "#e0d8d0" }} />
+                <select value={productionSort} onChange={e => setProductionSort(e.target.value)}
+                  style={{ padding: "6px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 12, cursor: "pointer" }}>
+                  <option value="newest">Newest First ↓</option>
+                  <option value="oldest">Oldest First ↑</option>
+                </select>
+                <input placeholder="🔍 Search ticket no, category, model, serial, name..."
+                  value={productionSearch} onChange={e => setProductionSearch(e.target.value)}
+                  style={{ flex: 1, minWidth: 200, padding: "7px 14px", borderRadius: 9, border: "1.5px solid #d1d5db", fontSize: 12, outline: "none", fontFamily: "inherit" }} />
+                {productionSearch && (
+                  <button onClick={() => setProductionSearch("")} style={{ background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: "#6b7280" }}>✕</button>
+                )}
+              </div>
+
+              <div style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, background: "white", minWidth: 900 }}>
+                  <thead>
+                    <tr style={{ background: "linear-gradient(135deg,#065f46,#10b981)", position: "sticky", top: 0, zIndex: 2 }}>
+                      {["Ticket No", "Date", "Category", "Item", "Assigned To", "Raised By", "Status", "Image", "Action"].map((h, i) => (
+                        <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMyProduction.map((t, idx) => {
+                      const s = (t.status || "open").toLowerCase();
+                      const id = t.id || t._id;
+                      const isMineToResolve = t.assignTo && currentUser?.name && t.assignTo.toLowerCase().trim() === currentUser.name.toLowerCase().trim();
+                      return (
+                        <React.Fragment key={id}>
+                          <tr style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#f0fdf8" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
+                            <td style={{ padding: "10px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0" }}>
+                              <div style={{ fontSize: 11, fontWeight: 800, color: "#10b981" }}>#{t.ticketNumber || "—"}</div>
+                            </td>
+                            <td style={{ padding: "10px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0" }}>
+                              <div style={{ fontSize: 11, color: "#374151" }}>{t.date || "—"}</div>
+                            </td>
+                            <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{t.category || "—"}</div>
+                            </td>
+                            <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: "#10b981" }}>{t.model || "—"}</div>
+                              <div style={{ fontSize: 10, color: "#6b7280" }}>{t.subCategory || ""}</div>
+                            </td>
+                            <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: "#059669" }}>{t.assignTo || "—"}</div>
+                            </td>
+                            <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e" }}>{t.raisedByName || "—"}</div>
+                            </td>
+                            <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
+                              <span style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block" }}>
+                                {s.toUpperCase()}
+                              </span>
+                            </td>
+                            <td style={{ padding: "10px 12px", textAlign: "center", borderRight: "1px solid #e0d8d0" }}>
+                              {t.productImage ? (
+                                <button onClick={() => setProductionExpandedImage(prev => prev === id ? null : id)}
+                                  style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: "#065f46" }}>
+                                  📷 {productionExpandedImage === id ? "Hide" : "View"}
+                                </button>
+                              ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
+                            </td>
+                            <td style={{ padding: "10px 12px" }}>
+                              {s !== "resolved" && isMineToResolve && (
+                                <button onClick={() => setProductionResolveForm(prev => ({ ...prev, [id]: { ...prev[id], show: !prev[id]?.show } }))}
+                                  style={{ background: productionResolveForm[id]?.show ? "#ecfdf5" : "#10b981", color: productionResolveForm[id]?.show ? "#065f46" : "white", border: productionResolveForm[id]?.show ? "1.5px solid #6ee7b7" : "none", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
+                                  ✅ {productionResolveForm[id]?.show ? "Cancel" : "Resolve"}
+                                </button>
+                              )}
+                              {s === "resolved" && <div style={{ fontSize: 11, color: "#059669", fontWeight: 600 }}>✅ Done</div>}
+                            </td>
+                          </tr>
+
+                          {productionExpandedImage === id && t.productImage && (
+                            <tr>
+                              <td colSpan={9} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
+                                <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
+                                  <img src={t.productImage} alt="Product" style={{ maxHeight: 220, maxWidth: 300, borderRadius: 10, border: "2px solid #86efac", cursor: "pointer", objectFit: "contain", background: "white" }}
+                                    onClick={() => openImageInNewTab(t.productImage)} />
+                                  <div style={{ fontSize: 13, color: "#065f46" }}>
+                                    <div style={{ fontWeight: 800, marginBottom: 6, fontSize: 14 }}>📷 Product Image</div>
+                                    <div style={{ color: "#6b7280", marginBottom: 4 }}>Product: <strong>{t.category}</strong></div>
+                                    <div style={{ color: "#6b7280", marginBottom: 4 }}>Serial No: <strong>{t.serialNo || "—"}</strong></div>
+                                    {t.mac && <div style={{ color: "#6b7280", marginBottom: 4 }}>MAC: <strong>{t.mac}</strong></div>}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+
+                          {productionResolveForm[id]?.show && s !== "resolved" && (
+                            <tr style={{ background: "#f0fdf4" }}>
+                              <td colSpan={9} style={{ padding: "16px 20px" }}>
+                                <div style={{ background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "16px 20px", maxWidth: 600 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 10 }}>
+                                    ✅ Resolve Ticket #{t.ticketNumber}
+                                  </div>
+                                  <textarea rows={3} placeholder="Describe what was resolved..."
+                                    value={productionResolveForm[id]?.notes || ""}
+                                    onChange={e => setProductionResolveForm(prev => ({ ...prev, [id]: { ...prev[id], notes: e.target.value } }))}
+                                    style={{ width: "100%", padding: "10px 12px", border: "2px solid #6ee7b7", borderRadius: 8, fontSize: 12, outline: "none", fontFamily: "inherit", background: "white", resize: "vertical", color: "#111", lineHeight: 1.5, boxSizing: "border-box" }} />
+                                  <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                                    <button onClick={() => handleProductionResolve(id)}
+                                      style={{ background: "linear-gradient(135deg,#10b981,#059669)", color: "white", border: "none", padding: "10px 24px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800 }}>
+                                      ✅ Confirm Resolve
+                                    </button>
+                                    <button onClick={() => setProductionResolveForm(prev => ({ ...prev, [id]: { ...prev[id], show: false } }))}
+                                      style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+
+                          {s === "resolved" && (
+                            <tr style={{ background: "#f0fdf4" }}>
+                              <td colSpan={9} style={{ padding: "8px 20px" }}>
+                                <span style={{ fontSize: 12, color: "#065f46", fontWeight: 600 }}>
+                                  ✅ Resolved by <strong>{t.resolvedBy}</strong>
+                                  {t.resolutionNotes ? ` — ${t.resolutionNotes}` : ""}
+                                </span>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       )}
 

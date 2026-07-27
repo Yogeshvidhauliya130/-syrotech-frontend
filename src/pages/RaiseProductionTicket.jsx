@@ -80,7 +80,6 @@ export default function RaiseProductionTicket({ onSuccess }) {
       ...form,
       description: `${form.issuePrefix} | ${form.issueSuffix}`,
       ticketType:   "production",
-      assignTo:     "Nishant Gupta",
       raisedBy:     currentUser?.email || "",
       raisedByName: currentUser?.name  || "",
       status:       "open",
