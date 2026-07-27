@@ -1305,7 +1305,7 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
       </div>
 
       {/* Tabs — ✅ CHANGE 2: Added "My Reassigned" tab */}
-     <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0 }}>
+     <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", padding: "0 28px", display: "flex", gap: 0, overflowX: "auto", overflowY: "hidden", whiteSpace: "nowrap" }}>
         {[
          ["tickets",      `📋 Assigned Tickets (${counts.all})`],
          ["myraised",     `📞 My Raised (${myRaisedCount})`],
@@ -1320,7 +1320,7 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
             padding: "14px 22px", fontSize: 13, fontWeight: activeTab === key ? 800 : 500,
             color: activeTab === key ? "#059669" : "#6b7280",
             background: "none", border: "none", borderBottom: activeTab === key ? "3px solid #10b981" : "3px solid transparent",
-            cursor: "pointer", whiteSpace: "nowrap", marginBottom: -2,
+            cursor: "pointer", whiteSpace: "nowrap", marginBottom: -2, flexShrink: 0,
           }}>{label}</button>
         ))}
       </div>
@@ -1351,11 +1351,15 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
 
 
 {activeTab === "producttesting" && (
-  <ProductTesting currentUser={currentUser} />
+  <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
+    <ProductTesting currentUser={currentUser} />
+  </div>
 )}
 
 {activeTab === "mytestingtickets" && (
-  <ProductTestingTickets currentUser={currentUser} />
+  <div style={{ maxWidth: 1200, margin: "28px auto", padding: "0 16px" }}>
+    <ProductTestingTickets currentUser={currentUser} />
+  </div>
 )}
       {/* ══ RAISE TICKET TAB ══ */}
       {activeTab === "raise" && (
