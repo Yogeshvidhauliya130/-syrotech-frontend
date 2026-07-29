@@ -629,7 +629,7 @@ body { font-family: 'DM Sans', sans-serif; }
   position: relative;
 }
 .af-panel > div + div {
-  border-top: 1.5px solid #1a1a1a !important;
+  border-top: 1px solid #f0ede8 !important;
 }
 
 /* Row 1 — Raised By (violet accent) */
