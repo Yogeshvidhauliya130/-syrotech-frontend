@@ -1156,7 +1156,8 @@ isRma: issuePopup.firstIsRma || false,
      
         <>
           {/* Source Filter */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12, background: "white", borderRadius: 10, padding: "10px 14px", border: "1.5px solid #e0d8d0" }}>
+         <div className="af-panel">
+<div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12, background: "white", borderRadius: 10, padding: "10px 14px", border: "1.5px solid #e0d8d0" }}>
   <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", whiteSpace: "nowrap" }}>🎫 Raised By:</span>
   {[
     ["all",      "All Tickets",       "#374151", "#f3f4f6", tickets.length],
@@ -1262,9 +1263,10 @@ isRma: issuePopup.firstIsRma || false,
   ))}
 </div>
 
-          <div style={{ marginBottom: 12 }}>
+         <div style={{ marginBottom: 12 }}>
             <input placeholder="🔍 Search by name, agent, phone, product, subcategory, item..." value={search} onChange={e => setSearch(e.target.value)}
               style={{ width: "100%", padding: "10px 16px", border: "1.5px solid #d1d5db", borderRadius: 10, fontSize: 13, outline: "none", background: "white", fontFamily: "inherit", color: "#111", boxSizing: "border-box" }} />
+          </div>
           </div>
 
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "72vh", borderRadius: 12, border: "1.5px solid #e0d8d0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>

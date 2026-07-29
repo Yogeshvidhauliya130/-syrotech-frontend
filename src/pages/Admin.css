@@ -612,3 +612,20 @@ body { font-family: 'DM Sans', sans-serif; }
 .row-resolved:hover {
   background: linear-gradient(135deg, #ecfdf5, #f0fdf4) !important;
 }
+
+.af-panel > div {
+  border: none !important;
+  border-radius: 0 !important;
+  margin-bottom: 0 !important;
+  box-shadow: none !important;
+}
+.af-panel > div + div {
+  border-top: 1px solid #f0ede8 !important;
+}
+.af-panel {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e8e0d6;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+  margin-bottom: 16px;
+}
