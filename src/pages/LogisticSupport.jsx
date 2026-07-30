@@ -51,6 +51,7 @@ export default function LogisticSupport() {
   const [issuePopup, setIssuePopup] = useState(null);
   const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
   const [statusUpdateForm, setStatusUpdateForm] = useState({});
+  const [reassignPopup, setReassignPopup] = useState(null);
 
   const fetchTickets = () => {
     fetch(`${BASE_URL}/tickets?assignTo=${encodeURIComponent(currentUser?.name || "")}&ticketType=logistic&limit=2000`)
@@ -350,6 +351,62 @@ export default function LogisticSupport() {
         </div>
       )}
 
+      {/* Reassign History Popup */}
+      {reassignPopup && (
+        <div onClick={() => setReassignPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "20px 22px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fed7aa", maxHeight: "80vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#c2410c" }}>🔄 Reassignment History</div>
+              <button onClick={() => setReassignPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 12, color: "#374151" }}>✕</button>
+            </div>
+
+            {Array.isArray(reassignPopup.reassignHistory) && reassignPopup.reassignHistory.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {reassignPopup.reassignHistory.map((entry, i) => (
+                  <div key={i} style={{ border: "1px solid #e0d8d0", borderRadius: 10, overflow: "hidden", fontSize: 12 }}>
+                    <div style={{ background: "#fff7ed", padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontWeight: 700, color: "#c2410c", fontSize: 11 }}>Step {i + 1}</span>
+                      {entry.timestamp && <span style={{ fontSize: 10, color: "#9ca3af" }}>{new Date(entry.timestamp).toLocaleString()}</span>}
+                    </div>
+                    <div style={{ padding: "8px 12px", display: "flex", gap: 8, alignItems: "center" }}>
+                      <div style={{ flex: 1, background: "#fef2f2", borderRadius: 8, padding: "6px 10px", border: "1px solid #fca5a5" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>FROM</div>
+                        <div style={{ fontWeight: 700, color: "#111" }}>{entry.from || "—"}</div>
+                      </div>
+                      <div style={{ fontSize: 16 }}>→</div>
+                      <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 8, padding: "6px 10px", border: "1px solid #86efac" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#059669", marginBottom: 4 }}>TO</div>
+                        <div style={{ fontWeight: 700, color: "#111" }}>{entry.to || "—"}</div>
+                      </div>
+                    </div>
+                    {entry.reason && <div style={{ padding: "4px 12px 8px", fontSize: 11, color: "#92400e", background: "#fffbeb" }}>📝 {entry.reason}</div>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ border: "1px solid #e0d8d0", borderRadius: 10, overflow: "hidden", fontSize: 12 }}>
+                <div style={{ background: "#fff7ed", padding: "6px 12px" }}>
+                  <span style={{ fontWeight: 700, color: "#c2410c", fontSize: 11 }}>Reassigned</span>
+                  {reassignPopup.reassignedAt && <span style={{ fontSize: 10, color: "#9ca3af", marginLeft: 8 }}>{new Date(reassignPopup.reassignedAt).toLocaleString()}</span>}
+                </div>
+                <div style={{ padding: "8px 12px", display: "flex", gap: 8, alignItems: "center" }}>
+                  <div style={{ flex: 1, background: "#fef2f2", borderRadius: 8, padding: "6px 10px", border: "1px solid #fca5a5" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>FROM</div>
+                    <div style={{ fontWeight: 700, color: "#111" }}>{reassignPopup.reassignedFrom || "—"}</div>
+                  </div>
+                  <div style={{ fontSize: 16 }}>→</div>
+                  <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 8, padding: "6px 10px", border: "1px solid #86efac" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#059669", marginBottom: 4 }}>TO</div>
+                    <div style={{ fontWeight: 700, color: "#111" }}>{reassignPopup.assignTo || "—"}</div>
+                  </div>
+                </div>
+                {reassignPopup.reassignReason && <div style={{ padding: "4px 12px 8px", fontSize: 11, color: "#92400e", background: "#fffbeb" }}>📝 {reassignPopup.reassignReason}</div>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ background: "linear-gradient(135deg,#0369a1,#0ea5e9)", color: "white", padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
@@ -490,11 +547,24 @@ export default function LogisticSupport() {
                             </div>
                           </td>
 
-                          {/* Status */}
+                         {/* Status */}
                           <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
                             <span style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s], display: "inline-block" }}>
                               {s.toUpperCase()}
                             </span>
+                            {t.reassignedFrom && (
+                              <div
+                                onClick={() => setReassignPopup({
+                                  reassignedFrom: t.reassignedFrom,
+                                  assignTo: t.assignTo,
+                                  reassignReason: t.reassignReason,
+                                  reassignedAt: t.reassignedAt,
+                                  reassignHistory: t.reassignHistory,
+                                })}
+                                style={{ fontSize: 9, color: "#c2410c", fontWeight: 700, cursor: "pointer", marginTop: 3 }}>
+                                🔄 reassigned by {t.reassignedFrom} — click
+                              </div>
+                            )}
                           </td>
 
                           {/* Status Update column */}
