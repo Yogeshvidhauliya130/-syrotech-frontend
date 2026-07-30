@@ -854,7 +854,7 @@ isRma: issuePopup.firstIsRma || false,
         className={`dash-tab-btn ${activeTab === key ? "dash-tab-active" : ""}`}>
         {label}
       </button>
-      {key === "myrma" && (
+      {key === "mylogistic" && (
         <div
           style={{
             height: 2,
