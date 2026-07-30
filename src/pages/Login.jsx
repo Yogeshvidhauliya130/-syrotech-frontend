@@ -72,6 +72,12 @@ else if (data.user.role === "support") {
     navigate("/productionsupport", { replace: true });
   } else if (data.user.email === "ravi.kumar@goip.in") {
     navigate("/rmasupport", { replace: true });
+  } else if (
+    data.user.email === "logisticsnp@goip.in" ||
+    data.user.email === "ajay.k@goip.in" ||
+    data.user.email === "anurag.gupta@goip.in"
+  ) {
+    navigate("/logisticsupport", { replace: true });
   } else {
     navigate("/support", { replace: true });
   }

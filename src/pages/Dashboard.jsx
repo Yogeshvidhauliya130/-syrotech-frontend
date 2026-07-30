@@ -11,6 +11,8 @@ import RaiseRmaTicket from "./RaiseRmaTicket";
 import MyRmaTickets from "./MyRmaTickets";
 import ProductTesting from "./ProductTesting";
 import ProductTestingTickets from "./ProductTestingTicket";
+import RaiseLogisticTicket from "./RaiseLogisticTicket";
+import MyLogisticTicket from "./MyLogisticTicket";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -838,12 +840,14 @@ isRma: issuePopup.firstIsRma || false,
     ["myproduction",     "🏭 My Production Tickets"],
     ["mytestingtickets", "🧪 My Product Testing Tickets"],
     ["myrma",   "🔧 My Return RMA Tickets"],
+     ["mylogistic", "📦 My Logistic Tickets"],
     
     ["raise",       "🎫 Raise Support Ticket"],
     ["raiselockin", "🔒 Raise Lockin Ticket"],
      ["raiseproduction",  "🏭 Raise Production Ticket"],
     ["producttesting",   "🧪 Raise Product Testing Ticket"],
    ["raiserma", "🔧 Raise Return RMA Ticket"],
+   ["raiselogistic", "📦 Raise Logistic Ticket"],
  ].map(([key, label]) => (
     <Fragment key={key}>
       <button onClick={() => setActiveTab(key)}
@@ -1573,6 +1577,16 @@ firstIsRma: ticket.firstIsRma || false,
       {/* MY PRODUCTION TICKETS */}
         {activeTab === "myproduction" && (
           <MyProductionTickets tickets={tickets} />
+        )}
+
+        {/* RAISE LOGISTIC TICKET */}
+        {activeTab === "raiselogistic" && (
+          <RaiseLogisticTicket onSuccess={() => { fetchTickets(); setActiveTab("mylogistic"); }} />
+        )}
+
+        {/* MY LOGISTIC TICKETS */}
+        {activeTab === "mylogistic" && (
+          <MyLogisticTicket tickets={tickets} />
         )}
 
         {/* RAISE PRODUCT TESTING TICKET */}

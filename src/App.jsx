@@ -11,6 +11,7 @@ import RnD from "./pages/RnD";
 import LockinSupport from "./pages/lockinsupport";
 import ProductionSupport from "./pages/productionsupport";
 import RmaSupport from "./pages/rmasupport";
+import LogisticSupport from "./pages/LogisticSupport";
 import Feedback from "./pages/Feedback";
 function App() {
   return (
@@ -48,6 +49,10 @@ function App() {
 
         <Route path="/rmasupport" element={
   <ProtectedRoute role="support"><RmaSupport /></ProtectedRoute>
+} />
+
+<Route path="/logisticsupport" element={
+  <ProtectedRoute role="support"><LogisticSupport /></ProtectedRoute>
 } />
 
         <Route path="/rnd" element={
