@@ -835,7 +835,7 @@ isRma: issuePopup.firstIsRma || false,
 {/* Lockin  to replace above  */}
 <div className="dash-tabs">
   {[
-    ["mytickets",   `📋 My  Support Tickets (${myTickets.length})`],
+    ["mytickets",   `📋 My  Support Tickets (${myTickets.length}) All tickets` ],
     ["mylockin",    "🔒 My Lockin Tickets"],
     ["myproduction",     "🏭 My Production Tickets"],
     ["mytestingtickets", "🧪 My Product Testing Tickets"],
