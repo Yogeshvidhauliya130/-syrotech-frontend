@@ -227,6 +227,7 @@ const [analyticsType, setAnalyticsType] = useState("all");
        ["testing",    "🧪 Testing"], 
        ["rnd",        "🔬 R&D"],
        ["rma",        "🔧 RMA"],
+         ["logistic",   "📦 Logistic"],
     ].map(([type, label]) => (
       <button key={type}
         onClick={() => { setTab("analytics"); setAnalyticsType(type); setShowAnalyticsMenu(false); }}
@@ -651,6 +652,7 @@ const STATUS_BG    = { open: "#fff4ee", resolved: "#edfaf3", rma: "#f5f3ff" };
   testing: "Testing",
   rnd: "R&D",
   rma: "RMA Tickets",
+  logistic: "Logistic Tickets",
 };
 
   return (
@@ -1941,7 +1943,7 @@ return true;
   if (perfTypeFilter === "all") return true;
  if (perfTypeFilter === "product") {
   const isHr = t.source === "hr" || t.source === "hradmin";
-  const isOtherType = ["lockin", "product_testing", "rnd", "production", "rma"].includes(t.ticketType);
+  const isOtherType = ["lockin", "product_testing", "rnd", "production", "rma", "logistic"].includes(t.ticketType);
   return !isHr && !isOtherType;
 }
 if (perfTypeFilter === "lockin")     return t.ticketType === "lockin";
@@ -1949,6 +1951,7 @@ if (perfTypeFilter === "production") return t.ticketType === "production";
 if (perfTypeFilter === "testing")    return t.ticketType === "product_testing";
 if (perfTypeFilter === "rnd")        return t.ticketType === "rnd";
 if (perfTypeFilter === "rma")        return t.ticketType === "rma";
+if (perfTypeFilter === "logistic")   return t.ticketType === "logistic";
   if (perfTypeFilter === "hr")         return t.source === "hr" || t.source === "hradmin";
   return true;
 }));
@@ -2305,6 +2308,7 @@ t.resolutionNotes || "—",
             ["rnd",        "🔬 R&D"],
             ["hr",         "🧑‍💼 Internal IT"],
             ["rma",        "🔧 RMA"],
+            ["logistic",   "📦 Logistic"],
           ].map(([key, label]) => (
             <button key={key} onClick={() => setPerfTypeFilter(key)} style={{
               padding:"6px 14px", borderRadius:16, fontSize:12, cursor:"pointer",
