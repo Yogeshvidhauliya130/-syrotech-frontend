@@ -1275,8 +1275,8 @@ isRma: issuePopup.firstIsRma || false,
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1300, background: "white" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0, zIndex: 2 }}>
-            {["Ticket No","Raised From","Raised By","Product","Task Role","Item Name","Customer / KYC","Employee Details","Issue","History","Status","Image","File","Sup. Updates","Customer Rating"].map((h, i) => (
-                    <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
+           {["Ticket No","Raised From","Raised By","Product","Task Role","Item Name","Customer / KYC","Employee Details","Issue","History","Status","Image","File","Sup. Updates","Customer Rating"].map((h, i) => (
+                    <th key={i} style={{ padding: "12px 14px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1699,7 +1699,7 @@ firstIsRma: ticket.firstIsRma || false,
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", position: "sticky", top: 0, zIndex: 2 }}>
                  {["Ticket No","Product","Item Name","Customer","Raised From","Raised By","Reassigned From","Reassigned To","Reason","Status","Reassigned At"].map((h, i) => (
-                    <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
+                    <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
