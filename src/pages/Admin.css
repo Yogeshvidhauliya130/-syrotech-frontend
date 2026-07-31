@@ -619,36 +619,17 @@ body { font-family: 'DM Sans', sans-serif; }
   border: 1px solid #e8e0d6;
   box-shadow: 0 4px 18px rgba(0,0,0,0.07);
   margin-bottom: 16px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: start;
 }
 .af-panel > div {
   border: none !important;
   border-radius: 0 !important;
   margin-bottom: 0 !important;
   box-shadow: none !important;
-  padding: 16px 14px !important;
+  padding-left: 18px !important;
   position: relative;
-  min-width: 0;
 }
 .af-panel > div + div {
-  border-top: none !important;
-  border-left: 1px solid #f0ede8 !important;
-}
-
-@media (max-width: 900px) {
-  .af-panel {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .af-panel > div:nth-of-type(3) {
-    border-top: 1px solid #f0ede8 !important;
-    border-left: none !important;
-  }
-  .af-panel > div:nth-of-type(4) {
-    border-top: 1px solid #f0ede8 !important;
-    border-left: none !important;
-  }
+  border-top: 1px solid #f0ede8 !important;
 }
 
 /* Row 1 — Raised By (violet accent) */
