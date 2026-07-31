@@ -64,6 +64,7 @@ const filtered = useMemo(() => {
     return tickets.filter(t => {
       if (t.ticketType === "production") return false; // exclude production
       if (t.ticketType === "rma") return false; // exclude rma
+      if (t.ticketType === "logistic") return false; // exclude logistic
       const d = new Date(t.createdAt || t.date);
       if (filterDate)  return d.toDateString() === new Date(filterDate).toDateString();
       if (filterYear  && d.getFullYear() !== parseInt(filterYear))  return false;
@@ -209,6 +210,7 @@ const salesData = useMemo(() => {
       const mTickets = tickets.filter(t => {
   if (t.ticketType === "production") return false;
   if (t.ticketType === "rma") return false;
+  if (t.ticketType === "logistic") return false;
   const td = new Date(t.createdAt || t.date);
   return td.getMonth() === m && td.getFullYear() === y;
 });
@@ -243,6 +245,7 @@ const salesData = useMemo(() => {
       { label: "HR Team",         count: hr,       color: "#1d4ed8", icon: "🧑‍💼" },
      { label: "Production", count: tickets.filter(t => t.ticketType === "production").length, color: "#10b981", icon: "🏭" },
       { label: "RMA", count: tickets.filter(t => t.ticketType === "rma").length, color: "#7c3aed", icon: "🔧" },
+      { label: "Logistic", count: tickets.filter(t => t.ticketType === "logistic").length, color: "#0891b2", icon: "📦" },
     ];
   }, [filtered]);
 
@@ -259,6 +262,7 @@ const salesData = useMemo(() => {
     { key: "trends",    label: "Monthly Trends",    icon: "📈" },
     { key: "production", label: "Production", icon: "🏭" },
     { key: "rma", label: "RMA", icon: "🔧" },
+    { key: "logistic", label: "Logistic", icon: "📦" },
     { key: "rnd", label: "R&D", icon: "🔬" },
   ];
 
@@ -861,6 +865,45 @@ const rate = pct(m.resolved, m.resolved + Math.max(0, open));
                   <td>{t.model||"—"}</td>
                   <td style={{ color:"#1d4ed8", fontWeight:700 }}>{t.customer||"—"}</td>
                   <td style={{ color:"#059669", fontWeight:700 }}>{t.raisedByName||"—"}</td>
+                  <td><span style={{ padding:"3px 8px", borderRadius:10, fontSize:10, fontWeight:700, color: t.status==="resolved"?"#1a7a46":"#e04e00", background: t.status==="resolved"?"#edfaf3":"#fff4ee" }}>{(t.status||"open").toUpperCase()}</span></td>
+                  <td style={{ color:"#059669" }}>{t.resolvedBy||"Pending"}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+)}
+
+{activeSection === "logistic" && (
+  <div className="sla-section">
+    <div className="sla-card">
+    <div className="sla-card-title">📦 Logistic Tickets — {tickets.filter(t => t.ticketType === "logistic").length} total</div>
+      <div className="sla-scroll">
+        <table className="sla-table">
+          <thead>
+            <tr>
+              {["Ticket No","Date","Category","Model","Raised By","Assigned To","Status","Resolved By"].map(h => <th key={h}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {tickets.filter(t => {
+  const d = new Date(t.createdAt || t.date);
+  if (filterDate) return t.ticketType === "logistic" && d.toDateString() === new Date(filterDate).toDateString();
+  if (filterYear && d.getFullYear() !== parseInt(filterYear)) return false;
+  if (filterMonth && d.getMonth() + 1 !== parseInt(filterMonth)) return false;
+  return t.ticketType === "logistic";
+})
+  .sort((a,b) => new Date(b.createdAt||b.date) - new Date(a.createdAt||a.date))
+  .map((t, i) => (
+               <tr key={t.id||t._id} className={i % 2 === 0 ? "even" : ""}>
+                  <td><strong style={{ color:"#0891b2" }}>#{t.ticketNumber||"—"}</strong></td>
+                  <td>{t.date||"—"}</td>
+                  <td>{t.category||"—"}</td>
+                  <td>{t.model||"—"}</td>
+                  <td style={{ color:"#059669", fontWeight:700 }}>{t.raisedByName||"—"}</td>
+                  <td style={{ color:"#374151", fontWeight:700 }}>{t.assignTo||"—"}</td>
                   <td><span style={{ padding:"3px 8px", borderRadius:10, fontSize:10, fontWeight:700, color: t.status==="resolved"?"#1a7a46":"#e04e00", background: t.status==="resolved"?"#edfaf3":"#fff4ee" }}>{(t.status||"open").toUpperCase()}</span></td>
                   <td style={{ color:"#059669" }}>{t.resolvedBy||"Pending"}</td>
                 </tr>
