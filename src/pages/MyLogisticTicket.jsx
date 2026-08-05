@@ -12,6 +12,7 @@ export default function MyLogisticTicket({ tickets: allTickets }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [issuePopup, setIssuePopup] = useState(null);
+  const [logisticPopup, setLogisticPopup] = useState(null);
   const [expandedImage, setExpandedImage] = useState(null);
 
   const fetchTickets = () => {
@@ -40,8 +41,9 @@ export default function MyLogisticTicket({ tickets: allTickets }) {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       return (
-        (t.category  || "").toLowerCase().includes(q) ||
-        (t.model     || "").toLowerCase().includes(q) ||
+        (t.courierCompany || "").toLowerCase().includes(q) ||
+        (t.invoiceNumber  || "").toLowerCase().includes(q) ||
+        (t.trackingDetails || "").toLowerCase().includes(q) ||
         (t.customer  || "").toLowerCase().includes(q) ||
         (t.ticketNumber?.toString() || "").includes(q)
       );
@@ -83,6 +85,33 @@ export default function MyLogisticTicket({ tickets: allTickets }) {
         </div>
       )}
 
+      {/* Logistics Details Popup */}
+      {logisticPopup && (
+        <div onClick={() => setLogisticPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 460, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #bfdbfe" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#1d4ed8" }}>🚚 Logistics Details</div>
+              <button onClick={() => setLogisticPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+            </div>
+            <div style={{ background: "#eff6ff", borderRadius: 10, padding: "14px 16px", border: "1px solid #bfdbfe" }}>
+              {[
+                ["🚚 Courier Company", logisticPopup.courierCompany],
+                ["🧾 Invoice Number", logisticPopup.invoiceNumber],
+                ["📅 Invoice Date", logisticPopup.invoiceDate],
+                ["📦 Dispatch Date", logisticPopup.dispatchDate],
+                ["📍 Delivery Destination", logisticPopup.deliveryDestination],
+                ["🔗 Tracking Details", logisticPopup.trackingDetails],
+              ].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 150 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
@@ -112,7 +141,7 @@ export default function MyLogisticTicket({ tickets: allTickets }) {
                   {label} <span style={{ marginLeft: 4, fontSize: 10, fontWeight: 700, background: statusFilter === key ? (STATUS_COLOR[key] || "#374151") : "#e5e7eb", color: statusFilter === key ? "white" : "#555", borderRadius: 10, padding: "1px 6px" }}>{counts[key] ?? 0}</span>
                 </button>
               ))}
-              <input placeholder="🔍 Search category, model, customer, ticket no..."
+              <input placeholder="🔍 Search courier, invoice, tracking, customer, ticket no..."
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 style={{ flex: 1, minWidth: 200, padding: "8px 14px", borderRadius: 9, border: "1.5px solid #d1d5db", fontSize: 12, outline: "none" }} />
             </div>
@@ -121,7 +150,7 @@ export default function MyLogisticTicket({ tickets: allTickets }) {
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, background: "white", minWidth: 900 }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #c94500 0%, #ff5a00 100%)", position: "sticky", top: 0 }}>
-                    {["Ticket No", "Date", "Category", "Customer", "Assigned To", "Status", "Image", "Issue / Resolution"].map((h, i) => (
+                    {["Ticket No", "Date", "Logistics Details", "Customer", "Assigned To", "Status", "Issue / Resolution"].map((h, i) => (
                       <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", textAlign: "left", whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
@@ -131,39 +160,34 @@ export default function MyLogisticTicket({ tickets: allTickets }) {
                     const s = (t.status || "open").toLowerCase();
                     const id = t.id || t._id;
                     return (
-                      <>
-                        <tr key={id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#faf7f4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
-                          <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, fontWeight: 800, color: "#ff5a00" }}>#{t.ticketNumber || "—"}</div></td>
-                          <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, color: "#374151" }}>{t.date || "—"}</div></td>
-                          <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{t.category || "—"}</div><div style={{ fontSize: 10, color: "#6b7280" }}>{t.model}</div></td>
-                          <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8" }}>{t.customer || "—"}</div></td>
-                          <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, fontWeight: 700, color: "#92400e" }}>{t.assignTo || "—"}</div></td>
-                          <td style={{ padding: "10px 12px" }}>
-                            <span style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s] }}>{s.toUpperCase()}</span>
-                          </td>
-                          <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                            {t.productImage ? (
-                              <button onClick={() => setExpandedImage(prev => prev === id ? null : id)}
-                                style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: "#065f46" }}>
-                                📷 {expandedImage === id ? "Hide" : "View"}
-                              </button>
-                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
-                          </td>
-                          <td style={{ padding: "10px 12px" }}>
-                            <div onClick={() => setIssuePopup({ description: t.description, resolutionNotes: t.resolutionNotes, resolvedBy: t.resolvedBy })}
-                              style={{ fontSize: 11, color: "#ff5a00", cursor: "pointer", fontWeight: 700, background: "#fff4ee", padding: "2px 8px", borderRadius: 4, display: "inline-block" }}>
-                              📋 View
-                            </div>
-                          </td>
-                        </tr>
-                        {expandedImage === id && t.productImage && (
-                          <tr key={`img-${id}`}>
-                            <td colSpan={8} style={{ padding: "12px 20px", background: "#f0fdf4" }}>
-                              <img src={t.productImage} alt="Product" style={{ maxHeight: 200, borderRadius: 8, border: "2px solid #86efac" }} />
-                            </td>
-                          </tr>
-                        )}
-                      </>
+                      <tr key={id} style={{ borderBottom: "1px solid #f0ede8", background: idx % 2 === 0 ? "#faf7f4" : "white", borderLeft: `4px solid ${STATUS_COLOR[s] || "#ccc"}` }}>
+                        <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, fontWeight: 800, color: "#ff5a00" }}>#{t.ticketNumber || "—"}</div></td>
+                        <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, color: "#374151" }}>{t.date || "—"}</div></td>
+                        <td style={{ padding: "10px 12px" }}>
+                          <div onClick={() => setLogisticPopup({
+                            courierCompany: t.courierCompany,
+                            invoiceNumber: t.invoiceNumber,
+                            invoiceDate: t.invoiceDate,
+                            dispatchDate: t.dispatchDate,
+                            deliveryDestination: t.deliveryDestination,
+                            trackingDetails: t.trackingDetails,
+                          })}
+                            style={{ fontSize: 11, color: "#1d4ed8", cursor: "pointer", fontWeight: 700, background: "#eff6ff", padding: "3px 10px", borderRadius: 6, display: "inline-block" }}>
+                            🚚 View Details
+                          </div>
+                        </td>
+                        <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8" }}>{t.customer || "—"}</div></td>
+                        <td style={{ padding: "10px 12px" }}><div style={{ fontSize: 11, fontWeight: 700, color: "#92400e" }}>{t.assignTo || "—"}</div></td>
+                        <td style={{ padding: "10px 12px" }}>
+                          <span style={{ padding: "3px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, color: STATUS_COLOR[s], background: STATUS_BG[s] }}>{s.toUpperCase()}</span>
+                        </td>
+                        <td style={{ padding: "10px 12px" }}>
+                          <div onClick={() => setIssuePopup({ description: t.description, resolutionNotes: t.resolutionNotes, resolvedBy: t.resolvedBy })}
+                            style={{ fontSize: 11, color: "#ff5a00", cursor: "pointer", fontWeight: 700, background: "#fff4ee", padding: "2px 8px", borderRadius: 4, display: "inline-block" }}>
+                            📋 View
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>

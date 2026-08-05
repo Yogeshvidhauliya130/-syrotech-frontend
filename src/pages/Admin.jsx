@@ -782,13 +782,16 @@ isRma: issuePopup.firstIsRma || false,
         <div onClick={() => setProductPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fad8be" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#c94500" }}>📦 Device Details</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#c94500" }}>{productPopup.isLogistic ? "🚚 Logistics Details" : "📦 Device Details"}</div>
               <button onClick={() => setProductPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
             <div style={{ background: "#fff8f2", borderRadius: 10, padding: "14px 16px", border: "1px solid #fad8be" }}>
-              {[["📦 Category", productPopup.category], ["📂 Sub Category", productPopup.subCategory], ["📐 Item Name", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]].map(([label, val]) => (
+              {(productPopup.isLogistic
+                ? [["🚚 Courier Company", productPopup.courierCompany], ["🧾 Invoice Number", productPopup.invoiceNumber], ["📅 Invoice Date", productPopup.invoiceDate], ["📦 Dispatch Date", productPopup.dispatchDate], ["📍 Delivery Destination", productPopup.deliveryDestination], ["🔗 Tracking Details", productPopup.trackingDetails]]
+                : [["📦 Category", productPopup.category], ["📂 Sub Category", productPopup.subCategory], ["📐 Item Name", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]]
+              ).map(([label, val]) => (
                 <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 110 }}>{label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 150 }}>{label}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
                 </div>
               ))}
@@ -1362,12 +1365,19 @@ isRma: issuePopup.firstIsRma || false,
                       </td>
 
                       {/* Col 5 — Model */}
-                <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: (ticket.source === "hr" || ticket.source === "hradmin") ? "default" : "pointer" }}
-  onClick={() => { if(ticket.source === "hr" || ticket.source === "hradmin") return; setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac }); }}>
+       <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #e0d8d0", cursor: (ticket.source === "hr" || ticket.source === "hradmin") ? "default" : "pointer" }}
+  onClick={() => {
+    if (ticket.source === "hr" || ticket.source === "hradmin") return;
+    if (ticket.ticketType === "logistic") {
+      setProductPopup({ isLogistic: true, courierCompany: ticket.courierCompany, invoiceNumber: ticket.invoiceNumber, invoiceDate: ticket.invoiceDate, dispatchDate: ticket.dispatchDate, deliveryDestination: ticket.deliveryDestination, trackingDetails: ticket.trackingDetails });
+    } else {
+      setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac });
+    }
+  }}>
   <div style={{ fontSize: 11, fontWeight: 700, color: "#c94500", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fad8be" }}>
-    {(ticket.source === "hr" || ticket.source === "hradmin") ? "—" : (ticket.model || "—")}
+    {(ticket.source === "hr" || ticket.source === "hradmin") ? "—" : (ticket.ticketType === "logistic" ? "🚚 View Details" : (ticket.model || "—"))}
   </div>
-  {!(ticket.source === "hr" || ticket.source === "hradmin") && (ticket.modelNo || ticket.serialNo) && (
+  {!(ticket.source === "hr" || ticket.source === "hradmin") && ticket.ticketType !== "logistic" && (ticket.modelNo || ticket.serialNo) && (
     <div style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>
       📦 {ticket.modelNo || "—"} / {ticket.serialNo || "—"}
     </div>
@@ -1731,9 +1741,16 @@ firstIsRma: ticket.firstIsRma || false,
   <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{ticket.category || "—"}</div>
 </td>
                       {/* Model */}
-                     <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #fde68a", cursor: "pointer" }}
-  onClick={() => { if(ticket.source === "hr" || ticket.source === "hradmin") return; setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac }); }}>
-  <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>{(ticket.source === "hr" || ticket.source === "hradmin") ? "—" : (ticket.model || "—")}</div>
+                    <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #fde68a", cursor: "pointer" }}
+  onClick={() => {
+    if (ticket.source === "hr" || ticket.source === "hradmin") return;
+    if (ticket.ticketType === "logistic") {
+      setProductPopup({ isLogistic: true, courierCompany: ticket.courierCompany, invoiceNumber: ticket.invoiceNumber, invoiceDate: ticket.invoiceDate, dispatchDate: ticket.dispatchDate, deliveryDestination: ticket.deliveryDestination, trackingDetails: ticket.trackingDetails });
+    } else {
+      setProductPopup({ category: ticket.category, subCategory: ticket.subCategory, model: ticket.model, serialNo: ticket.serialNo, mac: ticket.mac });
+    }
+  }}>
+  <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#fde68a" }}>{(ticket.source === "hr" || ticket.source === "hradmin") ? "—" : (ticket.ticketType === "logistic" ? "🚚 View Details" : (ticket.model || "—"))}</div>
 </td>
                       {/* Customer */}
                       <td style={{ padding: "11px 12px", whiteSpace: "nowrap", borderRight: "1px solid #fde68a", cursor: "pointer" }}

@@ -23,12 +23,6 @@ function getAutoNextLogisticLevel(allPersons, currentUserName, allTickets) {
   return matched.reduce((best, p) => countOpen(p.name) < countOpen(best.name) ? p : best, matched[0]);
 }
 
-const openImageInNewTab = (imgSrc) => {
-  const win = window.open("", "_blank");
-  win.document.write(`<html><body style="margin:0;background:#111;display:flex;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box;"><img src="${imgSrc}" style="max-width:100%;height:auto;border-radius:8px;" /></body></html>`);
-  win.document.close();
-};
-
 export default function LogisticSupport() {
   const navigate = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -42,10 +36,9 @@ export default function LogisticSupport() {
   const [resolveForm, setResolveForm] = useState({});
   const [reassignForm, setReassignForm] = useState({});
   const [reassigning, setReassigning] = useState(null);
-  const [expandedImage, setExpandedImage] = useState(null);
 
-  // ✅ New popups (matching Production style)
-  const [productPopup, setProductPopup] = useState(null);
+  // Popups
+  const [logisticPopup, setLogisticPopup] = useState(null);
   const [customerPopup, setCustomerPopup] = useState(null);
   const [raisedByPopup, setRaisedByPopup] = useState(null);
   const [issuePopup, setIssuePopup] = useState(null);
@@ -122,7 +115,6 @@ export default function LogisticSupport() {
       .catch(() => setReassigning(null));
   };
 
-  // ✅ Submit a status update (like Production's status update form)
   const submitStatusUpdate = () => {
     const note = statusUpdateForm.note?.trim();
     if (!note) { alert("Please write an update note."); return; }
@@ -149,7 +141,7 @@ export default function LogisticSupport() {
     .filter(t => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
-      return (t.category || "").toLowerCase().includes(q) || (t.customer || "").toLowerCase().includes(q) || (t.raisedByName || "").toLowerCase().includes(q);
+      return (t.courierCompany || "").toLowerCase().includes(q) || (t.customer || "").toLowerCase().includes(q) || (t.raisedByName || "").toLowerCase().includes(q) || (t.trackingDetails || "").toLowerCase().includes(q);
     })
     .sort((a, b) => {
       const da = new Date(a.createdAt || a.date).getTime();
@@ -167,18 +159,25 @@ export default function LogisticSupport() {
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8", fontFamily: "DM Sans, sans-serif" }}>
 
-      {/* Product Popup */}
-      {productPopup && (
-        <div onClick={() => setProductPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fad8be" }}>
+      {/* Logistics Details Popup */}
+      {logisticPopup && (
+        <div onClick={() => setLogisticPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 14, padding: "24px 28px", maxWidth: 460, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "2px solid #fad8be" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#c94500" }}>📦 Product Details</div>
-              <button onClick={() => setProductPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#c94500" }}>🚚 Logistics Details</div>
+              <button onClick={() => setLogisticPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
             <div style={{ background: "#fff8f2", borderRadius: 10, padding: "14px 16px", border: "1px solid #fad8be" }}>
-              {[["🔧 Category", productPopup.category], ["📂 Sub Category", productPopup.subCategory], ["📐 Item Name", productPopup.model], ["🔢 Serial No", productPopup.serialNo], ["📡 MAC Address", productPopup.mac]].map(([label, val]) => (
+              {[
+                ["🚚 Courier Company", logisticPopup.courierCompany],
+                ["🧾 Invoice Number", logisticPopup.invoiceNumber],
+                ["📅 Invoice Date", logisticPopup.invoiceDate],
+                ["📦 Dispatch Date", logisticPopup.dispatchDate],
+                ["📍 Delivery Destination", logisticPopup.deliveryDestination],
+                ["🔗 Tracking Details", logisticPopup.trackingDetails],
+              ].map(([label, val]) => (
                 <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 120 }}>{label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 150 }}>{label}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val || "—"}</div>
                 </div>
               ))}
@@ -196,7 +195,7 @@ export default function LogisticSupport() {
               <button onClick={() => setCustomerPopup(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: "#374151" }}>✕ Close</button>
             </div>
             <div style={{ background: "#eff6ff", borderRadius: 10, padding: "14px 16px", border: "1px solid #bfdbfe" }}>
-              {[["👤 Name", customerPopup.customer], ["🏢 Company", customerPopup.companyName], ["✉️ Email", customerPopup.email], ["📞 Phone", customerPopup.phone], ["🏙️ City", customerPopup.city], ["🗺️ State", customerPopup.state], ["🌍 Country", customerPopup.country], ["📮 Pincode", customerPopup.pincode]].map(([label, val]) => val ? (
+              {[["👤 Name", customerPopup.customer], ["✉️ Email", customerPopup.email], ["📞 Phone", customerPopup.phone], ["🏙️ City", customerPopup.city], ["🗺️ State", customerPopup.state], ["🌍 Country", customerPopup.country], ["📮 Pincode", customerPopup.pincode]].map(([label, val]) => val ? (
                 <div key={label} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", minWidth: 90 }}>{label}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{val}</div>
@@ -449,7 +448,7 @@ export default function LogisticSupport() {
               <option value="newest">Newest First ↓</option>
               <option value="oldest">Oldest First ↑</option>
             </select>
-            <input placeholder="🔍 Search category, customer, raised by..."
+            <input placeholder="🔍 Search courier, customer, tracking, raised by..."
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               style={{ flex: 1, minWidth: 220, padding: "7px 14px", borderRadius: 9, border: "1.5px solid #d1d5db", fontSize: 12, outline: "none" }} />
           </div>
@@ -464,7 +463,7 @@ export default function LogisticSupport() {
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, background: "white", minWidth: 1100 }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg,#0369a1,#0ea5e9)", position: "sticky", top: 0, zIndex: 2 }}>
-                    {["Ticket No", "Date", "Category", "Product Details", "Customer", "Raised By", "Image", "History", "Status", "Status Update", "Action"].map((h, i) => (
+                    {["Ticket No", "Date", "Logistics Details", "Customer", "Raised By", "History", "Status", "Status Update", "Action"].map((h, i) => (
                       <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
@@ -487,23 +486,24 @@ export default function LogisticSupport() {
                             <div style={{ fontSize: 11, color: "#374151" }}>{t.date || "—"}</div>
                           </td>
 
-                          {/* Category */}
+                          {/* Logistics Details — popup */}
                           <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{t.category || "—"}</div>
-                          </td>
-
-                          {/* Product Details — popup */}
-                          <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0", cursor: "pointer" }}
-                            onClick={() => setProductPopup({ category: t.category, subCategory: t.subCategory, model: t.model, serialNo: t.serialNo, mac: t.mac })}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: "#0369a1", textDecoration: "underline", textDecorationStyle: "dotted", whiteSpace: "nowrap" }}>
-                              {t.model || "—"}
+                            <div onClick={() => setLogisticPopup({
+                              courierCompany: t.courierCompany,
+                              invoiceNumber: t.invoiceNumber,
+                              invoiceDate: t.invoiceDate,
+                              dispatchDate: t.dispatchDate,
+                              deliveryDestination: t.deliveryDestination,
+                              trackingDetails: t.trackingDetails,
+                            })}
+                              style={{ fontSize: 11, color: "#0369a1", cursor: "pointer", fontWeight: 700, background: "#f0f9ff", padding: "3px 10px", borderRadius: 6, display: "inline-block", border: "1px solid #bae6fd" }}>
+                              🚚 View Details
                             </div>
-                            <div style={{ fontSize: 10, color: "#6b7280" }}>{t.subCategory || ""}</div>
                           </td>
 
                           {/* Customer — popup */}
                           <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0", cursor: "pointer" }}
-                            onClick={() => setCustomerPopup({ customer: t.customer, companyName: t.companyName, email: t.email, phone: t.phone, city: t.city, state: t.state, country: t.country, pincode: t.pincode })}>
+                            onClick={() => setCustomerPopup({ customer: t.customer, email: t.email, phone: t.phone, city: t.city, state: t.state, country: t.country, pincode: t.pincode })}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#93c5fd" }}>
                               {t.customer || "—"}
                             </div>
@@ -520,17 +520,7 @@ export default function LogisticSupport() {
                             </div>
                           </td>
 
-                          {/* Image */}
-                          <td style={{ padding: "10px 12px", textAlign: "center", borderRight: "1px solid #e0d8d0" }}>
-                            {t.productImage ? (
-                              <button onClick={() => setExpandedImage(prev => prev === id ? null : id)}
-                                style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: "#065f46" }}>
-                                📷 {expandedImage === id ? "Hide" : "View"}
-                              </button>
-                            ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
-                          </td>
-
-                          {/* History (renamed from Issue) — popup */}
+                          {/* History — popup */}
                           <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
                             <div onClick={() => setIssuePopup({
                               description: t.description,
@@ -601,28 +591,10 @@ export default function LogisticSupport() {
                           </td>
                         </tr>
 
-                        {/* Expanded Image */}
-                        {expandedImage === id && t.productImage && (
-                          <tr key={`img-${id}`}>
-                            <td colSpan={11} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
-                              <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
-                                <img src={t.productImage} alt="Product" style={{ maxHeight: 220, maxWidth: 300, borderRadius: 10, border: "2px solid #86efac", cursor: "pointer", objectFit: "contain", background: "white" }}
-                                  onClick={() => openImageInNewTab(t.productImage)} />
-                                <div style={{ fontSize: 13, color: "#065f46" }}>
-                                  <div style={{ fontWeight: 800, marginBottom: 6, fontSize: 14 }}>📷 Product Image</div>
-                                  <div style={{ color: "#6b7280", marginBottom: 4 }}>Product: <strong>{t.category}</strong></div>
-                                  <div style={{ color: "#6b7280", marginBottom: 4 }}>Serial No: <strong>{t.serialNo || "—"}</strong></div>
-                                  {t.mac && <div style={{ color: "#6b7280", marginBottom: 4 }}>MAC: <strong>{t.mac}</strong></div>}
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-
                         {/* Resolve Form */}
                         {resolveForm[id]?.show && s !== "resolved" && (
                           <tr key={`resolve-${id}`} style={{ background: "#f0fdf4" }}>
-                            <td colSpan={11} style={{ padding: "16px 20px" }}>
+                            <td colSpan={9} style={{ padding: "16px 20px" }}>
                               <div style={{ background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "16px 20px", maxWidth: 600 }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 10 }}>✅ Resolve Ticket #{t.ticketNumber}</div>
                                 <textarea rows={3} placeholder="Write what was resolved..."
@@ -641,7 +613,7 @@ export default function LogisticSupport() {
                         {/* Reassign Form */}
                         {reassignForm[id]?.show && s !== "resolved" && (
                           <tr key={`reassign-${id}`} style={{ background: "#fffdf0" }}>
-                            <td colSpan={11} style={{ padding: "16px 20px" }}>
+                            <td colSpan={9} style={{ padding: "16px 20px" }}>
                               <div style={{ background: "#fffbeb", border: "2px solid #f59e0b", borderRadius: 12, padding: "16px 20px", maxWidth: 600 }}>
                                 <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e", marginBottom: 12 }}>🔄 Reassign Ticket</div>
                                 {(() => {
@@ -676,7 +648,7 @@ export default function LogisticSupport() {
                         {/* Resolved info row */}
                         {s === "resolved" && (
                           <tr key={`res-${id}`} style={{ background: "#f0fdf4" }}>
-                            <td colSpan={11} style={{ padding: "8px 20px" }}>
+                            <td colSpan={9} style={{ padding: "8px 20px" }}>
                               <span style={{ fontSize: 12, color: "#065f46", fontWeight: 600 }}>
                                 ✅ Resolved by <strong>{t.resolvedBy}</strong>{t.resolutionNotes ? ` — ${t.resolutionNotes}` : ""}
                               </span>

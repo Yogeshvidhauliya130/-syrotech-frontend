@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useProducts } from "../hooks/useProducts";
-import { getIssues } from "../data/issueList";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -37,21 +35,43 @@ const STATE_CITY_MAP = {
 };
 const INDIAN_STATES = Object.keys(STATE_CITY_MAP).sort();
 
+const LOGISTIC_ISSUE_TYPES = [
+  "Customer not available at delivery location",
+  "Customer refused to accept delivery",
+  "Vehicle breakdown during transit",
+  "Shipment misrouted to the wrong hub/branch",
+  "Adverse weather conditions (heavy rain, flood, storm, etc.)",
+  "Traffic congestion, road closure, or accident",
+  "Vehicle detained by authorities (RTO, Police, State Check Post)",
+  "Incorrect delivery address or contact details",
+  "Shipment held at transit hub beyond committed TAT",
+  "Delivery vehicle changed (vehicle interchange) causing delay",
+  "Festival, strike, bandh, or government restrictions",
+  "Month end dispatch delay",
+  "Last-mile delivery delay",
+  "Damage in transit requiring inspection or re-packing",
+  "Shipment misrouted to the wrong hub/branch",
+  "Shipment interchange/mislabeling with another customer's consignment",
+  "Partial shipment delivered due to vehicle capacity or operational constraints",
+  "Delivery rescheduled at customer's request",
+  "Delivery rescheduled at customer's request",
+  "Shortage or missing package identified during transit",
+];
+
 export default function RaiseLogisticTicket({ onSuccess }) {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  const { getCategories, getSubCategories, getItems } = useProducts();
-  const CATEGORIES = getCategories();
 
   const [form, setForm] = useState({
-    category: "", subCategory: "", model: "", serialNo: "", mac: "", macPrefix: "", macSuffix: "",
-    customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "",
-    issuePrefix: "", issueSuffix: "", productImage: "",
+    customer: "", email: "", phone: "",
+    courierCompany: "", invoiceNumber: "", invoiceDate: "",
+    city: "", state: "", country: "", pincode: "",
+    dispatchDate: "", deliveryDestination: "", trackingDetails: "",
+    issuePrefix: "", issueSuffix: "",
   });
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  const [imagePreview, setImagePreview] = useState("");
 
   const inputStyle = (field) => ({
     width: "100%", padding: "11px 14px",
@@ -66,11 +86,7 @@ export default function RaiseLogisticTicket({ onSuccess }) {
     const { name, value } = e.target;
     if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
     if (name === "pincode" && value !== "" && !/^\d*$/.test(value)) return;
-    if (name === "category") {
-      setForm(p => ({ ...p, category: value, subCategory: "", model: "", issuePrefix: "", issueSuffix: "" }));
-    } else if (name === "subCategory") {
-      setForm(p => ({ ...p, subCategory: value, model: "", issuePrefix: "", issueSuffix: "" }));
-    } else if (name === "state") {
+    if (name === "state") {
       setForm(p => ({ ...p, state: value, city: "" }));
     } else {
       setForm(p => ({ ...p, [name]: value }));
@@ -78,27 +94,8 @@ export default function RaiseLogisticTicket({ onSuccess }) {
     setErrors(p => ({ ...p, [name]: "" }));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      setErrors(p => ({ ...p, productImage: "Image must be less than 3MB" }));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setForm(p => ({ ...p, productImage: ev.target.result }));
-      setImagePreview(ev.target.result);
-      setErrors(p => ({ ...p, productImage: "" }));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const validate = () => {
     const e = {};
-    if (!form.category)    e.category    = "Please select a product category.";
-    if (!form.subCategory) e.subCategory = "Please select a sub category.";
-    if (!form.model)       e.model       = "Please select an item.";
     if (!form.customer.trim()) e.customer = "Customer name is required.";
     else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
@@ -141,11 +138,12 @@ export default function RaiseLogisticTicket({ onSuccess }) {
       if (!res.ok) throw new Error("Server error");
       setSuccessMsg("✅ Logistic Ticket submitted successfully!");
       setForm({
-        category: "", subCategory: "", model: "", serialNo: "", mac: "", macPrefix: "", macSuffix: "",
-        customer: "", email: "", phone: "", city: "", state: "", country: "", pincode: "", companyName: "",
-        issuePrefix: "", issueSuffix: "", productImage: "",
+        customer: "", email: "", phone: "",
+        courierCompany: "", invoiceNumber: "", invoiceDate: "",
+        city: "", state: "", country: "", pincode: "",
+        dispatchDate: "", deliveryDestination: "", trackingDetails: "",
+        issuePrefix: "", issueSuffix: "",
       });
-      setImagePreview("");
       setErrors({});
       setTimeout(() => {
         setSuccessMsg("");
@@ -181,63 +179,6 @@ export default function RaiseLogisticTicket({ onSuccess }) {
 
       <div className="form-grid">
         <div className="form-field">
-          <label className="form-label">Product Category <span className="req">*</span></label>
-          <select name="category" value={form.category} onChange={handleChange} style={inputStyle("category")}>
-            <option value="">Select Category</option>
-            {CATEGORIES.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-          {errors.category && <span className="field-error">{errors.category}</span>}
-        </div>
-
-        <div className="form-field">
-          <label className="form-label">Sub Category <span className="req">*</span></label>
-          <select name="subCategory" value={form.subCategory} onChange={handleChange}
-            style={{ ...inputStyle("subCategory"), color: !form.category ? "#888" : "#111" }}
-            disabled={!form.category}>
-            <option value="">{form.category ? "Select Sub Category" : "Select category first"}</option>
-            {getSubCategories(form.category).map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          {errors.subCategory && <span className="field-error">{errors.subCategory}</span>}
-        </div>
-
-        <div className="form-field">
-          <label className="form-label">Item Name <span className="req">*</span></label>
-          <select name="model" value={form.model} onChange={handleChange}
-            style={{ ...inputStyle("model"), color: !form.subCategory ? "#888" : "#111" }}
-            disabled={!form.subCategory}>
-            <option value="">{form.subCategory ? "Select Item" : "Select sub category first"}</option>
-            {getItems(form.category, form.subCategory).map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-          {errors.model && <span className="field-error">{errors.model}</span>}
-        </div>
-
-        <div className="form-field">
-          <label className="form-label">Serial Number <span style={{ fontSize: 11, color: "#6b7280" }}>(optional)</span></label>
-          <input name="serialNo" placeholder="e.g. SYR-20240001" value={form.serialNo} onChange={handleChange} style={inputStyle("serialNo")} />
-        </div>
-
-        <div className="form-field">
-          <label className="form-label">MAC Address</label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <select value={form.macPrefix || ""}
-              onChange={e => setForm(p => ({ ...p, macPrefix: e.target.value, mac: `${e.target.value}:${p.macSuffix || ""}` }))}
-              style={{ ...inputStyle("mac"), width: "45%" }}>
-              <option value="">Select Prefix</option>
-              <option value="38:94:E0">38:94:E0</option>
-              <option value="7C:A9:6B">7C:A9:6B</option>
-              <option value="54:47:E8">54:47:E8</option>
-              <option value="A8:E2:07">A8:E2:07</option>
-              <option value="B8:B7:DB">B8:B7:DB</option>
-              <option value="98:9D:B2">98:9D:B2</option>
-              <option value="74:61:D1">74:61:D1</option>
-            </select>
-            <input placeholder="11:22:33" value={form.macSuffix || ""}
-              onChange={e => { const v = e.target.value.toUpperCase(); setForm(p => ({ ...p, macSuffix: v, mac: `${p.macPrefix || ""}:${v}` })); }}
-              style={{ ...inputStyle("mac"), width: "55%" }} />
-          </div>
-        </div>
-
-        <div className="form-field">
           <label className="form-label">Customer Name <span className="req">*</span></label>
           <input name="customer" placeholder="Full name (letters only)" value={form.customer} onChange={handleChange} style={inputStyle("customer")} />
           {errors.customer && <span className="field-error">{errors.customer}</span>}
@@ -256,8 +197,18 @@ export default function RaiseLogisticTicket({ onSuccess }) {
         </div>
 
         <div className="form-field">
-          <label className="form-label">Company Name</label>
-          <input name="companyName" placeholder="e.g. ABC Pvt Ltd" value={form.companyName} onChange={handleChange} style={inputStyle("companyName")} />
+          <label className="form-label">Courier Company Name</label>
+          <input name="courierCompany" placeholder="e.g. Delhivery, BlueDart" value={form.courierCompany} onChange={handleChange} style={inputStyle("courierCompany")} />
+        </div>
+
+        <div className="form-field">
+          <label className="form-label">Invoice Number</label>
+          <input name="invoiceNumber" placeholder="e.g. INV-20240001" value={form.invoiceNumber} onChange={handleChange} style={inputStyle("invoiceNumber")} />
+        </div>
+
+        <div className="form-field">
+          <label className="form-label">Invoice Date</label>
+          <input type="date" name="invoiceDate" value={form.invoiceDate} onChange={handleChange} style={inputStyle("invoiceDate")} />
         </div>
 
         <div className="form-field">
@@ -294,49 +245,31 @@ export default function RaiseLogisticTicket({ onSuccess }) {
           <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
           {errors.pincode && <span className="field-error">{errors.pincode}</span>}
         </div>
-      </div>
 
-      {/* Product Image */}
-      <div className="form-field" style={{ padding: "20px 36px 0" }}>
-        <label className="form-label">Product Image <span style={{ fontSize: 11, color: "#6b7280" }}>(optional)</span></label>
-        <div style={{ border: `2px dashed ${errors.productImage ? "#ef4444" : "#ddd5c8"}`, borderRadius: 10, padding: "16px 20px", background: "#f9f7f4", textAlign: "center" }}>
-          {!imagePreview ? (
-            <div>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
-              <div style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>Upload photo (max 3MB)</div>
-              <label style={{ background: "#ff5a00", color: "white", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-block" }}>
-                Choose Image
-                <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
-              </label>
-            </div>
-          ) : (
-            <div>
-              <img src={imagePreview} alt="Product" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0d8d0", marginBottom: 10 }} />
-              <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
-                <label style={{ background: "#f0ebe3", color: "#555", border: "1px solid #ddd5c8", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>
-                  Change Image
-                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
-                </label>
-                <button type="button" onClick={() => { setImagePreview(""); setForm(p => ({ ...p, productImage: "" })); }}
-                  style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
-                  Remove
-                </button>
-              </div>
-            </div>
-          )}
+        <div className="form-field">
+          <label className="form-label">Dispatch Date</label>
+          <input type="date" name="dispatchDate" value={form.dispatchDate} onChange={handleChange} style={inputStyle("dispatchDate")} />
         </div>
-        {errors.productImage && <span className="field-error">{errors.productImage}</span>}
+
+        <div className="form-field">
+          <label className="form-label">Delivery Destination</label>
+          <input name="deliveryDestination" placeholder="e.g. Warehouse, Sector 12, Gurugram" value={form.deliveryDestination} onChange={handleChange} style={inputStyle("deliveryDestination")} />
+        </div>
+
+        <div className="form-field">
+          <label className="form-label">Tracking Details</label>
+          <input name="trackingDetails" placeholder="Tracking ID / link" value={form.trackingDetails} onChange={handleChange} style={inputStyle("trackingDetails")} />
+        </div>
       </div>
 
       {/* Issue Type + Description */}
       <div className="form-field" style={{ padding: "20px 36px 0" }}>
         <label className="form-label">Issue Type <span className="req">*</span></label>
         <select value={form.issuePrefix} onChange={e => { setForm(p => ({ ...p, issuePrefix: e.target.value })); setErrors(p => ({ ...p, description: "" })); }}
-          disabled={!form.category}
           style={{ ...inputStyle("description"), marginBottom: 10 }}>
-          <option value="">{form.category ? "Select Issue Type" : "Select category first"}</option>
-          {getIssues(form.category, form.subCategory).map(issue => (
-            <option key={issue} value={issue}>{issue}</option>
+          <option value="">Select Issue Type</option>
+          {LOGISTIC_ISSUE_TYPES.map((issue, i) => (
+            <option key={i} value={issue}>{issue}</option>
           ))}
         </select>
 
