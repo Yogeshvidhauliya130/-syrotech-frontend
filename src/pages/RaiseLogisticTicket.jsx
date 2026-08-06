@@ -105,6 +105,12 @@ export default function RaiseLogisticTicket({ onSuccess }) {
     if (!form.state.trim()) e.state = "State is required.";
     if (!form.country)      e.country = "Please select a country.";
     if (form.pincode.trim() && !/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode.";
+    if (!form.courierCompany.trim()) e.courierCompany = "Courier company name is required.";
+    if (!form.invoiceNumber.trim()) e.invoiceNumber = "Invoice number is required.";
+    if (!form.invoiceDate.trim()) e.invoiceDate = "Invoice date is required.";
+    if (!form.dispatchDate.trim()) e.dispatchDate = "Dispatch date is required.";
+    if (!form.deliveryDestination.trim()) e.deliveryDestination = "Delivery destination is required.";
+    if (!form.trackingDetails.trim()) e.trackingDetails = "Tracking details are required.";
     if (!form.issuePrefix) e.description = "Please select an issue type.";
     else if (!form.issueSuffix.trim()) e.description = "Please describe the issue in detail.";
     else if (form.issueSuffix.trim().length > 500) e.description = "Description cannot exceed 500 characters.";
@@ -197,18 +203,21 @@ export default function RaiseLogisticTicket({ onSuccess }) {
         </div>
 
         <div className="form-field">
-          <label className="form-label">Courier Company Name</label>
+          <label className="form-label">Courier Company Name <span className="req">*</span></label>
           <input name="courierCompany" placeholder="e.g. Delhivery, BlueDart" value={form.courierCompany} onChange={handleChange} style={inputStyle("courierCompany")} />
+          {errors.courierCompany && <span className="field-error">{errors.courierCompany}</span>}
         </div>
 
         <div className="form-field">
-          <label className="form-label">Invoice Number</label>
+          <label className="form-label">Invoice Number <span className="req">*</span></label>
           <input name="invoiceNumber" placeholder="e.g. INV-20240001" value={form.invoiceNumber} onChange={handleChange} style={inputStyle("invoiceNumber")} />
+          {errors.invoiceNumber && <span className="field-error">{errors.invoiceNumber}</span>}
         </div>
 
         <div className="form-field">
-          <label className="form-label">Invoice Date</label>
+          <label className="form-label">Invoice Date <span className="req">*</span></label>
           <input type="date" name="invoiceDate" value={form.invoiceDate} onChange={handleChange} style={inputStyle("invoiceDate")} />
+          {errors.invoiceDate && <span className="field-error">{errors.invoiceDate}</span>}
         </div>
 
         <div className="form-field">
@@ -246,19 +255,22 @@ export default function RaiseLogisticTicket({ onSuccess }) {
           {errors.pincode && <span className="field-error">{errors.pincode}</span>}
         </div>
 
-        <div className="form-field">
-          <label className="form-label">Dispatch Date</label>
+       <div className="form-field">
+          <label className="form-label">Dispatch Date <span className="req">*</span></label>
           <input type="date" name="dispatchDate" value={form.dispatchDate} onChange={handleChange} style={inputStyle("dispatchDate")} />
+          {errors.dispatchDate && <span className="field-error">{errors.dispatchDate}</span>}
         </div>
 
         <div className="form-field">
-          <label className="form-label">Delivery Destination</label>
+          <label className="form-label">Delivery Destination <span className="req">*</span></label>
           <input name="deliveryDestination" placeholder="e.g. Warehouse, Sector 12, Gurugram" value={form.deliveryDestination} onChange={handleChange} style={inputStyle("deliveryDestination")} />
+          {errors.deliveryDestination && <span className="field-error">{errors.deliveryDestination}</span>}
         </div>
 
         <div className="form-field">
-          <label className="form-label">Tracking Details</label>
+          <label className="form-label">Tracking Details <span className="req">*</span></label>
           <input name="trackingDetails" placeholder="Tracking ID / link" value={form.trackingDetails} onChange={handleChange} style={inputStyle("trackingDetails")} />
+          {errors.trackingDetails && <span className="field-error">{errors.trackingDetails}</span>}
         </div>
       </div>
 
