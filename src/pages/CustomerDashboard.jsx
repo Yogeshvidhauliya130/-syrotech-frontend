@@ -223,6 +223,16 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
   };
 
  const handleSubmit = async () => {
+    if (submitting) return;
+    form.description = `${form.issuePrefix} | ${form.issueSuffix}`;
+const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      const firstErr = document.querySelector(".cust-field-error");
+      if (firstErr) firstErr.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setSubmitting(true);
     let customerType = currentUser?.customerType || "";
     try {
       const freshUser = await fetch(`${BASE_URL}/api/users/me/${currentUser?.email}`)
@@ -232,14 +242,6 @@ else if (form.issueSuffix.trim().length > 500) e.description = "Description cann
       console.error("Could not fetch user", e);
     }
     console.log("Final customerType:", customerType);
-    form.description = `${form.issuePrefix} | ${form.issueSuffix}`;
-const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      const firstErr = document.querySelector(".cust-field-error");
-      if (firstErr) firstErr.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
 
   
 
