@@ -650,9 +650,9 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* Row 1 — Raised By (violet) */
 .af-panel > div:nth-of-type(1) {
-  background: linear-gradient(135deg, #f5f3ff, #ede9fe) !important;
-  border: 1.5px solid #ddd6fe !important;
-  box-shadow: 0 4px 14px rgba(124,58,237,0.10) !important;
+  background: linear-gradient(135deg, #ede9fe, #ddd0ff) !important;
+  border: 2px solid #a78bfa !important;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.22) !important;
 }
 .af-panel > div:nth-of-type(1)::before {
   background-color: #7c3aed;
@@ -661,9 +661,9 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* Row 2 — Date Filter (orange) */
 .af-panel > div:nth-of-type(2) {
-  background: linear-gradient(135deg, #fff4ee, #ffe8d9) !important;
-  border: 1.5px solid #fed7aa !important;
-  box-shadow: 0 4px 14px rgba(255,90,0,0.10) !important;
+  background: linear-gradient(135deg, #ffe4cc, #ffd0a8) !important;
+  border: 2px solid #ff9d47 !important;
+  box-shadow: 0 4px 14px rgba(255,90,0,0.22) !important;
 }
 .af-panel > div:nth-of-type(2)::before {
   background-color: #ff5a00;
@@ -672,9 +672,9 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* Row 3 — Engineer Level (green) */
 .af-panel > div:nth-of-type(3) {
-  background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
-  border: 1.5px solid #a7f3d0 !important;
-  box-shadow: 0 4px 14px rgba(5,150,105,0.10) !important;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+  border: 2px solid #34d399 !important;
+  box-shadow: 0 4px 14px rgba(5,150,105,0.22) !important;
 }
 .af-panel > div:nth-of-type(3)::before {
   background-color: #059669;
@@ -683,9 +683,9 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* Row 4 — Search box (blue) */
 .af-panel > div:nth-of-type(4) {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
-  border: 1.5px solid #bfdbfe !important;
-  box-shadow: 0 4px 14px rgba(37,99,235,0.10) !important;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+  border: 2px solid #60a5fa !important;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.22) !important;
 }
 .af-panel > div:nth-of-type(4)::before {
   background-color: #2563eb;
