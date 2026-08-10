@@ -64,7 +64,6 @@ export default function RaiseLogisticTicket({ onSuccess }) {
   const [form, setForm] = useState({
     customer: "", email: "", phone: "",
     courierCompany: "", invoiceNumber: "", invoiceDate: "",
-    city: "", state: "", country: "", pincode: "",
     dispatchDate: "", deliveryDestination: "", trackingDetails: "",
     issuePrefix: "", issueSuffix: "",
   });
@@ -85,12 +84,7 @@ export default function RaiseLogisticTicket({ onSuccess }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "customer" && value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
-    if (name === "pincode" && value !== "" && !/^\d*$/.test(value)) return;
-    if (name === "state") {
-      setForm(p => ({ ...p, state: value, city: "" }));
-    } else {
-      setForm(p => ({ ...p, [name]: value }));
-    }
+    setForm(p => ({ ...p, [name]: value }));
     setErrors(p => ({ ...p, [name]: "" }));
   };
 
@@ -98,13 +92,9 @@ export default function RaiseLogisticTicket({ onSuccess }) {
     const e = {};
     if (!form.customer.trim()) e.customer = "Customer name is required.";
     else if (/\d/.test(form.customer)) e.customer = "Name cannot contain numbers.";
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
+  if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
     if (!form.phone.trim()) e.phone = "Contact number is required.";
     else if (!/^\d+$/.test(form.phone.replace(/\s+/g, ""))) e.phone = "Enter a valid phone number.";
-    if (!form.city.trim())  e.city  = "City is required.";
-    if (!form.state.trim()) e.state = "State is required.";
-    if (!form.country)      e.country = "Please select a country.";
-    if (form.pincode.trim() && !/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode.";
     if (!form.courierCompany.trim()) e.courierCompany = "Courier company name is required.";
     if (!form.invoiceNumber.trim()) e.invoiceNumber = "Invoice number is required.";
     if (!form.invoiceDate.trim()) e.invoiceDate = "Invoice date is required.";
@@ -146,7 +136,6 @@ export default function RaiseLogisticTicket({ onSuccess }) {
       setForm({
         customer: "", email: "", phone: "",
         courierCompany: "", invoiceNumber: "", invoiceDate: "",
-        city: "", state: "", country: "", pincode: "",
         dispatchDate: "", deliveryDestination: "", trackingDetails: "",
         issuePrefix: "", issueSuffix: "",
       });
@@ -221,41 +210,6 @@ export default function RaiseLogisticTicket({ onSuccess }) {
         </div>
 
         <div className="form-field">
-          <label className="form-label">Country <span className="req">*</span></label>
-          <select name="country" value={form.country} onChange={handleChange} style={inputStyle("country")}>
-            <option value="">Select Country</option>
-            <option>India</option><option>United States</option><option>United Kingdom</option>
-            <option>United Arab Emirates</option><option>Saudi Arabia</option><option>Canada</option>
-            <option>Australia</option><option>Singapore</option><option>Other</option>
-          </select>
-          {errors.country && <span className="field-error">{errors.country}</span>}
-        </div>
-
-        <div className="form-field">
-          <label className="form-label">State <span className="req">*</span></label>
-          <select name="state" value={form.state} onChange={handleChange} style={inputStyle("state")}>
-            <option value="">Select State</option>
-            {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          {errors.state && <span className="field-error">{errors.state}</span>}
-        </div>
-
-        <div className="form-field">
-          <label className="form-label">City <span className="req">*</span></label>
-          <select name="city" value={form.city} onChange={handleChange} disabled={!form.state} style={inputStyle("city")}>
-            <option value="">{form.state ? "Select City" : "Select state first"}</option>
-            {(STATE_CITY_MAP[form.state] || []).map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          {errors.city && <span className="field-error">{errors.city}</span>}
-        </div>
-
-        <div className="form-field">
-          <label className="form-label">Pincode <span style={{ fontSize: 11, color: "#6b7280" }}>(optional)</span></label>
-          <input name="pincode" placeholder="e.g. 400001" value={form.pincode} onChange={handleChange} maxLength={6} style={inputStyle("pincode")} />
-          {errors.pincode && <span className="field-error">{errors.pincode}</span>}
-        </div>
-
-       <div className="form-field">
           <label className="form-label">Dispatch Date <span className="req">*</span></label>
           <input type="date" name="dispatchDate" value={form.dispatchDate} onChange={handleChange} style={inputStyle("dispatchDate")} />
           {errors.dispatchDate && <span className="field-error">{errors.dispatchDate}</span>}
