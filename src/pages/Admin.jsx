@@ -1007,6 +1007,7 @@ isRma: issuePopup.firstIsRma || false,
             <option value="Testing">Testing</option>
             <option value="TR069 ACS Server Testing">TR069 ACS Server Testing </option>
             <option value="Data Analyst">Data Analyst</option>
+            <option value="Android/IOS APP">Android/IOS APP</option>
           </select>
         </div>
       )}
