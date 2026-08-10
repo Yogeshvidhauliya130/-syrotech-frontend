@@ -73,6 +73,7 @@ const STATE_CITY_MAP = {
   "Lakshadweep": ["Kavaratti","Agatti","Minicoy"],
   "Puducherry": ["Puducherry","Karaikal","Mahe","Yanam"],
   "other": ["Other"],
+  
 };
 
 const INDIAN_STATES = Object.keys(STATE_CITY_MAP).sort();
