@@ -614,44 +614,47 @@ body { font-family: 'DM Sans', sans-serif; }
 }
 
 .af-panel {
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid #e8e0d6;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;               /* ← this creates the gap you wanted */
   margin-bottom: 16px;
 }
 .af-panel > div {
-  border: none !important;
-  border-radius: 0 !important;
+  border-radius: 12px !important;
   margin-bottom: 0 !important;
-  box-shadow: none !important;
   padding-left: 18px !important;
   position: relative;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.06) !important;
+  transition: transform 0.15s ease;
 }
-.af-panel > div + div {
-  border-top: 1px solid #f0ede8 !important;
+.af-panel > div:hover {
+  transform: translateY(-1px);
 }
 
-/* Row 1 — Raised By (violet accent) */
+/* Row 1 — Raised By (violet) */
 .af-panel > div:nth-of-type(1) {
-  background: linear-gradient(90deg, #f5f3ff 0%, #ffffff 14%) !important;
-  border-left: 4px solid #7c3aed !important;
+  background: linear-gradient(90deg, #f5f3ff 0%, #ffffff 25%) !important;
+  border: 1px solid #ddd6fe !important;
+  border-left: 5px solid #7c3aed !important;
 }
 
-/* Row 2 — Date Filter (orange accent) */
+/* Row 2 — Date Filter (orange) */
 .af-panel > div:nth-of-type(2) {
-  background: linear-gradient(90deg, #fff4ee 0%, #ffffff 14%) !important;
-  border-left: 4px solid #ff5a00 !important;
+  background: linear-gradient(90deg, #fff4ee 0%, #ffffff 25%) !important;
+  border: 1px solid #fed7aa !important;
+  border-left: 5px solid #ff5a00 !important;
 }
 
-/* Row 3 — Engineer Level (green accent) */
+/* Row 3 — Engineer Level (green) */
 .af-panel > div:nth-of-type(3) {
-  background: linear-gradient(90deg, #ecfdf5 0%, #ffffff 14%) !important;
-  border-left: 4px solid #059669 !important;
+  background: linear-gradient(90deg, #ecfdf5 0%, #ffffff 25%) !important;
+  border: 1px solid #a7f3d0 !important;
+  border-left: 5px solid #059669 !important;
 }
 
-/* Row 4 — Search box (blue accent) */
+/* Row 4 — Search box (blue) */
 .af-panel > div:nth-of-type(4) {
-  background: linear-gradient(90deg, #eff6ff 0%, #ffffff 14%) !important;
-  border-left: 4px solid #2563eb !important;
+  background: linear-gradient(90deg, #eff6ff 0%, #ffffff 25%) !important;
+  border: 1px solid #bfdbfe !important;
+  border-left: 5px solid #2563eb !important;
 }
