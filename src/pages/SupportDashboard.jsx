@@ -488,8 +488,6 @@ const handleRMASubmit = (ticketId) => {
    const ticket = allTickets.find(t => t.id === ticketId);
     if (!rf.reason) { alert("Please select a reason for RMA."); return; }
 if (!rf.note?.trim()) { alert("Please enter a note."); return; }
-const sent = sendRMAWhatsApp({ ...ticket, rmaNote: rf.note || "" }, rf.reason);
-    if (!sent) return;
     setSubmittingRma(ticketId);
     fetch(`${BASE_URL}/tickets/${ticketId}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -2138,14 +2136,7 @@ firstIsRma: ticket.firstIsRma || false,
         ✅ {resolveForm[ticket.id]?.show ? "Cancel" : "Resolve"}
       </button>
     )}
-   {(ticket.status || "open") === "resolved" && !ticket.feedbackSent && (
-  <button onClick={() => markWhatsAppSent(ticket.id)}
-    style={{ background: "#25D366", color: "white", border: "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
-    📱 WhatsApp
-  </button>
-)}
-   
-  </div>
+     </div>
 </td>
                         </tr>
 
@@ -2187,28 +2178,25 @@ firstIsRma: ticket.firstIsRma || false,
           />
         </div>
 
-       {!resolveAction[ticket.id] && (
-          <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+               <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
             <button onClick={() => {
               const rf2 = resolveForm[ticket.id] || {};
-if (!rf2.notes?.trim()) { alert("Please describe what issue was solved."); return; }
-              setResolveAction(prev => ({ ...prev, [ticket.id]: "resolved" }));
+              if (!rf2.notes?.trim()) { alert("Please describe what issue was solved."); return; }
+              handleResolveSubmit(ticket.id);
             }} style={{ background:"linear-gradient(135deg,#10b981,#059669)", color:"white", border:"none", padding:"10px 22px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:800, fontFamily:"inherit" }}>
               ✅ Mark Resolved
             </button>
 
             <button onClick={() => {
-             const rf2 = resolveForm[ticket.id] || {};
-setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }));
-setRmaForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
+              setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }));
+              setRmaForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
             }} style={{ background:"#f5f3ff", border:"1.5px solid #c4b5fd", color:"#5b21b6", padding:"10px 22px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit" }}>
               🔧 Send to RMA
             </button>
 
             <button onClick={() => {
-             const rf2 = resolveForm[ticket.id] || {};
-setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }));
-setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
+              setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }));
+              setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
             }} style={{ background:"#fff7ed", border:"1.5px solid #fed7aa", color:"#92400e", padding:"10px 22px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit" }}>
               🔄 Reassign
             </button>
@@ -2218,29 +2206,6 @@ setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
               Cancel
             </button>
           </div>
-        )}
-
-        {resolveAction[ticket.id] === "resolved" && (
-          <div style={{ background:"linear-gradient(135deg,#ecfdf5,#d1fae5)", border:"2px solid #10b981", borderRadius:12, padding:"18px 20px", marginTop:4 }}>
-            <div style={{ fontSize:14, fontWeight:800, color:"#065f46", marginBottom:6 }}>📱 Send WhatsApp to customer?</div>
-            <div style={{ fontSize:12, color:"#6b7280", marginBottom:14 }}>A feedback message will be sent to <strong>{ticket.customer}</strong> on WhatsApp, then ticket will be marked resolved.</div>
-            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-              <button onClick={() => {
-                const t = allTickets.find(x => x.id === ticket.id) || ticket;
-const resolveNotes = resolveForm[ticket.id]?.notes?.trim() || "";
-sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name);
-                handleResolveSubmit(ticket.id);
-                setResolveAction(prev => { const n={...prev}; delete n[ticket.id]; return n; });
-              }} style={{ background:"#25D366", color:"white", border:"none", padding:"11px 24px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:800, fontFamily:"inherit" }}>
-                📱 Send WhatsApp + Resolve
-              </button>
-              <button onClick={() => setResolveAction(prev => { const n={...prev}; delete n[ticket.id]; return n; })}
-                style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"11px 16px", cursor:"pointer", fontSize:12, color:"#64748b", fontFamily:"inherit" }}>
-                ← Back
-              </button>
-            </div>
-          </div>
-        )}
  </div>
       </div>
     </td>
@@ -2268,10 +2233,10 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
   />
 </div>
         </div>
-        <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
+               <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
           <button onClick={() => handleRMASubmit(ticket.id)}
             style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)", color: "white", border: "none", padding: "10px 24px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800 }}>
-            🔧 Confirm RMA + Send WhatsApp
+            🔧 Confirm RMA
           </button>
           <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
             style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
@@ -3092,20 +3057,16 @@ firstIsRma: ticket.firstIsRma || false,
           />
         </div>
 
-        {!resolveAction[ticket.id] && (
-          <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+                <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
             <button onClick={() => {
               const rf2 = resolveForm[ticket.id] || {};
-              
               if (!rf2.notes?.trim()) { alert("Please describe what issue was solved."); return; }
-              setResolveAction(prev => ({ ...prev, [ticket.id]: "resolved" }));
+              handleResolveSubmit(ticket.id);
             }} style={{ background:"linear-gradient(135deg,#10b981,#059669)", color:"white", border:"none", padding:"10px 22px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:800, fontFamily:"inherit" }}>
               ✅ Mark Resolved
             </button>
 
             <button onClick={() => {
-              const rf2 = resolveForm[ticket.id] || {};
-             
               setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }));
               setRmaForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
             }} style={{ background:"#f5f3ff", border:"1.5px solid #c4b5fd", color:"#5b21b6", padding:"10px 22px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit" }}>
@@ -3113,8 +3074,6 @@ firstIsRma: ticket.firstIsRma || false,
             </button>
 
             <button onClick={() => {
-              const rf2 = resolveForm[ticket.id] || {};
-             
               setResolveForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }));
               setReassignForm(prev => ({ ...prev, [ticket.id]: { show: true } }));
             }} style={{ background:"#fff7ed", border:"1.5px solid #fed7aa", color:"#92400e", padding:"10px 22px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit" }}>
@@ -3126,30 +3085,6 @@ firstIsRma: ticket.firstIsRma || false,
               Cancel
             </button>
           </div>
-        )}
-
-        {resolveAction[ticket.id] === "resolved" && (
-          <div style={{ background:"linear-gradient(135deg,#ecfdf5,#d1fae5)", border:"2px solid #10b981", borderRadius:12, padding:"18px 20px", marginTop:4 }}>
-            <div style={{ fontSize:14, fontWeight:800, color:"#065f46", marginBottom:6 }}>📱 Send WhatsApp to customer?</div>
-            <div style={{ fontSize:12, color:"#6b7280", marginBottom:14 }}>A feedback message will be sent to <strong>{ticket.customer}</strong> on WhatsApp, then ticket will be marked resolved.</div>
-            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-              <button onClick={() => {
-               const t = allTickets.find(x => x.id === ticket.id) || ticket;
-const resolveNotes = resolveForm[ticket.id]?.notes?.trim() || "";
-sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name);
-                handleResolveSubmit(ticket.id);
-                setResolveAction(prev => { const n={...prev}; delete n[ticket.id]; return n; });
-              }} style={{ background:"#25D366", color:"white", border:"none", padding:"11px 24px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:800, fontFamily:"inherit" }}>
-                📱 Send WhatsApp + Resolve
-              </button>
-             
-              <button onClick={() => setResolveAction(prev => { const n={...prev}; delete n[ticket.id]; return n; })}
-                style={{ background:"#f3f4f6", border:"none", borderRadius:8, padding:"11px 16px", cursor:"pointer", fontSize:12, color:"#64748b", fontFamily:"inherit" }}>
-                ← Back
-              </button>
-            </div>
-          </div>
-        )}
       </div>
        </div>
     </td>
@@ -3181,10 +3116,10 @@ sendWhatsAppFeedback({ ...t, resolutionNotes: resolveNotes }, currentUser?.name)
 </div>
                                 </div>
                                 
-                                <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
+                                                                <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
                                   <button onClick={() => handleRMASubmit(ticket.id)} disabled={submittingRma === ticket.id}
                                     style={{ background: submittingRma === ticket.id ? "#94a3b8" : "linear-gradient(135deg, #7c3aed, #6d28d9)", color: "white", border: "none", padding: "10px 24px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>
-                                    {submittingRma === ticket.id ? "⏳ Processing..." : "🔧 Confirm RMA + Send WhatsApp"}
+                                    {submittingRma === ticket.id ? "⏳ Processing..." : "🔧 Confirm RMA"}
                                   </button>
                                   <button onClick={() => setRmaForm(prev => ({ ...prev, [ticket.id]: { ...prev[ticket.id], show: false } }))}
                                     style={{ background: "#e2e8f0", border: "none", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 12, color: "#64748b" }}>Cancel</button>
