@@ -26,7 +26,6 @@ export default function RnD() {
  const [form, setForm] = useState({
     empName:  "",
     empEmail: "",
-    empPhone: "",
     taskRole: "",
     task:     "",
   });
@@ -85,8 +84,7 @@ export default function RnD() {
     if (!form.empName.trim())  e.empName  = "Employee name is required.";
     if (!form.empEmail.trim()) e.empEmail = "Employee email is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.empEmail)) e.empEmail = "Enter a valid email.";
-    if (!form.empPhone.trim()) e.empPhone = "Employee phone is required.";
-    else if (!/^\d{10}$/.test(form.empPhone.replace(/\s/g, ""))) e.empPhone = "Enter valid 10-digit phone.";
+    
     if (!form.taskRole)        e.taskRole = "Task role is required.";
 if (!form.task.trim())     e.task     = "Task description is required.";
     return e;
@@ -103,11 +101,10 @@ if (!form.task.trim())     e.task     = "Task description is required.";
     const newTicket = {
       empName:      form.empName.trim(),
       empEmail:     form.empEmail.trim(),
-      empPhone:     form.empPhone.trim(),
       description:  form.task.trim(),
        taskRole:     form.taskRole,
       customer:     form.empName.trim(),
-      phone:        form.empPhone.trim(),
+      
       email:        form.empEmail.trim(),
       assignTo:     currentUser?.name || "",
       raisedBy:     currentUser?.email || "",
@@ -129,7 +126,7 @@ if (!form.task.trim())     e.task     = "Task description is required.";
     })
       .then(r => { if (!r.ok) throw new Error("Server error"); return r.json(); })
       .then(() => {
-       setForm({ empName: "", empEmail: "", empPhone: "", taskRole: "", task: "" });
+       setForm({ empName: "", empEmail: "", taskRole: "", task: "" });
         setAttachFile(null);
         setAttachFileName("");
         setAttachImage("");
@@ -446,21 +443,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
               {errors.empEmail && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.empEmail}</span>}
             </div>
 
-            {/* Employee Phone */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Employee Phone <span style={{ color: "#ef4444" }}>*</span>
-              </label>
-              <input
-                name="empPhone"
-                placeholder="10-digit mobile number"
-                value={form.empPhone}
-                onChange={handleChange}
-                maxLength={10}
-                style={inputStyle("empPhone")}
-              />
-              {errors.empPhone && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.empPhone}</span>}
-            </div>
+            
 
 
 
@@ -651,7 +634,7 @@ const existingHistory = Array.isArray(currentTicket?.issueHistory) ? currentTick
 <td style={{ padding: "12px 14px", borderRight: "1px solid #e0d8d0", whiteSpace: "nowrap" }}>
   <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{ticket.empName || ticket.customer || "—"}</div>
   <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{ticket.empEmail || ticket.email || "—"}</div>
-  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}>{ticket.empPhone || ticket.phone || "—"}</div>
+ 
 </td>
 
                   
