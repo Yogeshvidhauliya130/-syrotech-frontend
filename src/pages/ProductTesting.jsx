@@ -12,7 +12,7 @@ const CATEGORY_ASSIGNEE_EMAIL = {
   "Networking Switch": "baidyanath.mishra1@goip.in",
   "Entrance Product": "gagandeep.sodhi@goip.in",
   "CCTV": "run.singh@goip.in",
-  "Passive Products": "archna.verma@goip.in",
+ "Passive Products": "neeraj.chaudhary@syrotech.com",
   "Grandstream UC": "tushar.panchal@goip.in",
   "Grandstream Networking": "tushar.panchal@goip.in",
   "Firewall/SDWAN":"naman.gupta@goip.in",
