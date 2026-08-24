@@ -44,6 +44,10 @@ export const RMA_ISSUE_LIST = {
     "Ont Led Issue",
     "Others",
     ],
+
+    "Power Adaptor":[
+    "others"
+  ]
   },
   "Wireless Access Point": {
     "_common": ["Other"],
