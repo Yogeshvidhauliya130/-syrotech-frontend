@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useProducts } from "../hooks/useProducts";
-import { getIssues } from "../data/issueList";
+import { getProductionIssues } from "../data/productionIssueList";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -242,9 +242,9 @@ export default function RaiseProductionTicket({ onSuccess }) {
           disabled={!form.category}
           style={{ ...inputStyle("description"), marginBottom: 10 }}>
           <option value="">{form.category ? "Select Issue Type" : "Select category first"}</option>
-          {getIssues(form.category, form.subCategory).map(issue => (
-            <option key={issue} value={issue}>{issue}</option>
-          ))}
+          {getProductionIssues(form.category, form.subCategory).map(issue => (
+  <option key={issue} value={issue}>{issue}</option>
+))}
         </select>
 
         <label className="form-label">Issue Description <span className="req">*</span>

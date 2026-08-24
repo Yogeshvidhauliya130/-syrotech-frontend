@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useProducts } from "../hooks/useProducts";
-import { getIssues } from "../data/issueList";
+import { getRmaIssues } from "../data/rmaIssueList";
 
 const BASE_URL = "https://api.syrotech.com";
 
@@ -388,9 +388,9 @@ export default function RaiseRmaTicket({ onSuccess }) {
           style={{ ...inputStyle("description"), marginBottom: 10 }}
         >
           <option value="">{form.category ? "Select Issue Type" : "Select category first"}</option>
-          {getIssues(form.category, form.subCategory).map(issue => (
-            <option key={issue} value={issue}>{issue}</option>
-          ))}
+          {getRmaIssues(form.category, form.subCategory).map(issue => (
+  <option key={issue} value={issue}>{issue}</option>
+))}
         </select>
 
         <label className="form-label">
