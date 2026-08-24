@@ -22,9 +22,6 @@ export const RMA_ISSUE_LIST = {
     "Olt Booting Issue",
     "Line & Service Profile Configuration",
     "Pon Optical issue",
-    "Regional Language Support Require",
-    "Toll free number Info",
-    "Product General Info",
     "Others",
     ],
   },
@@ -45,9 +42,6 @@ export const RMA_ISSUE_LIST = {
     "Wifi Extender/ Repeater via LAN",
     "Lan Port Issue",
     "Ont Led Issue",
-     "Regional Language Support Require",
-    "Toll free number Info",
-    "Product General Info",
     "Others",
     ],
   },
@@ -83,6 +77,8 @@ export const RMA_ISSUE_LIST = {
       "Latency Issue",
       "Switch Ring Configuration",
       "Switch Testing",
+      "POE Port Issue",
+      "POE & Fiber Switch",
       "Others",],
   },
   "Grandstream UC": {
@@ -110,10 +106,181 @@ export const RMA_ISSUE_LIST = {
       "Others",],
   },
   "Entrance Product": {
-    "_common": ["Other"],
+
+    // No common issues — all are subcategory specific
+    "_common": [],
+
+    // Access Control subcategories
+    "Access Control Products": [
+      "Device not coming online",
+      "Relay output not working",
+      "Door not unlocking",
+      "Card not detecting",
+      "Software not searching device",
+      "Low power supply output",
+      "Access control, UHF Reader to Boom Barrier connectivity",
+      "Others",
+    ],
+
+    // Boom Barrier subcategories
+    "Residential Boom Barrier": [
+      "Barrier not opening/closing",
+      "Barrier jerking during operation",
+      "Boom arm auto reverse",
+      "Error code issue",
+      "Barrier left to right/Right to left direction",
+      "Motor direction issue",
+      "Barrier controller card component issue",
+      "Mechanism sound issue",
+      "Supply voltage issue",
+      "Remote not working",
+      "Photocell issue",
+      "Loop Detector issue",
+      "Others",
+    ],
+
+    "Parking Boom Barrier": [
+      "Barrier not opening/closing",
+      "Barrier jerking during operation",
+      "Boom arm auto reverse",
+      "Error code issue",
+      "Barrier left to right/Right to left direction",
+      "Motor direction issue",
+      "Barrier controller card component issue",
+      "Mechanism sound issue",
+      "Supply voltage issue",
+      "Remote not working",
+      "Photocell issue",
+      "Loop Detector issue",
+      "Others",
+    ],
+
+    "High Speed Toll  Barrier": [
+      "Barrier not opening/closing",
+      "Barrier jerking during operation",
+      "Boom arm auto reverse",
+      "Error code issue",
+      "Barrier left to right/Right to left direction",
+      "Motor direction issue",
+      "Barrier controller card component issue",
+      "Mechanism sound issue",
+      "Supply voltage issue",
+      "Remote not working",
+      "Photocell issue",
+      "Loop Detector issue",
+      "Others",
+    ],
+
+    "Toll Barrier": [
+      "Barrier not opening/closing",
+      "Barrier jerking during operation",
+      "Boom arm auto reverse",
+      "Error code issue",
+      "Barrier left to right/Right to left direction",
+      "Motor direction issue",
+      "Barrier controller card component issue",
+      "Mechanism sound issue",
+      "Supply voltage issue",
+      "Remote not working",
+      "Photocell issue",
+      "Loop Detector issue",
+      "Others",
+    ],
+
+    // UHF Reader subcategories
+    "UHF Reader": [
+      "Ping not responding",
+      "Tag not detecting",
+      "Reading range issue",
+      "Software not showing tags",
+      "Reader rebooting automatically",
+      "LAN light off",
+      "Buzzer sound issue",
+      "Others",
+    ],
+
+    "UHF RFID TCP IP PCB-15 mtr": [
+      "Ping not responding",
+      "Tag not detecting",
+      "Reading range issue",
+      "Software not showing tags",
+      "Reader rebooting automatically",
+      "LAN light off",
+      "Buzzer sound issue",
+      "Others",
+    ],
+
+    "UHF RFID TCP IP PCB-6 mtr": [
+      "Ping not responding",
+      "Tag not detecting",
+      "Reading range issue",
+      "Software not showing tags",
+      "Reader rebooting automatically",
+      "LAN light off",
+      "Buzzer sound issue",
+      "Others",
+    ],
+
+    "UHF RFID W/G PCB-15 mtr": [
+      "Ping not responding",
+      "Tag not detecting",
+      "Reading range issue",
+      "Software not showing tags",
+      "Reader rebooting automatically",
+      "LAN light off",
+      "Buzzer sound issue",
+      "Others",
+    ],
+
+    "UHF RFID W/G PCB-6 mtr": [
+      "Ping not responding",
+      "Tag not detecting",
+      "Reading range issue",
+      "Software not showing tags",
+      "Reader rebooting automatically",
+      "LAN light off",
+      "Buzzer sound issue",
+      "Others",
+    ],
+
+    "Loop Detector": [
+      "Loop Detector issue",
+      "Others",
+    ],
+
+    "Safety Sensor": [
+      "Photocell issue",
+      "Others",
+    ],
+
+    "Single Lane  Radar": [
+      "Reading range issue",
+      "Others",
+    ],
+
+    "UHF ADAPTOR": [
+      "Others",
+    ],
+
+
+
+    "Access Controller": [
+      "Others",
+    ],
+
+    
   },
   "Passive Products": {
-    "_common": ["Other"],
+    "_common": ["Splitter Losses",
+      "Patch Cords Losses (IL/RL)",
+      "Packaging",
+      "Patch Cords & PLC Length",
+      "Branding & Non Branding Product",
+      "Product Condition",
+      "DOA (Dead on arrival)",
+      "Warranty",
+      "Received other product",
+      "Others",],
   },
   "CCTV": {
     "_common": ["Other"],
