@@ -806,7 +806,7 @@ isRma: issuePopup.firstIsRma || false,
         <div className="dash-brand">
           <img src="/logo.png" alt="Syrotech" style={{ width: 50, height: 50, borderRadius: 8, objectFit: "contain" }} />
           <div>
-            <div className="dash-brand-name">Syrotech Networks Support hii</div>
+            <div className="dash-brand-name">Syrotech Networks Support </div>
             <div className="dash-brand-sub">Sales Portal</div>
           </div>
         </div>
