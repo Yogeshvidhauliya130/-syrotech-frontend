@@ -24,7 +24,7 @@ export const PRODUCTION_ISSUE_LIST = {
     "Pon Optical issue",
     "Brand new OLT does not power on",
     "OLT sticker label / MRP printing issue (incorrect or misprinted label).",
-    "Brad New OLT Noise issue ",
+    "Brand New OLT Noise issue ",
     "Brand New OLT physical damage",
     "Others",
     ],
