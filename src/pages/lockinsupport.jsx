@@ -741,12 +741,33 @@ const handleResolve = async (ticketId) => {
 </td>
                         <td style={{ padding: "10px 12px", textAlign: "center" }}>
                           {t.fileName ? (
-                            <a href={t.fileBase64} download={t.fileName} style={{
-                              fontSize: 11, color: "#2563eb",
-                              fontWeight: 600, textDecoration: "underline",
-                            }}>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`${BASE_URL}/tickets/${id}/full`);
+                                  const full = await res.json();
+                                  if (full.fileBase64) {
+                                    const link = document.createElement("a");
+                                    link.href = full.fileBase64;
+                                    link.download = full.fileName || t.fileName;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  } else {
+                                    alert("File not found.");
+                                  }
+                                } catch {
+                                  alert("Failed to load file.");
+                                }
+                              }}
+                              style={{
+                                fontSize: 11, color: "#2563eb",
+                                fontWeight: 600, textDecoration: "underline",
+                                background: "none", border: "none", cursor: "pointer", padding: 0,
+                              }}
+                            >
                               📎 {t.fileName.length > 12 ? t.fileName.slice(0,12)+"…" : t.fileName}
-                            </a>
+                            </button>
                           ) : (
                             <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>
                           )}
