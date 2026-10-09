@@ -2024,7 +2024,7 @@ if (perfTypeFilter === "logistic")   return t.ticketType === "logistic";
     "Date Raised","Status","Raised At","Accepted At","Resolved At",
     "Time Taken (hrs)","Time Score","Feedback Bonus","Final Score","Within 24hr SLA",
     "Customer Rating (⭐)","Customer Resolved?","Customer Comment",
-    "Has Product Image","RMA Status","RMA Reason","RMA Center","RMA Center Address","Resolution Notes",
+    "Has Product Image","RMA Status","RMA Reason","RMA Center","RMA Center Address","Resolution Notes","Level",
   ];
 
   const buildTicketRow = (t) => {
@@ -2063,6 +2063,13 @@ if (perfTypeFilter === "logistic")   return t.ticketType === "logistic";
       t.rmaCenterName    ? `${t.rmaCenterName} (${t.rmaCenterCity})` : "—",
       t.rmaCenterAddress || "—",
 t.resolutionNotes  || "—",
+(() => {
+  const lp = supportPersons.find(p =>
+    p.name && t.assignTo &&
+    p.name.toLowerCase().trim() === t.assignTo.toLowerCase().trim()
+  );
+  return lp ? (lp.level === 4 ? "Software Team" : `L${lp.level}`) : "—";
+})(),
     ];
   };
 
@@ -2086,7 +2093,7 @@ t.resolutionNotes  || "—",
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
     ws1["!cols"] = [{ wch: 40 }, { wch: 26 }];
     XLSX.utils.book_append_sheet(wb, ws1, "Summary");
-    const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30].map(w=>({wch:w}));
+    const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30,10,10,16].map(w=>({wch:w}));
     const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...stats.agentTickets.map(buildTicketRow)]);
     ws2["!cols"] = cw; XLSX.utils.book_append_sheet(wb, ws2, "All Tickets");
     const ws3 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...stats.resolvedList.map(buildTicketRow)]);
@@ -2115,7 +2122,7 @@ t.resolutionNotes  || "—",
     const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
     ws1["!cols"] = [20,10,10,10,10,10,10,12,10,12,16,10,14,12].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, "All Agents Summary");
-    const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30].map(w=>({wch:w}));
+    const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30,10,10,16].map(w=>({wch:w}));
     const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...filteredTickets.map(buildTicketRow)]);
     ws2["!cols"] = cw; XLSX.utils.book_append_sheet(wb, ws2, "All Tickets Combined");
     agents.forEach(agent => {
