@@ -2110,7 +2110,7 @@ t.resolutionNotes  || "—",
       ["Report Period", periodLabel()], ["Generated On", new Date().toLocaleString()],
       ["Total Tickets", filteredTickets.length], [""],
       ["Agent","Total","Open","Resolved","RMA","Reopened","Within 24hr","SLA%","Avg Hrs","Avg Score","Overdue","Feedback","Avg Rating","Level"],
-      ...agents.map(agent => {
+            ...filteredAgents.map(agent => {
         const s = getAgentStats(agent, tickets);
         return [agent, s.total,  s.open, s.resolved, s.rma, s.reopened, s.within24,
           `${s.compliance}%`, s.avgHours==="—"?"—":`${s.avgHours}`,
@@ -2129,9 +2129,9 @@ t.resolutionNotes  || "—",
    ws1["!cols"] = [20,10,10,10,10,10,10,12,10,12,16,10,14,12,16].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, "All Agents Summary");
     const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30,10,10,16].map(w=>({wch:w}));
-    const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...filteredTickets.map(buildTicketRow)]);
+    const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...filteredTickets.filter(t => levelFilter === "all" || filteredAgents.includes(t.assignTo) || filteredAgents.includes(t.rmaAssignedTo)).map(buildTicketRow)]);
     ws2["!cols"] = cw; XLSX.utils.book_append_sheet(wb, ws2, "All Tickets Combined");
-    agents.forEach(agent => {
+        filteredAgents.forEach(agent => {
       const stats = getAgentStats(agent, tickets);
       const ws = XLSX.utils.aoa_to_sheet([
         [`AGENT: ${agent}`], [`Period: ${periodLabel()}`],
