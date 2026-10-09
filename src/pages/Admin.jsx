@@ -2109,18 +2109,24 @@ t.resolutionNotes  || "—",
       ["ALL AGENTS PERFORMANCE REPORT"], [""],
       ["Report Period", periodLabel()], ["Generated On", new Date().toLocaleString()],
       ["Total Tickets", filteredTickets.length], [""],
-      ["Agent","Total","Open","Resolved","RMA","Reopened","Within 24hr","SLA%","Avg Hrs","Avg Score","Overdue","Feedback","Avg Rating"],
+      ["Agent","Total","Open","Resolved","RMA","Reopened","Within 24hr","SLA%","Avg Hrs","Avg Score","Overdue","Feedback","Avg Rating","Level"],
       ...agents.map(agent => {
         const s = getAgentStats(agent, tickets);
         return [agent, s.total,  s.open, s.resolved, s.rma, s.reopened, s.within24,
           `${s.compliance}%`, s.avgHours==="—"?"—":`${s.avgHours}`,
           s.avgScore!=="—"?`${s.avgScore}/10`:"—",
-          s.overdueCount, s.feedbackCount,
-          s.avgFeedback==="—"?"—":`${s.avgFeedback}/5`];
+                   s.overdueCount, s.feedbackCount,
+          s.avgFeedback==="—"?"—":`${s.avgFeedback}/5`,
+          (() => {
+            const lp = supportPersons.find(p =>
+              p.name && p.name.toLowerCase().trim() === agent.toLowerCase().trim()
+            );
+            return lp ? (lp.level === 4 ? "Software Team" : `L${lp.level}`) : "—";
+          })()];
       }),
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
-    ws1["!cols"] = [20,10,10,10,10,10,10,12,10,12,16,10,14,12].map(w=>({wch:w}));
+   ws1["!cols"] = [20,10,10,10,10,10,10,12,10,12,16,10,14,12,16].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, "All Agents Summary");
     const cw = [10,12,20,24,18,24,14,14,20,20,14,18,14,14,40,14,12,12,22,22,22,14,12,14,12,14,12,14,30,10,10,16,28,30,10,10,16].map(w=>({wch:w}));
     const ws2 = XLSX.utils.aoa_to_sheet([TICKET_HEADER, ...filteredTickets.map(buildTicketRow)]);
