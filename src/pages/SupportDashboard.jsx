@@ -1773,7 +1773,7 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
                 <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, background: "white", minWidth: 900 }}>
                   <thead>
                     <tr style={{ background: "linear-gradient(135deg,#065f46,#10b981)", position: "sticky", top: 0, zIndex: 2 }}>
-                      {["Ticket No", "Date", "Category", "Item", "Assigned To", "Raised By", "Status", "Image", "Action"].map((h, i) => (
+                      {["Ticket No", "Date", "Category", "Item", "Assigned To", "Raised By", "Status", "Image", "Status Update", "Action"].map((h, i) => (
                         <th key={i} style={{ padding: "12px 12px", fontSize: 10, fontWeight: 800, color: "white", textTransform: "uppercase", textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -1818,6 +1818,20 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
                                 </button>
                               ) : <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>}
                             </td>
+                                                      <td style={{ padding: "10px 12px", borderRight: "1px solid #e0d8d0" }}>
+                              {Array.isArray(t.statusUpdates) && t.statusUpdates.length > 0 && (
+                                <div onClick={() => setStatusUpdatePopup(t.statusUpdates)}
+                                  style={{ fontSize: 10, color: "#1d4ed8", cursor: "pointer", fontWeight: 700, background: "#eff6ff", padding: "2px 6px", borderRadius: 4, display: "inline-block", marginBottom: 6 }}>
+                                  📝 {t.statusUpdates.length} Update{t.statusUpdates.length > 1 ? "s" : ""} — View
+                                </div>
+                              )}
+                              {s !== "resolved" && isMineToResolve && (
+                                <button onClick={() => setStatusUpdateForm({ show: true, id: id, note: "" })}
+                                  style={{ background: "#1d4ed8", color: "white", border: "none", padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, display: "block" }}>
+                                  📝 Update
+                                </button>
+                              )}
+                            </td>
                             <td style={{ padding: "10px 12px" }}>
                               {s !== "resolved" && isMineToResolve && (
                                 <button onClick={() => setProductionResolveForm(prev => ({ ...prev, [id]: { ...prev[id], show: !prev[id]?.show } }))}
@@ -1831,7 +1845,7 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
 
                           {productionExpandedImage === id && t.productImage && (
                             <tr>
-                              <td colSpan={9} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
+                              <td colSpan={10} style={{ padding: 0, background: "#f0fdf4", borderBottom: "1px solid #86efac" }}>
                                 <div style={{ padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 16, borderLeft: "4px solid #10b981" }}>
                                   <img src={t.productImage} alt="Product" style={{ maxHeight: 220, maxWidth: 300, borderRadius: 10, border: "2px solid #86efac", cursor: "pointer", objectFit: "contain", background: "white" }}
                                     onClick={() => openImageInNewTab(t.productImage)} />
@@ -1848,7 +1862,7 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
 
                           {productionResolveForm[id]?.show && s !== "resolved" && (
                             <tr style={{ background: "#f0fdf4" }}>
-                              <td colSpan={9} style={{ padding: "16px 20px" }}>
+                              <td colSpan={10} style={{ padding: "16px 20px" }}>
                                 <div style={{ background: "linear-gradient(135deg,#ecfdf5,#d1fae5)", border: "2px solid #10b981", borderRadius: 12, padding: "16px 20px", maxWidth: 600 }}>
                                   <div style={{ fontSize: 13, fontWeight: 800, color: "#065f46", marginBottom: 10 }}>
                                     ✅ Resolve Ticket #{t.ticketNumber}
@@ -1874,7 +1888,7 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
 
                           {s === "resolved" && (
                             <tr style={{ background: "#f0fdf4" }}>
-                              <td colSpan={9} style={{ padding: "8px 20px" }}>
+                              <td colSpan={10} style={{ padding: "8px 20px" }}>
                                 <span style={{ fontSize: 12, color: "#065f46", fontWeight: 600 }}>
                                   ✅ Resolved by <strong>{t.resolvedBy}</strong>
                                   {t.resolutionNotes ? ` — ${t.resolutionNotes}` : ""}
