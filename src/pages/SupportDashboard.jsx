@@ -232,6 +232,7 @@ const [resolveAction, setResolveAction] = useState({});
  const [statusUpdateForm, setStatusUpdateForm] = useState({});
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const prevCountRef = useRef(0);
+const seenIdsRef = useRef(null);
 const [updateNotifications, setUpdateNotifications] = useState(() => {
   try { return JSON.parse(localStorage.getItem("support_updateNotifications")) || []; }
   catch { return []; }
@@ -334,9 +335,17 @@ const [showLookupDropdown, setShowLookupDropdown] = useState(false);
   (t.resolvedBy && currentUser?.name &&
   t.resolvedBy.toLowerCase().trim() === currentUser.name.toLowerCase().trim())
 );
-       if (prevCountRef.current > 0 && mine.length > prevCountRef.current) {
+       const myNameLc  = (currentUser?.name  || "").toLowerCase().trim();
+const myEmailLc = (currentUser?.email || "").toLowerCase().trim();
+const alertable = mine.filter(t =>
+  (t.assignTo || "").toLowerCase().trim() === myNameLc &&
+  (t.raisedBy || "").toLowerCase().trim() !== myEmailLc &&
+  ["open", "pending", "reopened"].includes((t.status || "open").toLowerCase())
+);
+if (seenIdsRef.current && alertable.some(t => !seenIdsRef.current.has(t.id))) {
   setNewTicketAlert(true);
 }
+seenIdsRef.current = new Set(alertable.map(t => t.id));
 prevCountRef.current = mine.length;
 setTickets(mine);
         mine.filter(t => (t.status === "pending" || t.status === "reopened") && !autoAcceptingRef.current.has(t.id))
@@ -598,7 +607,9 @@ const handleResolveSubmit = (ticketId) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("currentUser");
+        localStorage.removeItem("currentUser");
+    localStorage.removeItem("support_newTicketAlert");
+    localStorage.removeItem("support_updateNotifications");
     navigate("/", { replace: true });
   };
 
