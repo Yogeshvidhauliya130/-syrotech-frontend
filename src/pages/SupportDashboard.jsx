@@ -233,6 +233,10 @@ const [resolveAction, setResolveAction] = useState({});
 const [statusUpdatePopup, setStatusUpdatePopup] = useState(null);
 const prevCountRef = useRef(0);
 const seenIdsRef = useRef(null);
+const [newTicketNumbers, setNewTicketNumbers] = useState(() => {
+  try { return JSON.parse(localStorage.getItem("support_newTicketNumbers")) || []; }
+  catch { return []; }
+});
 const [updateNotifications, setUpdateNotifications] = useState(() => {
   try { return JSON.parse(localStorage.getItem("support_updateNotifications")) || []; }
   catch { return []; }
@@ -342,8 +346,12 @@ const alertable = mine.filter(t =>
   (t.raisedBy || "").toLowerCase().trim() !== myEmailLc &&
   ["open", "pending", "reopened"].includes((t.status || "open").toLowerCase())
 );
-if (seenIdsRef.current && alertable.some(t => !seenIdsRef.current.has(t.id))) {
-  setNewTicketAlert(true);
+if (seenIdsRef.current) {
+  const freshOnes = alertable.filter(t => !seenIdsRef.current.has(t.id));
+  if (freshOnes.length > 0) {
+    setNewTicketAlert(true);
+    setNewTicketNumbers(prev => [...new Set([...prev, ...freshOnes.map(t => t.ticketNumber)])]);
+  }
 }
 seenIdsRef.current = new Set(alertable.map(t => t.id));
 prevCountRef.current = mine.length;
@@ -412,9 +420,13 @@ const poll = setInterval(() => {
     localStorage.setItem("support_updateNotifications", JSON.stringify(updateNotifications));
   }, [updateNotifications]);
 
-  useEffect(() => {
+    useEffect(() => {
     localStorage.setItem("support_newTicketAlert", newTicketAlert ? "true" : "false");
   }, [newTicketAlert]);
+
+  useEffect(() => {
+    localStorage.setItem("support_newTicketNumbers", JSON.stringify(newTicketNumbers));
+  }, [newTicketNumbers]);
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/users`)
@@ -608,7 +620,8 @@ const handleResolveSubmit = (ticketId) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
         localStorage.removeItem("currentUser");
-    localStorage.removeItem("support_newTicketAlert");
+        localStorage.removeItem("support_newTicketAlert");
+    localStorage.removeItem("support_newTicketNumbers");
     localStorage.removeItem("support_updateNotifications");
     navigate("/", { replace: true });
   };
@@ -1340,9 +1353,9 @@ body: JSON.stringify({ statusUpdates: [...existing, { ...newEntry, updatedByRole
     padding:"12px 20px", display:"flex",
     justifyContent:"space-between", alignItems:"center" }}>
     <span style={{ fontSize:14, fontWeight:700, color:"#92400e" }}>
-      🔔 New ticket assigned to you!
+            🔔 New ticket assigned to you!{newTicketNumbers.length > 0 && ` ${newTicketNumbers.map(n => `#${n}`).join(", ")}`}
     </span>
-    <button onClick={() => { setNewTicketAlert(false); setActiveTab("tickets"); }}
+    <button onClick={() => { setNewTicketAlert(false); setNewTicketNumbers([]); setActiveTab("tickets"); }}
       style={{ background:"#f59e0b", color:"white", border:"none",
         padding:"6px 16px", borderRadius:8, cursor:"pointer",
         fontSize:13, fontWeight:700 }}>
